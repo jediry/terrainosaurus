@@ -29,7 +29,8 @@ MapEditorWidget::MapEditorWidget()
            // Rendering attributes
            terrainColors(this), backgroundColor(this), boundaryColor(this),
            refinedBoundaryColor(this), intersectionColor(this),
-           gridColor(this),
+           gridColor(this), boundaryWidth(this), refinedBoundaryWidth(this),
+           intersectionSize(this),
 
            // Rendering flags
            renderRegions(this), renderBoundaries(this),
@@ -45,7 +46,7 @@ MapEditorWidget::MapEditorWidget()
 
     // Fine tune the GUI control parameters
     panScale = 0.1;
-    rollScale = math::PI<scalar_t>() / 150.0;
+    rollScale = 3.1415962 / 150.0;
     zoomScale = 1.001;
 
     // Create a map (#$%@ idiot!)
@@ -64,10 +65,11 @@ MapEditorWidget::MapEditorWidget()
  | Rendering functions
  *---------------------------------------------------------------------------*/
 void MapEditorWidget::initializeView() {
-    cerr << "Initialize!\n";
     renderer.initialize();
     renderer.setBackgroundColor(backgroundColor());
     renderer.setShadingMode(Paint);
+    renderer.enableLineSmoothing(true);
+    renderer.enablePointSmoothing(true);
 }
 
 void MapEditorWidget::resizeView(size_t w, size_t h) {
@@ -90,7 +92,6 @@ void MapEditorWidget::resetCameraProjection() {
 }
 
 void MapEditorWidget::renderView() {
-    cerr << "Render!\n";
     renderer.clear();
 
     // Transform to the camera's location
@@ -110,7 +111,7 @@ void MapEditorWidget::renderView() {
                 Map::Region r = *it;
                 //renderer.setColor(terrainColor[r.terrainType()]);
                 renderer.beginRenderImmediate(Polygon);
-                    for (index_t i = 0; i < r.intersectionCount(); i++)
+                    for (index_t i = 0; i < index_t(r.intersectionCount()); i++)
                         renderer.renderVertex(r.intersection(i).location());
                 renderer.endRenderImmediate();
             }
@@ -121,6 +122,7 @@ void MapEditorWidget::renderView() {
             const Map::BoundaryList &bs = map()->boundaries();
             Map::BoundaryList::const_iterator it;
             renderer.setColor(boundaryColor());
+            renderer.setLineWidth(boundaryWidth());
 
             renderer.beginRenderImmediate(Lines);
             for (it = bs.begin(); it != bs.end(); it++) {
@@ -136,11 +138,12 @@ void MapEditorWidget::renderView() {
             const Map::BoundaryList &bs = map()->boundaries();
             Map::BoundaryList::const_iterator it;
             renderer.setColor(refinedBoundaryColor());
+            renderer.setLineWidth(refinedBoundaryWidth());
 
             for (it = bs.begin(); it != bs.end(); it++) {
                 Map::RefinedBoundary rb = it->refinement();
                 renderer.beginRenderImmediate(LineStrip);
-                    for (index_t i = 0; i < rb.size(); i++)
+                    for (index_t i = 0; i < index_t(rb.size()); i++)
                         renderer.renderVertex(rb[i]);
                 renderer.endRenderImmediate();
             }
@@ -151,6 +154,7 @@ void MapEditorWidget::renderView() {
             const Map::IntersectionList &is = map()->intersections();
             Map::IntersectionList::const_iterator it;
             renderer.setColor(intersectionColor());
+            renderer.setPointSize(intersectionSize());
 
             renderer.beginRenderImmediate(Points);
             for (it = is.begin(); it != is.end(); it++) {

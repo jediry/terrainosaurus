@@ -13,7 +13,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="C:\temp"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="2"
@@ -34,8 +34,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/LTCG"
+				AdditionalDependencies="libinca.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="1"/>
 			<Tool
@@ -108,26 +110,32 @@
 			Name="libinca"/>
 	</References>
 	<Files>
-		<File
-			RelativePath=".\src\DEMInterpreter.cpp">
-		</File>
-		<File
-			RelativePath=".\src\DEMInterpreter.hpp">
-		</File>
-		<File
-			RelativePath=".\src\DEMTest.cpp">
-		</File>
-		<File
-			RelativePath=".\src\ElevationMap.cpp">
-		</File>
-		<File
-			RelativePath=".\src\ElevationMap.hpp">
-		</File>
+		<Filter
+			Name="genetics"
+			Filter="">
+			<File
+				RelativePath=".\src\genetics\Chromosome.h">
+			</File>
+			<File
+				RelativePath=".\src\genetics\GA.h">
+			</File>
+			<File
+				RelativePath=".\src\genetics\main.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\genetics\Pyramid.h">
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\src\GLUTMapEditor.cpp">
 			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Debug|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -135,8 +143,7 @@
 		<File
 			RelativePath=".\src\Map.cpp">
 			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Debug|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -144,8 +151,7 @@
 		<File
 			RelativePath=".\src\Map.hpp">
 			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Debug|Win32">
 				<Tool
 					Name="VCCustomBuildTool"/>
 			</FileConfiguration>
@@ -153,8 +159,7 @@
 		<File
 			RelativePath=".\src\MapEditorWidget.cpp">
 			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Debug|Win32">
 				<Tool
 					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
@@ -162,14 +167,18 @@
 		<File
 			RelativePath=".\src\MapEditorWidget.hpp">
 			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="TRUE">
+				Name="Debug|Win32">
 				<Tool
 					Name="VCCustomBuildTool"/>
 			</FileConfiguration>
 		</File>
 		<File
 			RelativePath=".\src\terrainosaurus-common.h">
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"/>
+			</FileConfiguration>
 		</File>
 	</Files>
 	<Globals>

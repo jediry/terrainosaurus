@@ -64,6 +64,9 @@ public:
     rw_property(Color, boundaryColor,           Color(0.0f, 0.0f, 0.3f, 1.0f));
     rw_property(Color, refinedBoundaryColor,    Color(0.0f, 0.0f, 1.0f, 1.0f));
     rw_property(Color, gridColor,               Color(0.8f, 0.8f, 0.8f, 0.5f));
+    rw_property(float, boundaryWidth,           5.0f);
+    rw_property(float, refinedBoundaryWidth,    3.0f);
+    rw_property(float, intersectionSize,        7.0f);
 
     // Rendering switches
     rw_property(bool, renderRegions,            true);

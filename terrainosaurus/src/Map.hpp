@@ -44,6 +44,7 @@ namespace terrainosaurus {
     typedef shared_ptr<Map> MapPtr;
 };
 
+// Import the mesh that manages our topology
 #include <inca/math/topology/WingedEdge-PolygonMesh>
 
 class terrainosaurus::Map {
@@ -101,6 +102,7 @@ public:
         // Accessors
         const Map & map() const { return _map; }
         FacePtr face() const { return _face; }
+        unsigned int id() const { return face()->getID(); }
 
         // Properties of the Region
         TerrainType terrainType() const;
@@ -149,6 +151,7 @@ public:
         // Accessors
         const Map & map() const { return _map; }
         VertexPtr vertex() const { return _vertex; }
+        unsigned int id() const { return vertex()->getID(); }
 
         // Properties of this intersection
         const Point & location() const;
@@ -206,6 +209,7 @@ public:
         const Map & map() const { return _map; }
         EdgePtr edge() const { return _edge; }
         VertexPtr vertex() const { return _vertex; }
+        unsigned int id() const { return edge()->getID(); }
 
         // Properties of the Boundary
         double length() const;
@@ -286,13 +290,30 @@ public:
     typedef vector<Boundary>                BoundaryList;
     typedef hash_map<EdgePtr, PointList *>  BoundaryRefinementMap;
 
+private:
+    typedef Map ThisType;
 
 /*---------------------------------------------------------------------------*
  | Constructors & Destructor
  *---------------------------------------------------------------------------*/
 public:
-    explicit Map() : _mesh(new PolygonMesh()) { }
-    explicit Map(PolygonMeshPtr m) : _mesh(m) { }
+    explicit Map() : _mesh(new PolygonMesh()),
+           numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
+           mutationRate(this), crossoverRate(this), selectionRatio(this),
+           resolution(this) { }
+    explicit Map(PolygonMeshPtr m) : _mesh(m),
+           numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
+           mutationRate(this), crossoverRate(this), selectionRatio(this),
+           resolution(this) { }
+
+    // Genetic algorithm parameters
+    rw_property(int,   numberOfCycles,          5);     // How many mutation cycles we do?
+    rw_property(int,   numberOfChromosomes,     5);
+    rw_property(float, smoothness,              0.2f);
+    rw_property(float, mutationRate,            0.05f);
+    rw_property(float, crossoverRate,           0.05f);
+    rw_property(float, selectionRatio,          1.0f);
+    rw_property(float, resolution,              20.0f); // Segments per world-unit
 
 protected:
     // The data structure underlying the whole thing

@@ -15,6 +15,10 @@
 using namespace terrainosaurus;
 
 
+// Import our genetic algorithm code
+#include "genetics/GA.h"
+
+
 /*---------------------------------------------------------------------------*
  | Region functions
  *---------------------------------------------------------------------------*/
@@ -258,7 +262,7 @@ void Map::RefinedBoundary::insert(index_t beforeIndex, Point p) {
 Map::PointList::iterator
 Map::RefinedBoundary::fromStart(index_t index) {
     // Range check
-    if (index >= _refinement->size()) {
+    if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromStart(" << index
                 << "): Index out of range\n";
         return _refinement->end();
@@ -274,7 +278,7 @@ Map::RefinedBoundary::fromStart(index_t index) {
 Map::PointList::const_iterator
 Map::RefinedBoundary::fromStart(index_t index) const {
     // Range check
-    if (index >= _refinement->size()) {
+    if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromStart(" << index
                 << "): Index out of range\n";
         return _refinement->end();
@@ -290,7 +294,7 @@ Map::RefinedBoundary::fromStart(index_t index) const {
 Map::PointList::iterator
 Map::RefinedBoundary::fromEnd(index_t index) {
     // Range check
-    if (index >= _refinement->size()) {
+    if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromEnd(" << index
                 << "): Index out of range\n";
         return _refinement->end();
@@ -306,7 +310,7 @@ Map::RefinedBoundary::fromEnd(index_t index) {
 Map::PointList::const_iterator
 Map::RefinedBoundary::fromEnd(index_t index) const {
     // Range check
-    if (index >= _refinement->size()) {
+    if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromEnd(" << index
                 << "): Index out of range\n";
         return _refinement->end();
@@ -393,12 +397,12 @@ Map::RefinedBoundary Map::refinementOf(const Boundary &b) const {
 void Map::refineMap() {
     // Go do that thing you do on each boundary
     BoundaryList bs = boundaries();
-    for (index_t i = 0; i < bs.size(); i++)
+    for (index_t i = 0; i < index_t(bs.size()); i++)
         refineBoundary(bs[i]);
 
     // Now that all the b's are done, do the i's
     IntersectionList is = intersections();
-    for (index_t i = 0; i < is.size(); i++)
+    for (index_t i = 0; i < index_t(is.size()); i++)
         refineIntersection(is[i]);
 }
 
@@ -417,14 +421,62 @@ void Map::refineBoundary(const Boundary &b) {
     // Get the endpoints ‘n’ stuff
     Point start = b.startIntersection().vertex()->location();
     Point end = b.endIntersection().vertex()->location();
-    Vector diff = end - start;
+    Vector guide = end - start;
 
-    // Stick the start vtx as first point (could have used push_back too)
-    rb.push_front(start);
+    // Report it to our oh-so-intelligent user (HAIL TO THEE, USER!)
+    logger << "Refinement for Boundary " << b.id() << endl
+           << "   # of chromosomes: " << numberOfChromosomes() << endl
+           << "   # of cylcles: " << numberOfCycles() << endl
+           << "   Smoothness: " << smoothness() << endl
+           << "   Mutation rate: " << mutationRate() << endl
+           << "   Crossover rate: " << crossoverRate() << endl
+           << "   Selection ratio: " << selectionRatio() << endl
+           << "   Resolution: " << resolution();
+    logger.info();
 
-    // Create the remaining points to make 10 equivalent segments
-    for (int i = 0; i < 10; i++)
-        rb.push_back(start + diff * (i + 1.0) / 10.0);
+    // Figure what this looks like
+    double guideLength = magnitude(guide);          // Length of the edge
+    double guideAngle = angle(guide, Vector(1.0, 0.0));   // Angle with the X axis
+    if (guide[1] < 0.0)      // The angle might be negative
+        guideAngle = -guideAngle;
+
+    // Set up our genetic algorithm and generate a line
+    GA::Population population(numberOfChromosomes(), smoothness(),
+                              mutationRate(), crossoverRate(),
+                              selectionRatio());
+    GA::Point sPt, ePt;
+    sPt.x = 0;
+    sPt.y = 0;
+    ePt.x = int(guideLength * resolution());
+    ePt.y = 0;
+    float* line = population.MakeLine(sPt, ePt, numberOfCycles());
+
+    // Decode the angles into points (initially aligned semi-arbitrarily)
+    Point p(0.0, 0.0);
+    Vector path(0.0, 0.0);  // This keeps track of how far this moves us
+    scalar_t accumulatedAngle = 0.0;
+    rb.push_back(p);
+    for(int i = 0; i < ePt.x; i++) {
+        accumulatedAngle += 3.1415962 - line[i];
+        Vector dp(cos(accumulatedAngle), sin(accumulatedAngle));   // Find motion in X / Y
+        p += dp;            // Move us by this amound and place a point here
+        rb.push_back(p);    // Stick it in
+        path += dp;         // Update our path vector
+	}
+
+    double pathLength = magnitude(path);          // Length of the edge
+    double pathAngle = angle(path, Vector(1.0, 0.0));
+    if (path[1] < 0.0)      // The angle might be negative
+        pathAngle = -pathAngle;
+    logger << "Result:" << endl
+           << "   Start: " << start << ", end: " << end << endl
+           << "   Guide length: " << guideLength << endl
+           << "   Guide angle: " << guideAngle << endl
+           << "   Path length: " << pathLength << endl
+           << "   Path angle: " << pathAngle << endl
+           << "   Scale factor: " << scaleFactor << endl
+           << "   Rotation angle: " << rotationAngle << endl;
+    logger.info();
 }
 
 // Smooth out the intersection of all the RefinedBoundaries that meet here
@@ -433,11 +485,11 @@ void Map::refineIntersection(Intersection &in) {
 
     // Calculate an unweighted average of the nearby points
     Point p(0.0, 0.0);
-    for (index_t i = 0; i < bCount; i++)
+    for (index_t i = 0; i < index_t(bCount); i++)
         p += in.boundary(i).refinement()[1];
     p /= bCount;
 
     // Modify the start point of each boundary refinement
-    for (index_t i = 0; i < bCount; i++)
+    for (index_t i = 0; i < index_t(bCount); i++)
         in.boundary(i).refinement()[0] = p;
 }
