@@ -1,8 +1,14 @@
 #pragma once
 #include "Chromosome.h"
 #include "Pyramid.h"
+#include "RandomLine.h"
 #include <limits.h>
 #include <stdlib.h>
+//#include <Pair>
+#include <Vector>
+using namespace std;
+typedef std::pair<float,float> Range;
+typedef std::vector<Range> RangeList;
 
 namespace GA
 {
@@ -12,12 +18,16 @@ namespace GA
 	// will have to link this class to the pyramid class
 	class Population
 	{
-		public:
-			float* MakeLine(Point fromPt, Point toPt,int i_cycles);
-			Population(int i_numberOfChromosomes, float f_smoothParam, float f_mutationRate, float f_crossoverRate, float f_selectionRatio);
+		public:					
+			RangeList ranges;
+			//float* MakeLine(Point fromPt, Point toPt,int i_cycles); /* old version that uses polygon shape to generate lines */
+			float* MakeLine(Point fromPt, Point toPt,float* ubounds, float* lbounds,int i_cycles); /* new version */
+			Population(int i_numberOfChromosomes, float f_smoothParam, float f_mutationRate, float f_crossoverRate, float f_selectionRatio, int i_randomseed);
 			void InitializeChromosome(int i_offset, float* fA_genes, int i_length);			
-			float* Evolve(int cycles);
-			~Population(){delete[] chroms; delete pyramid;};
+			//float* Evolve(int cycles);
+			float* Evolve2(int cycles,RandomLine* randline);
+			~Population(){delete[] chroms; /*delete pyramid;*/};
+			float* MakeLine(Point fromPt, Point toPt,RangeList* bounds,int i_cycles);
 		private:
 			double GetAngle(Point* v_two, Point* v_three);
 			double* ComputePopulationFitness(double& total);
@@ -29,7 +39,8 @@ namespace GA
 			float* GetAngles(Point* fA_randomwalk, int i_length);
 			double GetAngle(Point* P_one, Point* P_two, Point* P_three);
 			void SinglePointCrossover(int offset1, int offset2,int index);
-			Chromosome* GenerateNewChromosome();
+			//Chromosome* GenerateNewChromosome();
+			Chromosome* GenerateNewChromosome2(RandomLine* randline);
 			int numOfChromosomes;
 			// selectionRatio determines the number of individuals being selected from the current population to form the new population
 			// in each evolution cycle, 0 to 1
@@ -38,7 +49,67 @@ namespace GA
 			Chromosome* chroms;	
 			Pyramid* pyramid;
 			Point fromPt, toPt;
+			int seed;
 	};
+	/* new version that doesn't use polygon to generate the line */
+	float* Population::MakeLine(Point fromPt, Point toPt,RangeList* bounds,int i_cycles)
+	{	
+		vector <Range>::iterator iter;
+		float* angles;
+		int segments = (int)(abs(toPt.x - fromPt.x)+0.5);
+		Range* rpt; float* ubounds; float* lbounds;
+		GA::Point2D prevpt, curpt;
+		prevpt.x = (float)fromPt.x; prevpt.y = (float)fromPt.y;
+		curpt.x = (float)toPt.x; curpt.y = (float)toPt.y;		 
+		// generate the ubounds and lbounds arrays
+		ubounds = new float[segments]; lbounds = new float[segments];
+		iter = bounds->begin();
+		for(int i = 0; i < segments; i++)
+		{
+			rpt = &(*iter);
+			lbounds[i] = rpt->first;
+			ubounds[i] = rpt->second;
+			iter++;
+		}
+		GA::RandomLine randline(prevpt,curpt,ubounds,lbounds,smoothParam,segments);		
+		// generate the initial population
+		for(int i = 0; i < numOfChromosomes; i++)
+		{			
+			angles = randline.GetAnotherLine();
+			InitializeChromosome(i,angles,toPt.x - fromPt.x);
+			delete[] angles;			
+		}		
+		// gets into evolution cycles
+		float* line=Evolve2(i_cycles,&randline);
+		delete[] ubounds; delete[] lbounds;
+		// return the angles of the lines		
+		return line;
+
+	}
+	
+	float* Population::MakeLine(Point fromPt, Point toPt,float* ubounds, float* lbounds,int i_cycles)
+	{	
+		float* angles;
+		GA::Point2D prevpt, curpt;
+		prevpt.x = (float)fromPt.x; prevpt.y = (float)fromPt.y;
+		curpt.x = (float)toPt.x; curpt.y = (float)toPt.y;		 
+		GA::RandomLine randline(prevpt,curpt,ubounds,lbounds,smoothParam,(int)(abs(toPt.x - fromPt.x)+0.5));		
+		// generate the initial population
+		for(int i = 0; i < numOfChromosomes; i++)
+		{			
+			angles = randline.GetAnotherLine();
+			InitializeChromosome(i,angles,toPt.x - fromPt.x);
+			delete[] angles;			
+		}		
+		// gets into evolution cycles
+		float* line=Evolve2(i_cycles,&randline);
+	
+		// return the angles of the lines		
+		return line;
+
+	}
+	
+	/*
 	float* Population::MakeLine(Point in_fromPt, Point in_toPt, int i_cycles)
 	{
 		int length;
@@ -50,7 +121,7 @@ namespace GA
 		data = pyramid->ConnectPoints(&fromPt,&toPt);		
 		length = pyramid->length;
 		// generate the initial population
-		for(int i = 0; i < numOfIndividuals; i++)
+		for(int i = 0; i < numOfChromosomes; i++)
 		{
 			randomwalk = pyramid->RandomWalk(&data[0][0]);			
 			randomwalk[length-1].x = toPt.x;
@@ -70,7 +141,7 @@ namespace GA
 		delete[] data;
 		// return the angles of the lines
 		return line;
-	}
+	}*/
 	float* Population::GetAngles(Point* fA_randomwalk, int i_length)
 	{
 		int arraylen = i_length;
@@ -100,7 +171,7 @@ namespace GA
 	double Population::GetAngle(Point* vec1, Point* vec2)
 	{
 		double angle;
-		angle = ::acos((vec1->x*vec2->x+vec1->y*vec2->y) / (::sqrt(vec1->x*vec1->x+vec1->y*vec1->y * 1.0) * ::sqrt(vec2->x*vec2->x+vec2->y*vec2->y * 1.0)));
+		angle = acos((vec1->x*vec2->x+vec1->y*vec2->y) / (sqrt((float)vec1->x*vec1->x+vec1->y*vec1->y) * sqrt((float)vec2->x*vec2->x+vec2->y*vec2->y)));
 		if(vec1->y > vec2->y)
 			angle *= -1.0;
 		return angle;
@@ -115,15 +186,17 @@ namespace GA
 		vec2.x = P_three->x - P_two->x;
 		vec2.y = P_three->y - P_two->y;
 		// angle is always 180-theta in degrees
-		result = ::acos((vec1.x*vec2.x+vec1.y*vec2.y) / (::sqrt(vec1.x*vec1.x+vec1.y*vec1.y * 1.0) * ::sqrt(vec2.x*vec2.x+vec2.y*vec2.y * 1.0)));
+		result = acos((vec1.x*vec2.x+vec1.y*vec2.y) / (sqrt((float)vec1.x*vec1.x+vec1.y*vec1.y) * sqrt((float)vec2.x*vec2.x+vec2.y*vec2.y)));
 		// direction is being calculated here
 		// P_one is ontop of point 3, so it's in positive direction
 		if(P_one->y < P_three->y)
 			result *= -1.0;
 		return result;
 	}
-	Population::Population(int i_numberOfChromosomes, float f_smoothParam, float f_mutationRate, float f_crossoverRate, float f_selectionRatio)
+	Population::Population(int i_numberOfChromosomes, float f_smoothParam, float f_mutationRate, float f_crossoverRate, float f_selectionRatio, int i_randomseed)
 	{		
+		seed=i_randomseed;
+		srand(seed);
 		selectionRatio = f_selectionRatio;
 		numOfChromosomes=i_numberOfChromosomes;
 		// numOfindivduals to be chosen from current population to form the new pop
@@ -136,6 +209,102 @@ namespace GA
 	{
 		chroms[i_offset].Initialize(fA_genes,i_length);
 	}
+	float* Population::Evolve2(int i_cycles,RandomLine* randline)
+	{		
+		int i = 0,j, chromlength, ii,jj;
+		double *cfitness;			
+		int offset, curOffset = 0;
+		int crossoveroffset1, crossoveroffset2,crossoverindex;
+		// roulette wheel
+		Chromosome* newpop = NULL;
+		while(i< i_cycles)
+		{					
+			newpop = new Chromosome[numOfChromosomes];
+			curOffset = 0;
+			// construct a cumulative frequency function
+			cfitness=ComputePopulationCFitness();
+			// choose individuals from the current pop
+			double randoffset;
+			for(j=0; j < numOfIndividuals; j++)
+			{
+				randoffset = GetRand(cfitness[numOfChromosomes-1]);
+
+				offset=FindOffset(randoffset,cfitness);
+				// copies the genes from the old chromosome to the new pop
+				newpop[curOffset++].Copy(&chroms[offset]);
+			}
+			// generate new individuals for the new pop
+			for(j = numOfIndividuals; j < numOfChromosomes; j++)
+			{
+				Chromosome* tempchrom = GenerateNewChromosome2(randline);
+				newpop[curOffset++].Copy(tempchrom);
+				delete tempchrom;
+			}
+			delete[] cfitness;
+			delete[] chroms;			
+			chroms = newpop;
+			newpop = NULL;			
+			////******* apply GA operators on the individuals
+			// chooses two individuals and perform single point crossover
+
+			chromlength = chroms[0].length;
+			if(GetRand(1.0) < crossoverRate)
+			{
+				crossoveroffset1 = rand() % numOfChromosomes;
+				crossoveroffset2 = rand() % numOfChromosomes;
+				crossoverindex = rand() % chromlength;
+				if(crossoveroffset1 != crossoveroffset2)
+					SinglePointCrossover(crossoveroffset1, crossoveroffset2,crossoverindex);		
+			}
+			// averaging operator
+			if(GetRand(1.0) < crossoverRate)
+			{
+
+				crossoveroffset1 = rand() % numOfChromosomes;
+				crossoveroffset2 = rand() % numOfChromosomes;
+				crossoverindex = rand() % chromlength;
+				if(crossoveroffset1 != crossoveroffset2)
+					AveragingOperator(crossoveroffset1, crossoveroffset2,crossoverindex);
+
+			}
+			// mutation section
+			for(ii = 0; ii < numOfChromosomes; ii++)
+			{
+				for(jj = 0; jj < chromlength; jj++)
+				{
+					if(GetRand(1.0) < mutationRate)
+					{
+						chroms[ii].MutateGene(jj);
+					}
+				}
+			}
+
+			////^^^^^^^ End GA operators section			
+			i++;			
+		}
+		double maxfitness = 0.0;
+		double currfitness;
+		offset=0;
+		for(i = 0; i < numOfChromosomes; i++)
+		{
+			currfitness = chroms[i].GetFitness(smoothParam);
+			if(maxfitness < currfitness)
+			{
+				maxfitness = currfitness;
+				offset = i;
+			}
+		}
+		return chroms[offset].GetGenes();
+	}
+	Chromosome* Population::GenerateNewChromosome2(RandomLine* randline)
+	{
+		Chromosome* chrom = new Chromosome();		
+		float* angles =randline->GetAnotherLine();
+		chrom->Initialize(angles,randline->segments);
+		delete[] angles;		
+		return chrom;
+	}
+	/*
 	float* Population::Evolve(int i_cycles)
 	{		
 		int i = 0,j, chromlength, ii,jj;
@@ -155,6 +324,7 @@ namespace GA
 			for(j=0; j < numOfIndividuals; j++)
 			{
 				randoffset = GetRand(cfitness[numOfChromosomes-1]);
+
 				offset=FindOffset(randoffset,cfitness);
 				// copies the genes from the old chromosome to the new pop
 				newpop[curOffset++].Copy(&chroms[offset]);
@@ -165,8 +335,7 @@ namespace GA
 				Chromosome* tempchrom = GenerateNewChromosome();
 				newpop[curOffset++].Copy(tempchrom);
 				delete tempchrom;
-			}
-			
+			}			
 			delete[] cfitness;
 			delete[] chroms;			
 			chroms = newpop;
@@ -180,7 +349,7 @@ namespace GA
 				crossoveroffset2 = rand() % numOfChromosomes;
 				crossoverindex = rand() % chromlength;
 				if(crossoveroffset1 != crossoveroffset2)
-					SinglePointCrossover(crossoveroffset1, crossoveroffset2,crossoverindex);			
+					SinglePointCrossover(crossoveroffset1, crossoveroffset2,crossoverindex);		
 			}
 			// averaging operator
 			if(GetRand(1.0) < crossoverRate)
@@ -234,6 +403,7 @@ namespace GA
 		delete[] randomwalk;
 		return chrom;
 	}
+	*/
 	void Population::SinglePointCrossover(int offset1, int offset2,int index)
 	{
 		int length = chroms[offset1].length;
@@ -267,7 +437,7 @@ namespace GA
 				return i;
 			}
 		}		
-		return numOfChromosomes;
+		return numOfChromosomes-1;
 	}
 	double Population::GetRand(double d_max)
 	{

@@ -4,7 +4,11 @@
 #include <time.h>
 
 namespace GA
-{
+{	
+	struct Point2D
+	{
+		float x, y;
+	};
 	struct Point
 	{
 		int x,y;
@@ -37,7 +41,7 @@ namespace GA
 		Point* line = new Point[length];
 		Point* curpt = origin;
 		int value, curroffset = 0;
-		printf(" Coord: x %d y %d \n", curpt->x, curpt->y);
+		//printf(" Coord: x %d y %d \n", curpt->x, curpt->y);
 		line[curroffset].x = curpt->x; line[curroffset++].y = curpt->y;
 		bool flat;
 		while(curpt->lower != NULL || curpt->mid != NULL || curpt->upper != NULL)
@@ -78,7 +82,7 @@ namespace GA
 				}
 			}
 			line[curroffset].x = curpt->x; line[curroffset++].y = curpt->y;			
-			printf(" Coord: x %d y %d \n", curpt->x, curpt->y);
+			//printf(" Coord: x %d y %d \n", curpt->x, curpt->y);
 		}
 		return line;
 	}

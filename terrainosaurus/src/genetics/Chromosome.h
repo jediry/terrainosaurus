@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define PI 3.14152
-
 namespace GA
 {
 	///<Summary> The chromosome class is a collection of floating point numbers </Summary>
@@ -25,6 +24,14 @@ namespace GA
 				} 
 				return fitness;
 			};						
+			void PrintDebugString()
+			{
+				for(int i = 0; i < length ;i++)
+				{
+					printf("%f ",genes[i]);
+				}
+				printf("\n");
+			}
 			void Copy(Chromosome* chrom_from);
 			float* GetGenes();
 			int length;
@@ -48,15 +55,13 @@ namespace GA
 	{
 		float PIdiv2 = (float)(PI/2.0);
 		float original = genes[i_offset];		
-		float current = (float)(GetRand(PIdiv2) * pow(-1,rand()));
+		float current = (float)(GetRand(PIdiv2/2.0) * pow(-1,rand()));
 		float result = original + current;
-		while(!((result < PIdiv2) && (result >= -PIdiv2)))
+		while(!(result < PIdiv2 && result >= -PIdiv2))
 		{
-			current = (float)(GetRand(PIdiv2) * pow(-1,rand()));
-			result = original + current;
+			result = result / 2.0f;
 		}
-		genes[i_offset] = original + current;
-
+		genes[i_offset] = result;
 	}	
 	double Chromosome::GetRand(double d_max)
 	{

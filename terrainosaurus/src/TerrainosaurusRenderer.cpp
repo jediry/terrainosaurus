@@ -1,0 +1,695 @@
+/*
+ * File: TerrainosaurusRenderer.cpp
+ *
+ * Author: Ryan L. Saunders
+ *
+ * Copyright 2004, Ryan L. Saunders. Permission is granted to use and
+ *      distribute this file freely for educational purposes.
+ *
+ * Description:
+ */
+
+// Import class definition
+#include "TerrainosaurusRenderer.hpp"
+
+// Import Application class definition
+#include "MapExplorer.hpp"
+
+
+// Import OpenGL FIXME
+#if __MS_WINDOZE__
+    // Windows OpenGL seems to need this
+#   include <windows.h>
+
+    // I'd also rather VS didn't complain about casting to boolean
+#   pragma warning (disable : 4800)
+#endif
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+
+using namespace terrainosaurus;
+using namespace inca::rendering;
+
+typedef TerrainosaurusRenderer TR;  // Shorthand for a long name
+
+void CALLBACK printTessError(GLenum errorCode) {
+    cerr << gluErrorString(errorCode) << endl;
+}
+
+void CALLBACK combineTessPoly(GLdouble coords[3], GLdouble *vertexData[4],
+                              GLfloat weight[4], GLdouble **dataOut) {
+    GLdouble *vtx = new GLdouble[3];
+    vtx[0] = coords[0];
+    vtx[1] = coords[1];
+    vtx[2] = coords[2];
+    *dataOut = vtx;
+}
+
+TR::TerrainosaurusRenderer() :
+    // Map element rendering/selection properties
+    vertexColor(this), edgeColor(this),
+    vertexDiameter(this), edgeWidth(this),
+    vertexSelectionRadius(this), edgeSelectionRadius(this),
+
+    // Refinement rendering properties
+    refinedEdgeColor(this), envelopeBorderColor(this), tangentLineColor(this),
+    refinedEdgeWidth(this), envelopeBorderWidth(this), tangentLineWidth(this),
+
+    // Selected element hilight colors
+    selectHilight(this), hoverSelectHilight(this), lassoSelectHilight(this),
+
+    // Other thingy properties
+    lassoColor(this),
+    minorGridTickColor(this), majorGridTickColor(this),
+    minorGridTickWidth(this), majorGridTickWidth(this)
+{
+
+    GLUtesselator * tess = gluNewTess();
+    gluTessCallback(tess, GLU_TESS_VERTEX,(GLvoid (CALLBACK*) ( )) &glVertex2dv);
+    gluTessCallback(tess, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineTessPoly);
+    gluTessCallback(tess, GLU_TESS_BEGIN,(GLvoid (CALLBACK*) ( )) &glBegin);
+    gluTessCallback(tess, GLU_TESS_END,(GLvoid (CALLBACK*) ( )) &glEnd);
+    gluTessCallback(tess, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &printTessError);
+    gluTessNormal(tess, 0.0, 0.0, 1.0);
+    tesselator = tess;
+}
+
+TR::~TerrainosaurusRenderer() {
+    gluDeleteTess(static_cast<GLUtesselator *>(tesselator));
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Rendering functions
+ *---------------------------------------------------------------------------*/
+// Render a visible representation of the grid we're using
+void TR::renderGrid() {
+    // Render a regular grid over the window
+    Point ps, pe;
+    PlanarGridConstPtr g = grid();
+    Vector extents = g->extents();
+    scalar_t halfX = extents[0] / 2.0,
+             halfY = extents[1] / 2.0;
+    scalar_t dx, dy,
+             minorTickSpacing = g->minorTickSpacing(),
+             majorTickSpacing = g->majorTickSpacing();
+
+    // Render minor grid ticks
+    if (minorTickSpacing > 0.0) {
+        setLineWidth(minorGridTickWidth());
+        setColor(minorGridTickColor());
+        dx = dy = minorTickSpacing;
+
+        beginRenderImmediate(Lines);
+
+            // Draw horizontal grid lines
+            ps[0] = -halfX; pe[0] = halfX;
+            for (scalar_t y = 0; y <= halfY; y += dy) {
+                ps[1] = pe[1] = y;
+                renderVertex(ps);
+                renderVertex(pe);
+                ps[1] = pe[1] = -y;
+                renderVertex(ps);
+                renderVertex(pe);
+            }
+
+            // Draw vertical grid lines
+            ps[1] = -halfY; pe[1] = halfY;
+            for (scalar_t x = 0; x <= halfX; x += dx) {
+                ps[0] = pe[0] = x;
+                renderVertex(ps);
+                renderVertex(pe);
+                ps[0] = pe[0] = -x;
+                renderVertex(ps);
+                renderVertex(pe);
+            }
+
+        endRenderImmediate();
+    }
+
+    // Render minor grid ticks
+    if (majorTickSpacing > 0.0) {
+        setLineWidth(majorGridTickWidth());
+        setColor(majorGridTickColor());
+        dx = dy = majorTickSpacing;
+
+        beginRenderImmediate(Lines);
+
+            // Draw horizontal grid lines
+            ps[0] = -halfX; pe[0] = halfX;
+            for (scalar_t y = 0; y <= halfY; y += dy) {
+                ps[1] = pe[1] = y;
+                renderVertex(ps);
+                renderVertex(pe);
+                ps[1] = pe[1] = -y;
+                renderVertex(ps);
+                renderVertex(pe);
+            }
+
+            // Draw vertical grid lines
+            ps[1] = -halfY; pe[1] = halfY;
+            for (scalar_t x = 0; x <= halfX; x += dx) {
+                ps[0] = pe[0] = x;
+                renderVertex(ps);
+                renderVertex(pe);
+                ps[0] = pe[0] = -x;
+                renderVertex(ps);
+                renderVertex(pe);
+            }
+
+        endRenderImmediate();
+    }
+}
+
+
+void TR::renderLasso(Pixel p1, Pixel p2) {
+    // Find the four corner points of the lasso FIXME
+    Point2D ll(std::min(p1[0], p2[0]), std::min(p1[1], p2[1]));
+    Point2D ur(std::max(p1[0], p2[0]), std::max(p1[1], p2[1]));
+    Point2D ul(ll[0], ur[1]),
+            lr(ur[0], ll[1]);
+
+    Vector2D size(width(), height()),
+             clip(-1.0, 1.0);
+    api::select_projection_matrix();
+    api::push_matrix();
+    api::reset_matrix();
+    api::apply_orthographic_projection(size, clip);
+    api::apply_scaling(math::Vector<double, 3>(1.0, -1.0, 1.0));
+    api::apply_translation(math::Vector<double, 3>(size[0] / -2.0, size[1] / -2.0, 0.0));
+    api::select_transformation_matrix();
+    api::push_matrix();
+    api::reset_matrix();
+
+    setColor(lassoColor());
+    beginRenderImmediate(LineLoop);
+        renderVertex(ll);
+        renderVertex(lr);
+        renderVertex(ur);
+        renderVertex(ul);
+    endRenderImmediate();
+
+    api::select_projection_matrix();
+    api::pop_matrix();
+    api::select_transformation_matrix();
+    api::pop_matrix();
+}
+
+void TR::renderMap(unsigned int flags) {
+    // Set up rendering properties
+    enableLineSmoothing(true);
+    enablePointSmoothing(true);
+    beginRenderPass(Transparency);
+        renderFaces<false>(flags);
+        renderEdges<false>(flags);
+        renderVertices<false>(flags);
+        renderRefinements(flags);
+    endRenderPass();
+}
+
+
+template <bool forSelection>
+void TR::renderVertices(unsigned int flags) {
+    if (! (flags & RenderVertices))
+        return;                     // Not supposed to draw these...leave!
+
+    // Set up the appropriate point size
+    if (!forSelection)  setPointDiameter(vertexDiameter);
+
+    // Render each vertex
+    const Map::VertexPtrList &vertices = map()->vertices();
+    Map::VertexPtrList::const_iterator vs;
+    for (vs = vertices.begin(); vs != vertices.end(); ++vs) {
+        Map::VertexPtr v = *vs;
+        
+        // Set either selection ID, or color, depending on mode
+        if (forSelection)       setSelectionID(v->id());
+        else                    setColor(pickColor(v, flags));
+
+        // Render the vertex
+        beginRenderImmediate(Points);
+            renderVertex(v->position());
+        endRenderImmediate();
+    }
+}
+
+template <bool forSelection>
+void TR::renderFaces(unsigned int flags) {
+    if (! (flags & RenderFaces))
+        return;                     // Not supposed to draw these...leave!
+
+    const Map::FacePtrList & faces = map()->faces();
+    Map::FacePtrList::const_iterator fs;
+    for (fs = faces.begin(); fs != faces.end(); ++fs) {
+        Map::FacePtr f = *fs;
+
+        // Set either selection ID, or color, depending on mode
+        if (forSelection)       setSelectionID(f->id());
+        else                    setColor(pickColor(f, flags));
+
+        // Draw the region
+        //beginRenderImmediate(Polygon);
+        //    size_t count = r.vertexCount();
+        //    for (index_t i = 0; i < index_t(count); ++i)
+        //        // This could DEFINITELY be done faster...but this'll get ripped
+        //        // out anyway once we support concave polys
+        //        renderVertex(r.vertex(i).position());
+        //endRenderImmediate();
+        GLUtesselator * tess = static_cast<GLUtesselator *>(tesselator);
+        gluTessBeginPolygon(tess, NULL); 
+            gluTessBeginContour(tess);
+
+            // Go through each edge of the face and draw each vertex
+            list<GLdouble *> vtx;
+            Map::Face::ccw_edge_iterator es, end_e;
+            for (es = f->edgesCCW(); es != end_e; ++es) {
+                Map::EdgePtr e = *es;
+                // Depending on which way the edge is oriented,
+                // we have handle it a little differently
+                if (e->startVertex() == e->vertexCW(f)) {
+                    if (e->isRefined()) {
+                        const Map::PointList & points = e->refinement();
+                        Map::PointList::const_iterator pt;
+                        // Skip first (duplicated) point
+                        for (pt = ++points.begin(); pt != points.end(); ++pt) {
+                            GLdouble * vert = new GLdouble[2];
+                            vtx.push_back(vert);
+                            vert[0] = (*pt)[0];
+                            vert[1] = (*pt)[1];
+                            gluTessVertex(tess, vert, vert);
+                        }
+                    } else {
+                        Point p = e->endVertex()->position();
+                        GLdouble * vert = new GLdouble[2];
+                        vtx.push_back(vert);
+                        vert[0] = p[0];
+                        vert[1] = p[1];
+                        gluTessVertex(tess, vert, vert);
+                    }
+                } else {
+                    if (e->isRefined()) {
+                        const Map::PointList & points = e->refinement();
+                        Map::PointList::const_reverse_iterator pt;
+                        // Skip first (duplicated) point
+                        for (pt = ++points.rbegin(); pt != points.rend(); ++pt) {
+                            GLdouble * vert = new GLdouble[2];
+                            vtx.push_back(vert);
+                            vert[0] = (*pt)[0];
+                            vert[1] = (*pt)[1];
+                            gluTessVertex(tess, vert, vert);
+                        }
+                    } else {
+                        Point p = e->startVertex()->position();
+                        GLdouble * vert = new GLdouble[2];
+                        vtx.push_back(vert);
+                        vert[0] = p[0];
+                        vert[1] = p[1];
+                        gluTessVertex(tess, vert, vert);
+                    }
+                }
+            }
+
+            gluTessEndContour(tess);
+        gluTessEndPolygon(tess);
+        list<GLdouble *>::iterator pt;
+//        cerr << "Deleting " << vtx.size() << " pointers:\n";
+        for (pt = vtx.begin(); pt != vtx.end(); ++pt) {
+//            cerr << "\t" << (*pt)[0] << ", " << (*pt)[1] << endl;
+            delete [] *pt;
+        }
+    }
+}
+
+template <bool forSelection>
+void TR::renderEdges(unsigned int flags) {
+    if (! (flags & RenderEdges))
+        return;                     // Not supposed to draw these...leave!
+
+    // Set up the appropriate line width
+    if (forSelection)   setLineWidth(edgeSelectionRadius());
+    else                setLineWidth(edgeWidth());
+
+    // Render each edge
+    const Map::EdgePtrList &edges = map()->edges();
+    Map::EdgePtrList::const_iterator es;
+    for (es = edges.begin(); es != edges.end(); ++es) {
+        Map::EdgePtr e = *es;
+
+        // Set either selection ID, or color, depending on mode
+        if (forSelection)       setSelectionID(e->id());
+        else                    setColor(pickColor(e, flags));
+
+        // Render the line
+        beginRenderImmediate(Lines);
+            renderVertex(e->startVertex()->position());
+            renderVertex(e->endVertex()->position());
+        endRenderImmediate();
+    }
+}
+
+// Render map refinements and decorations
+void TR::renderRefinements(unsigned int flags) {
+    if (! (flags & RefinementMask))
+        return;                     // Not supposed to draw these...leave!
+
+    // Some tools for later
+    const Map::VertexPtrList &vertices = map()->vertices();
+    const Map::EdgePtrList &edges = map()->edges();
+    Map::VertexPtrList::const_iterator vi;
+    Map::EdgePtrList::const_iterator ei;
+
+    // Render edges with refinements
+    if (flags & RenderRefinedEdges) {
+        // Set up the appropriate line width & color
+        setLineWidth(refinedEdgeWidth());
+        setColor(refinedEdgeColor());
+
+        // Draw each existing Edge refinement
+        for (ei = edges.begin(); ei != edges.end(); ++ei) {
+            Map::EdgeConstPtr e = *ei;
+            if (e->isRefined()) {
+                beginRenderImmediate(LineStrip);
+                    const Map::PointList & refinement = e->refinement();
+                    Map::PointList::const_iterator pt;
+                    for (pt = refinement.begin(); pt != refinement.end(); ++pt)
+                        renderVertex(*pt);
+                endRenderImmediate();
+            }
+        }
+    }
+
+    // Render Edge envelopes
+    if (flags & RenderEnvelopeBorders) {
+        // Set up the appropriate line width & color
+        setLineWidth(envelopeBorderWidth());
+        setColor(envelopeBorderColor());
+
+        // Draw each Edge envelope
+        Vector3D Z(0, 0, 1);    // Rotate around this
+        for (ei = edges.begin(); ei != edges.end(); ++ei) {
+            Map::EdgeConstPtr e = *ei;
+            const Map::RangeList & envelope = e->envelope();
+            if (envelope.size() > 1) {
+                pushTransform();
+                    Point2D p2 = e->startPoint();
+                    api::apply_translation(Point3D(p2[0], p2[1], 0.0));
+                    api::apply_rotation(e->angle(), Z);
+                    scalar_t dx = e->length() / (envelope.size() - 1);
+                    Point p(0.0);
+                    beginRenderImmediate(LineLoop);
+                        Map::RangeList::const_iterator ri;
+                        for (ri = envelope.begin(); ri != envelope.end(); ++ri) {
+                            p[1] = ri->first;
+                            renderVertex(p);
+                            p[0] += dx;
+                        }
+
+                        Map::RangeList::const_reverse_iterator rri;
+                        for (rri = envelope.rbegin(); rri != envelope.rend(); ++rri) {
+                            p[0] -= dx;
+                            p[1] = rri->second;
+                            renderVertex(p);
+                        }
+                    endRenderImmediate();
+                popTransform();
+            }
+        }
+    }
+
+    // Render Vertex tangent lines
+    if (flags & RenderTangentLines) {
+        // Set up the appropriate line width & color
+        setLineWidth(tangentLineWidth());
+        setColor(tangentLineColor());
+
+        // Draw each valence-2 Vertex tangent line
+        for (vi = vertices.begin(); vi != vertices.end(); ++vi) {
+            Map::VertexConstPtr v = *vi;
+            if (v->edgeCount() == 2) {
+               beginRenderImmediate(LineStrip);
+//                const Map::RangeList & envelope = e->envelope();
+//                Map::RangeList::const_iterator rg;
+//                for (rg = refinement.begin(); rg != refinement.end(); ++rg)
+//                    renderVertex(*pt);
+                endRenderImmediate();
+            }
+        }
+    }
+}
+
+// UGLY HACK! ICK! XXX
+template <>
+void TR::renderMapElements<Map::Face>(bool const forSelection, unsigned int flags) {
+    if (forSelection)   renderFaces<true>(flags);
+    else                renderFaces<false>(flags);
+}
+template <>
+void TR::renderMapElements<Map::Edge>(bool const forSelection, unsigned int flags) {
+    if (forSelection)   renderEdges<true>(flags);
+    else                renderEdges<false>(flags);
+}
+template <>
+void TR::renderMapElements<Map::Vertex>(bool const forSelection, unsigned int flags) {
+    if (forSelection)   renderVertices<true>(flags);
+    else                renderVertices<false>(flags);
+}
+
+template <class ElementType>
+Color TR::pickColor(ElementType const * e, unsigned int flags) const {
+    // If we're not rendering selected things at all, we can quit now
+    if (! (flags & SelectionMask))
+        return baseColor(e);
+
+    // If we are 'selected', we might want to draw that
+    else if (persistentSelection()->isSelected(e) && (flags & RenderSelected))
+        return selectedColor(e);
+
+    // Otherwise, this might be a "semi" selected element
+    else if (transientSelection()->isSelected(e))
+        if (flags & RenderLassoSelected)        // ...then  within the lasso
+            return lassoSelectedColor(e);
+        else if (flags & RenderHoverSelected)   // ...then under the mouse
+            return hoverSelectedColor(e);
+
+    // Failing all that, just return the base color
+    return baseColor(e);
+}
+
+// Base color for a Face (map region)
+template <>
+Color TR::baseColor<Map::Face>(Map::Face const * f) const {
+    return f->terrainType()->color();
+}
+
+// Base color for an Edge (map edge)
+template <>
+Color TR::baseColor<Map::Edge>(Map::Edge const * e) const {
+    return edgeColor();
+}
+
+// Base color for a Vertex
+template <>
+Color TR::baseColor<Map::Vertex>(Map::Vertex const * v) const {
+    return vertexColor();
+}
+
+// Selected color (calculated from base color and selection hilight)
+template <class ElementType>
+Color TR::selectedColor(ElementType const * e) const {
+    return baseColor(e) % selectHilight();
+}
+
+// Lasso-selected color (calculated from base color and lasso hilight)
+template <class ElementType>
+Color TR::lassoSelectedColor(ElementType const * e) const {
+    return baseColor(e) % lassoSelectHilight();
+}
+
+// Mouse-hover color (calculated from base color and hover hilight)
+template <class ElementType>
+Color TR::hoverSelectedColor(ElementType const * e) const {
+    return baseColor(e) % hoverSelectHilight();
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Selection/geometric functions
+ *---------------------------------------------------------------------------*/
+template <class ElementType>
+void TR::mapElementsAroundPoint(Point2D p, Vector2D size, MeshSelection &s) {
+    // Sanity-check the picking criteria
+    if (size[0] < 1)    size[0] = 1;    // If any dimension is zero, the pick
+    if (size[1] < 1)    size[1] = 1;    // region is degenerate so fix it
+    api::select_projection_matrix();
+
+    api::push_matrix();         // Set up the picking matrix
+    slipPickMatrix(p, size);
+    api::select_transformation_matrix();
+
+    beginRenderPass(Selection);
+        renderMapElements<ElementType>(true, RenderAll);
+    endRenderPass();
+
+    api::select_projection_matrix();
+    api::pop_matrix();          // Clean up the matrix stack
+    api::select_transformation_matrix();
+
+    s.setElementType<ElementType>();    // Set the element type of the selection
+    s.clear();                          // Stick the ids of the elements
+    getSelectedIDs(s);                  // into the selection
+    checkForError();
+}
+
+void TR::mapElementsAroundPixel(Pixel p, MeshSelection &s) {
+    scalar_t size;      // How wide a region around the pixel to look
+    Point2D point(p[0], height() - p[1]);
+
+    // Depending on the element type we're selecting, we have to do differently
+    switch(s.elementType()) {
+    case MeshSelection::Faces:
+        // Just check to see if the pointer is directly over a Region
+        size = 1.0;
+        mapElementsAroundPoint<Map::Face>(point, Vector2D(size), s);
+        break;
+    case MeshSelection::Edges:
+        // See if we're within 'edgeSelectionRadius' of an Edge
+        size = edgeSelectionRadius() * 2.0;
+        mapElementsAroundPoint<Map::Edge>(point, Vector2D(size), s);
+        break;
+    case MeshSelection::Vertices:
+        // See if we're within 'vertexSelectionRadius' of a Vertex
+        size = vertexSelectionRadius() * 2.0;
+        mapElementsAroundPoint<Map::Vertex>(point, Vector2D(size), s);
+        break;
+    }
+}
+
+void TR::mapElementsWithinLasso(Pixel start, Pixel end, MeshSelection &s) {
+    // Translate the lasso bounds into a center/size combination
+    Point2D pStart(start[0], height() - start[1]),
+            pEnd(end[0], height() - end[1]);
+    Vector2D pickSize(pEnd - pStart);     // Could be negative sizes right now
+    Point2D pickCenter(pEnd - pickSize / 2.0);  // Half way in between
+
+    // FIXME: this should be a single function call!
+    pickSize[0] = abs(pickSize[0]);     // Now we're guaranteed that size
+    pickSize[1] = abs(pickSize[1]);     // is positive
+
+    // Depending on the element type we're selecting, we have to do differently
+    switch(s.elementType()) {
+    case MeshSelection::Faces:
+        // Just check to see if the pointer is directly over a Region
+        // FIXME: this should check all Vertices
+        mapElementsAroundPoint<Map::Face>(pickCenter, pickSize, s);
+        break;
+    case MeshSelection::Edges:
+        // See if we're within 'edgeSelectionRadius' of an Edge
+        mapElementsAroundPoint<Map::Edge>(pickCenter, pickSize, s);
+        break;
+    case MeshSelection::Vertices:
+        // See if we're within 'vertexSelectionRadius' of a Vertex
+        mapElementsAroundPoint<Map::Vertex>(pickCenter, pickSize, s);
+        break;
+    }
+}
+
+// Create a spike at the specifed pixel, handling snapping to any nearby
+// Map::Vertex or Map::Edge
+Map::Spike TR::spikeAtPixel(Pixel p) {
+    Map::Spike spike;   // The result we're looking for
+    MeshSelection temp;  // A temporary selection to hold the result
+    Vector2D size;      // How far around the pixel center to look
+    Point2D point(p[0], height() - p[1]);   // The pixel center
+
+    // Calculate the world-space position of this pixel
+    spike.worldPosition = pointOnGroundPlane(p);
+    spike.snappedPosition = spike.worldPosition;
+
+    // Look for an vertex we can snap to
+    size = Vector2D(vertexSelectionRadius() * 2); // This is our 'snap'
+    mapElementsAroundPoint<Map::Vertex>(point, size, temp);
+
+    // If that failed, look for a edge we can snap to
+    if (temp.size() == 0) {
+        size = Vector2D(edgeSelectionRadius() * 2);
+        mapElementsAroundPoint<Map::Edge>(point, size, temp);
+    }
+    
+    // Now, if we actually hit anything, snap to it
+    if (temp.size() > 0) {
+        switch (temp.elementType()) {
+        case MeshSelection::Vertices:
+            {   // We're attaching to an existing Vertex
+                spike.type = Map::LinkVertex;
+
+                // Find the closest Vertex to our world position
+                MeshSelection::iterator it;
+                scalar_t distance = 1e20;   // SURELY this is enough...
+                for (it = temp.begin(); it != temp.end(); ++it) {
+                    Map::VertexPtr v = map()->vertex(*it);
+                    scalar_t d = magnitude(v->position() - spike.worldPosition);
+                    if (d < distance) { // This one is the new "closest"
+                        distance = d;
+                        spike.elementID = v->id();
+                        spike.snappedPosition = v->position();
+                    }
+                }
+            }
+            break;
+
+        case MeshSelection::Edges:
+            {   // We're attaching to an existing Vertex
+                spike.type = Map::SplitEdge;
+
+                // Find the closest Edge to our world position
+                MeshSelection::iterator it;
+                scalar_t distance = 1e20;   // SURELY this is enough...
+                for (it = temp.begin(); it != temp.end(); ++it) {
+                    Map::EdgePtr e = map()->edge(*it);
+                    Point p = e->nearestPointTo(spike.worldPosition);
+                    scalar_t d = magnitude(p - spike.worldPosition);
+                    if (d < distance) { // This one is the new "closest"
+                        distance = d;
+                        spike.elementID = e->id();
+                        spike.snappedPosition = p;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    return spike;
+}
+
+// Find the 2D point on the ground plane
+TR::Point TR::pointOnGroundPlane(Pixel p) {
+    Point3D screen(p[0], height() - p[1], 1.0);
+    Point3D p0 = unproject(screen); // Unproject at two different Z values
+    screen[2] = 2.0;
+    Point3D p1 = unproject(screen); // so we can get the vector connecting
+
+    scalar_t t = p0[2] / (p0[2] - p1[2]);   // t value to intersect with plane
+
+    return Point2D(p0[0] + (p1[0] - p0[0]) * t,     // The point at that T value
+                   p0[1] + (p1[1] - p0[1]) * t);
+}
+
+// Slip a matrix *under* the current one (i.e., reverse-order multiply)
+void TR::slipPickMatrix(const Point2D pickCenter, const Vector2D pickSize) {
+//    cerr << "Pick matrix at " << pickCenter << " of size " << pickSize << endl;
+    // Slip a picking projection underneath the current projection matrix
+    Matrix current;
+    saveProjectionMatrix(current);
+    api::select_projection_matrix();
+    api::reset_matrix();
+    api::apply_picking_projection(pickCenter, pickSize);
+    Matrix temp;
+    saveProjectionMatrix(temp);
+//    cerr << "Picking matrix looks like " << temp << endl;
+    api::multiply_matrix(current);
+//    resetProjectionMatrix();
+//    applyPickingProjection(pickCenter, pickSize);
+//    applyMatrixProjection(current);
+}

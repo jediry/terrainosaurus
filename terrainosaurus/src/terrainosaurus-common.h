@@ -19,16 +19,32 @@
 
 // Import Inca library configuration
 #include <inca/inca-common.h>
-using namespace inca;
 
 // Import Inca sub-libraries
 #include <inca/math.hpp>
-using namespace inca::math;
-
 #include <inca/imaging.hpp>
-using namespace inca::imaging;
 
-#include <inca/world.hpp>
-using namespace inca::world;
+// Import Boost libraries XXX should these go into inca-common?
+#include <boost/lambda/lambda.hpp>
+
+namespace terrainosaurus {
+    using namespace boost;
+
+    // Import Inca library namespaces
+    using namespace inca;
+    using namespace inca::math;
+
+    // Define scalar and vector types used for geometry
+    INCA_MATH_SCALAR_TYPEDEFS(double, IS_NOT_WITHIN_TEMPLATE, /* */, /* */);
+    INCA_MATH_VECTOR_TYPEDEFS(scalar_t, 2, /* */, 2D);
+    INCA_MATH_VECTOR_TYPEDEFS(scalar_t, 3, /* */, 3D);
+
+    // Define the Color type that will be used throughout
+    typedef inca::imaging::Color<float, inca::imaging::sRGB, true> Color;
+};
+
+// Choose which GUI toolkit we will be using (for windows, etc.)
+#define GUI_TOOLKIT GLUT
+
 
 #endif
