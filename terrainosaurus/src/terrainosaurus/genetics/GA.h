@@ -7,8 +7,6 @@
 //#include <Pair>
 #include <vector>
 using namespace std;
-typedef std::pair<float,float> Range;
-typedef std::vector<Range> RangeList;
 
 namespace GA
 {
@@ -19,9 +17,14 @@ namespace GA
 	class Population
 	{
 		public:
+                    typedef std::vector<float> AngleList;
+                    typedef std::pair<float,float> Range;
+                    typedef std::vector<Range> RangeList;
+
 			RangeList ranges;
 			//float* MakeLine(Point fromPt, Point toPt,int i_cycles); /* old version that uses polygon shape to generate lines */
 			float* MakeLine(Point fromPt, Point toPt,float* ubounds, float* lbounds,int i_cycles); /* new version */
+                        AngleList MakeLine(const RangeList & envelope, float startAngle, float endAngle, int cycles);   // NEW, hacked version
 			Population(int i_numberOfChromosomes, float f_smoothParam, float f_mutationRate, float f_crossoverRate, float f_selectionRatio, int i_randomseed);
 			void InitializeChromosome(int i_offset, float* fA_genes, int i_length);
 			//float* Evolve(int cycles);
@@ -51,6 +54,26 @@ namespace GA
 			Point fromPt, toPt;
 			int seed;
 	};
+        Population::AngleList Population::MakeLine(const RangeList & envelope, float startAngle, float endAngle, int cycles) {
+            Point start, end;
+            start.x = 0;                    start.y = 0;
+            end.x = envelope.size() - 1;    end.y = 0;
+            float * up = new float[envelope.size()];
+            float * down = new float[envelope.size()];
+            for (int i = 0; i < envelope.size(); ++i) {
+//                down[i] = envelope[i].second;
+//                up[i] = envelope[i].first;
+                up[i] = envelope[i].second;
+                down[i] = envelope[i].first;
+            }
+            float * f = MakeLine(start, end, up, down, cycles);
+//            float * f = MakeLine(start, end, const_cast<RangeList*>(&envelope), cycles);
+            AngleList angles(envelope.size());
+            for (int i = 0; i < angles.size(); ++i)
+                angles[i] = f[i];
+            delete f;
+            return angles;
+        }
 	/* new version that doesn't use polygon to generate the line */
 	float* Population::MakeLine(Point fromPt, Point toPt,RangeList* bounds,int i_cycles)
 	{

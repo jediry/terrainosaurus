@@ -1,0 +1,35 @@
+#!/bin/bash
+
+function die {
+    echo "$1"
+    exit 1
+}
+
+DATA_DIR="/mnt/data/scratch/gis"
+SDTS_DIR="$DATA_DIR/sdts"
+DEM_DIR="$DATA_DIR/dem"
+TEMP_DIR="/tmp"
+PROG_DIR="/home/jediry/Documents/Development/Media/terrainosaurus/data"
+
+sdts=$1
+dem=$DEM_DIR/`basename "$sdts"`
+dem=${dem%.sdts.tgz}.dem
+
+[ -r "$sdts" ] || die "SDTS file $sdts does not exist"
+[ -r "$dem"  ] && die "DEM file $dem already exists"
+
+(
+    ddf=`tar -zxvf "$sdts" -C "$TEMP_DIR" "*.DDF" | grep CEL0`
+    [ $? == 0 ] || die "Failed to extract $sdts to $TEMP_DIR"
+    cd "$TEMP_DIR" || die "Faild to change to $TEMP_DIR"
+    ddf=${ddf%CEL0.DDF}
+    sdts2dem $ddf "${dem%.dem}" L0 >/dev/null 2>&1 || die "Failed to convert $sdts -> $dem"
+    rm -f "$TEMP_DIR/$ddf"* || die "Cleanup of DDF failed"
+    "$PROG_DIR/verify_dem" "$dem" 2>/dev/null
+    if [ $? != 0 ] ; then
+        rm -f "$dem"
+        die "Verification of $dem failed"
+    fi
+)
+
+exit 0

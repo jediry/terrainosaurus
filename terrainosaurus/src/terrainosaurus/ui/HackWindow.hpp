@@ -14,6 +14,7 @@ namespace terrainosaurus {
 // Import superclass definition
 #include <inca/ui.hpp>
 
+// Import rendering object definitions
 #include <terrainosaurus/rendering/HeightfieldRendering.hpp>
 
 

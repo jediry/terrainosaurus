@@ -42,6 +42,8 @@ using namespace inca::ui;
 using namespace inca::io;
 
 #include <complex>
+#include <inca/raster/operators/fourier>
+#include <inca/raster/operators/magnitude>
 
 typedef MultiArrayRaster< std::complex<float>, 2> ComplexImage;
 typedef MultiArrayRaster< inca::math::Vector<float, 2>, 2> GradientImage;
@@ -53,6 +55,8 @@ typedef MultiArrayRaster< inca::math::Vector<float, 2>, 2> GradientImage;
 
 #include "ui/ImageWindow.hpp"
 #include "ui/HackWindow.hpp"
+#include "ui/GeneticsWindow.hpp"
+#include "ui/MapEditorWindow.hpp"
 #include "data/MapRasterization.hpp"
 #include "genetics/TerrainChromosome.hpp"
 #include "genetics/terrain-operations.hpp"
@@ -147,11 +151,6 @@ struct InTriangle {
 
 
 
-typedef shared_ptr<ImageWindow> ImageWindowPtr;
-ImageWindowPtr globalSourceWindow, globalSourceWindow2, globalResultWindow, globalDifferenceWindow;
-GrayscaleImage originalImage, originalImage2;
-
-
 /*---------------------------------------------------------------------------*
  | Access to the singleton Application instance
  *---------------------------------------------------------------------------*/
@@ -174,8 +173,9 @@ void MapExplorer::setup(int &argc, char **argv) {
     _persistentSelection->setElementType(MeshSelection::Edges);
     _transientSelection->setElementType(MeshSelection::Edges);
 
+
     // See if the user gave us any useful filenames
-    string arg, ext;
+    string arg, ext, demFile;
     while (argc > 1) {
         arg = shift(argc, argv);
         ext = arg.substr(arg.length() - 4);
@@ -183,39 +183,91 @@ void MapExplorer::setup(int &argc, char **argv) {
             loadTerrainLibrary(arg);
         else if (ext == ".map")             // Load the map from here
             loadMap(arg);
+        else if (ext == ".dem")
+            demFile = arg;
         else
             exit(1, "Unrecognized argument \"" + arg + "\"");
     }
 
     // If something wasn't specifed on the command line, choose a default
-    if (! _map)                 createMap();
-    if (! _terrainLibrary)      createTerrainLibrary();
+//    if (! _map)                 createMap();
+//    if (! _terrainLibrary)      createTerrainLibrary();
+    if (! _terrainLibrary)      loadTerrainLibrary("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.ttl");
+    if (! _map)                 loadMap("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.map");
 
     // Create the alignment grid
     _grid.reset(new PlanarGrid());
         grid()->minorTickSpacing = 0.5;
 
+#if 0
+    // Create a nice, boring MapRasterization
     MapRasterizationPtr mr(new MapRasterization(terrainLibrary()));
-    MapRasterization::LOD::IDMap idx(300, 300);
+    MapRasterization::LOD::IDMap idx(inca::Array<int, 2>(300, 300));
+    fill(idx, 1);
+    (*mr)[LOD_30m].createFromRaster(idx);
+
+    // Adopt one of the library terrains as our pattern
+    TerrainSamplePtr pattern = terrainLibrary()->terrainType(1)->randomTerrainSample();
+
+    // Make a TerrainChromosome from it
+    TerrainChromosome * c = new TerrainChromosome();
+    createChromosome(*c, (*pattern)[LOD_30m], (*mr)[LOD_30m]);
+    Heightfield hf;
+    renderChromosome(hf, *c);
+    WindowPtr iw(new ImageWindow(hf));
+    registerWindow(iw);
+    WindowPtr hw(new GeneticsWindow(*c, WINDOW_TITLE));
+    registerWindow(hw);
+
+#elif 0
+    // Create a nice, boring MapRasterization
+    MapRasterizationPtr mr(new MapRasterization(terrainLibrary()));
+    MapRasterization::LOD::IDMap idx(inca::Array<int, 2>(300, 300));
+    fill(idx, 1);
+    (*mr)[LOD_30m].createFromRaster(idx);
+
+    // Adopt one of the library terrains as our heightfield
+    TerrainSamplePtr result = terrainLibrary()->terrainType(1)->randomTerrainSample();
+
+    WindowPtr hw(new HackWindow(result, mr, LOD_30m, "A Terrain"));
+    registerWindow(hw);
+
+#elif 1
+    MapRasterizationPtr mr(new MapRasterization(terrainLibrary()));
+    MapRasterization::LOD::IDMap idx(inca::Array<int, 2>(300, 300));
     fill(idx, 1);
 //    select(idx, SizeArray(225, 225)) = select(constant<int, 2>(2), SizeArray(225, 225));
 //    flood_fill(idx, Pixel(90, 36), InTriangle(Pixel(30,30), Pixel(90, 30), Pixel(120, 240)), constant<int, 2>(1));
 //    flood_fill(idx, Pixel(210, 135), InTriangle(Pixel(225,90), Pixel(225, 180), Pixel(180, 150)), constant<int, 2>(1));
     (*mr)[LOD_30m].createFromRaster(idx);
 
-//    TerrainSamplePtr test = terrainLibrary()->terrainType(1)->terrainSample(0);
-//    TerrainSample::LOD & tsl = (*test)[LOD_30m];
-//    tsl.ensureLoaded();
-//    tsl.storeToFile("test30.cache");
-//    tsl.loadFromFile("test30.cache");
+    TerrainLOD startLOD  = LOD_810m,
+               targetLOD = LOD_90m;
+    TerrainSamplePtr result = generateTerrain(mr, startLOD, targetLOD);
 
-#if 1
-    matchSample = terrainLibrary()->terrainType(1)->terrainSample(0);
-    TerrainSamplePtr result = generateTerrain(mr, LOD_810m, LOD_90m);
-
-    WindowPtr hw(new HackWindow(result, mr, LOD_90m, "Generated Terrain"));
+    WindowPtr iw(new ImageWindow((*result)[targetLOD].elevations(), "Generated Terrain"));
+    registerWindow(iw);
+    WindowPtr hw(new HackWindow(result, mr, targetLOD, "Generated Terrain"));
     registerWindow(hw);
+
+#elif 1
+    TerrainSamplePtr result(new TerrainSample(dcToCenter(log(cmagnitude(dft((*terrainLibrary()->terrainType(1)->terrainSample(0))[LOD_30m].elevations())))) * 10.0f, LOD_30m));
+
+    MapRasterizationPtr mr(new MapRasterization(terrainLibrary()));
+    MapRasterization::LOD::IDMap idx((*result)[LOD_30m].sizes());
+    fill(idx, 1);
+//    select(idx, SizeArray(225, 225)) = select(constant<int, 2>(2), SizeArray(225, 225));
+//    flood_fill(idx, Pixel(90, 36), InTriangle(Pixel(30,30), Pixel(90, 30), Pixel(120, 240)), constant<int, 2>(1));
+//    flood_fill(idx, Pixel(210, 135), InTriangle(Pixel(225,90), Pixel(225, 180), Pixel(180, 150)), constant<int, 2>(1));
+    (*mr)[LOD_30m].createFromRaster(idx);
+    WindowPtr hw(new HackWindow(result, mr, LOD_30m, "Generated Terrain"));
+    registerWindow(hw);
+
 #else
+
+    WindowPtr ew(new MapEditorWindow(_map, _persistentSelection, _transientSelection));
+    registerWindow(ew);
+#endif
 //    WindowPtr iw(new ImageWindow(idx, "TT Map"));
 //    registerWindow(iw);
 //    WindowPtr mw(new ImageWindow((*mr)[LOD_30m].boundaryDistances(), "Boundary Distances"));
@@ -228,13 +280,6 @@ void MapExplorer::setup(int &argc, char **argv) {
 //    registerWindow(bhf);
 //    WindowPtr w(new TerrainSampleWindow(result, LOD_30m, "Generated Terrain"));
 //    registerWindow(w);
-#endif
-
-//    Heightfield hf, diff;
-//    diff = originalImage - hf;
-//    globalOriginalWindow->loadImage(originalImage);
-//    globalDifferenceWindow->loadImage(diff);
-//    globalResultWindow->loadImage(hf);
 }
 
 

@@ -19,7 +19,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class PolygonTessellator;
-    
+
     // Pointer typedefs
     typedef shared_ptr<PolygonTessellator>       PolygonTessellatorPtr;
     typedef shared_ptr<PolygonTessellator const> PolygonTessellatorConstPtr;

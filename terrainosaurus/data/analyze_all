@@ -1,0 +1,19 @@
+#!/bin/sh
+
+DEM_DIR=/mnt/data/scratch/gis/dem
+LOG_DIR=/home/jediry/Documents/Development/Media/terrainosaurus/data/log
+ANALYZE=/home/jediry/Documents/Development/Media/terrainosaurus/data/analyze_dem
+
+# Figure out which ones we want
+pattern="*.dem"
+if [ -n "$1" ]; then
+    pattern="*$1*.dem"
+fi
+
+# Go there
+cd "$DEM_DIR"
+
+# Analyze each one
+for file in $pattern ; do
+    "$ANALYZE" "$file" > "$LOG_DIR/${file%dem}log"
+done

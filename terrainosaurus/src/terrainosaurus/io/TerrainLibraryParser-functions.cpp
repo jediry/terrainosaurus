@@ -14,10 +14,12 @@
  */
 
 // Import class definition
-//#include "TerrainLibraryLexer.hpp"
 #include "TerrainLibraryParser.hpp"
-using namespace terrainosaurus;
 using namespace antlr;
+
+// Import GA global parameters
+#include <terrainosaurus/genetics/terrain-ga.hpp>
+using namespace terrainosaurus;
 
 // Import file-related exception definitions
 #include <inca/io/FileExceptions.hpp>
@@ -25,25 +27,63 @@ using namespace inca::io;
 
 
 // Write a string representation of a property enumeration
-inline ostream & operator<<(ostream &o, TerrainLibraryParser::PropertyType p) {
+inline std::ostream & operator<<(std::ostream & o,
+                                 TerrainLibraryParser::PropertyType p) {
     switch (p) {
         case TerrainLibraryParser::TTColor:
             return o << "Color";
-        case TerrainLibraryParser::TSNumChromosomes:
-            return o << "Number of Chromosomes";
         case TerrainLibraryParser::TSSmoothness:
             return o << "Smoothness";
-        case TerrainLibraryParser::TSMutationRatio:
-            return o << "Mutation Ratio";
-        case TerrainLibraryParser::TSCrossoverRatio:
-            return o << "Crossover Ratio";
-        case TerrainLibraryParser::TSSelectionRatio:
-            return o << "Selection Ratio";
         case TerrainLibraryParser::TSAspectRatio:
             return o << "Aspect Ratio";
+        case TerrainLibraryParser::GAPopulationSize:
+            return o << "Population Size";
+        case TerrainLibraryParser::GAEvolutionCycles:
+            return o << "Evolution Cycles";
+        case TerrainLibraryParser::GASelectionRatio:
+            return o << "Selection Ratio";
+        case TerrainLibraryParser::GAEliteRatio:
+            return o << "Elite Ratio";
+        case TerrainLibraryParser::GACrossoverProbability:
+            return o << "Crossover Probability";
+        case TerrainLibraryParser::GACrossoverRatio:
+            return o << "Crossover Ratio";
+        case TerrainLibraryParser::GAMutationProbability:
+            return o << "Mutation Probability";
+        case TerrainLibraryParser::GAMutationRatio:
+            return o << "Mutation Ratio";
+        case TerrainLibraryParser::HFMaxCrossoverWidth:
+            return o << "Max Crossover Width";
+        case TerrainLibraryParser::HFMaxJitterPixels:
+            return o << "Max Jitter Pixels";
+        case TerrainLibraryParser::HFMaxScaleFactor:
+            return o << "Max Scale Factor";
+        case TerrainLibraryParser::HFMaxOffsetAmount:
+            return o << "Max Offset Amount";
         default:
             return o << "INVALID PropertyType";
     }
+}
+
+
+void TerrainLibraryParser::beginGlobalSection(RefToken tt) {
+    // Close the previous record
+    endRecord(tt);
+
+    // Throw a fit if we've already read a global section
+    static bool parsedGlobal = false;
+    if (parsedGlobal) {
+        FileFormatException e(getFilename(), tt->getLine(), tt->getColumn());
+        e << "Duplicate [Global] section";
+        throw e;
+    }
+
+    // Never do this again
+    parsedGlobal = true;
+
+    // Get ready for the properties
+    setProperties = 0x0000;
+    inGlobal = true;
 }
 
 
@@ -135,6 +175,8 @@ void TerrainLibraryParser::endRecord(RefToken t) {
         currentTT.reset();      // We're no longer inside a TT
     } else if (currentTS) {
         currentTS.reset();      // We're no longer inside a TS
+    } else if (inGlobal) {
+        inGlobal = false;       // We're done with the global section
     }
 }
 
@@ -188,17 +230,46 @@ void TerrainLibraryParser::setScalarProperty(PropertyType p, scalar_t s, int lin
     case TSSmoothness:
         currentTS->smoothness = float(s);
         break;
-    case TSMutationRatio:
-        currentTS->mutationRatio = float(s);
-        break;
-    case TSCrossoverRatio:
-        currentTS->crossoverRatio = float(s);
-        break;
-    case TSSelectionRatio:
-        currentTS->selectionRatio = float(s);
-        break;
     case TSAspectRatio:
         currentTS->aspectRatio = float(s);
+        break;
+    case GASelectionRatio:
+        if (inGlobal)
+            SELECTION_RATIO = float(s);
+        else if (currentTS)
+            currentTS->selectionRatio = float(s);
+        break;
+    case GAEliteRatio:
+        if (inGlobal)
+            ELITE_RATIO = float(s);
+        break;
+    case GACrossoverProbability:
+        if (inGlobal)
+            CROSSOVER_PROBABILITY = float(s);
+        break;
+    case GACrossoverRatio:
+        if (inGlobal)
+            CROSSOVER_RATIO = float(s);
+        else if (currentTS)
+            currentTS->crossoverRatio = float(s);
+        break;
+    case GAMutationProbability:
+        if (inGlobal)
+            MUTATION_PROBABILITY = float(s);
+        break;
+    case GAMutationRatio:
+        if (inGlobal)
+            MUTATION_RATIO = float(s);
+        else if (currentTS)
+            currentTS->mutationRatio = float(s);
+        break;
+    case HFMaxScaleFactor:
+        if (inGlobal)
+            MAX_SCALE_FACTOR = float(s);
+        break;
+    case HFMaxOffsetAmount:
+        if (inGlobal)
+            MAX_OFFSET_AMOUNT = float(s);
         break;
     default:
         cerr << "Internal parser error: unhandled scalar property "
@@ -221,8 +292,23 @@ void TerrainLibraryParser::setIntegerProperty(PropertyType p, int i, int line) {
 
     // Set it and record that we did so
     switch (p) {
-    case TSNumChromosomes:
-        currentTS->numberOfChromosomes = i;
+    case GAPopulationSize:
+        if (inGlobal)
+            POPULATION_SIZE = i;
+        else if (currentTS)
+            currentTS->numberOfChromosomes = i;
+        break;
+    case GAEvolutionCycles:
+        if (inGlobal)
+            EVOLUTION_CYCLES = i;
+        break;
+    case HFMaxCrossoverWidth:
+        if (inGlobal)
+            MAX_CROSSOVER_WIDTH = i;
+        break;
+    case HFMaxJitterPixels:
+        if (inGlobal)
+            MAX_JITTER_PIXELS = i;
         break;
     default:
         cerr << "Internal parser error: unhandled integer property "

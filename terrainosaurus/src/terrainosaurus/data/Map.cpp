@@ -19,6 +19,9 @@ using namespace terrainosaurus;
 #include "../genetics/GA.h"
 #undef PI
 
+// Import the Timer, which we'll use to initialize the random number generator
+#include <inca/util/Timer>
+
 // Import STL/Boost algorithms
 using std::for_each;
 
@@ -156,12 +159,13 @@ void MapData::EdgeData::refine() {
     // resolve any boundary features with frequency higher than half its
     // resolution (God bless you, Mr. Nyquist!).
     int segments = static_cast<int>(mapData().resolution() * length / 2);
+    if (segments <  2) segments = 2;
     buildDiamondEnvelope(segments, ts->aspectRatio());
 
 
     // Report what we're about to do to our oh-so-intelligent user
     // (HAIL TO THEE, USER!)
-    logger << "Refinement for Edge  " << static_cast<Map::EdgePtr>(this)->id() << endl
+    INCA_INFO("Refinement for Edge  " << static_cast<Map::EdgePtr>(this)->id() << endl
            << "   # of chromosomes: " << ts->numberOfChromosomes() << endl
            << "   Smoothness:       " << ts->smoothness() << endl
            << "   Mutation rate:    " << ts->mutationRatio() << endl
@@ -169,8 +173,7 @@ void MapData::EdgeData::refine() {
            << "   Selection ratio:  " << ts->selectionRatio() << endl
            << "   Aspect ratio:     " << ts->aspectRatio() << endl
            << "   # of cycles:      " << ts->numberOfCycles() << endl
-           << "   Segments:         " << envelope().size() << endl;
-    logger.info();
+           << "   Segments:         " << envelope().size() << endl)
 
 
     // WARNING: now entering Mike's magical world of genetic algorithmic
@@ -181,12 +184,12 @@ void MapData::EdgeData::refine() {
                               ts->smoothness(),
                               ts->mutationRatio(),
                               ts->crossoverRatio(),
-                              ts->selectionRatio(), 25);
-//    const AngleList & angles = population.MakeLine(envelope(),
-//                                                   startAngle(), endAngle(),
-//                                                   ts->numberOfCycles());
-    const AngleList angles;
-    float f = 1.0;
+                              ts->selectionRatio(), inca::getSystemClocks());
+
+     AngleList angles = population.MakeLine(envelope(),
+                                            startAngle(), endAngle(),
+                                            50);
+//                                            ts->numberOfCycles());
 
     // Now returning to the relative safety of graphics-world :-)
     // Decode the angles into points (initially aligned semi-arbitrarily)
@@ -200,8 +203,7 @@ void MapData::EdgeData::refine() {
         p += dp;            // Move us by this amound and place a point here
         refinement().push_back(p);  // Stick it in
         path += dp;                 // Update our path vector
-//        logger << "Angle[" << i << "]: " << angles[i] << endl
-//               << "  p is " << p;
+        cerr << "Angle[" << i << "]: " << angles[i] << "  p is " << p;
 //        logger.debug();
     }
 
@@ -230,18 +232,21 @@ void MapData::EdgeData::refine() {
     inca::math::loadScaling<scalar_t, 3>(S, Vector(scaleFactor, scaleFactor));
     inca::math::loadRotation2D(R, rotationAngle);
     X = T % (R % S);
-//    logger << "S: -------------" << endl << S << endl;
-//    logger << "R: -------------" << endl << R << endl;
-//    logger << "T: -------------" << endl << T << endl;
-//    logger << "X: -------------" << endl << X << endl;
+//    cerr << "Scale factor is " << scaleFactor << " (" << guideLength << " / " << pathLength << ")\n";
+//    cerr << "S: -------------" << endl << S << endl;
+//    cerr << "R: -------------" << endl << R << endl;
+//    cerr << "T: -------------" << endl << T << endl;
+//    cerr << "X: -------------" << endl << X << endl;
 //    logger.info();
 
     // Now go back and apply the world-space transformation to each point
     PointList::iterator pt;
     for (pt = refinement().begin(); pt != refinement().end(); pt++) {
         Point & p = *pt;
-        //p = operator%<scalar_t>(X, p);
+//        cerr << "Old p " << p << endl;
+//        p = operator%<scalar_t>(X, p);
         p = X % p; //FIXME
+//        cerr << "New p " << p << endl << endl;
 //        cerr << *pt << endl;
     }
 }
@@ -266,7 +271,7 @@ void MapData::EdgeData::buildDiamondEnvelope(int segments,
     envelope().resize(segments);    // Make sure we've got the right # of slots
 
     SizeType levels = segments / 2 + segments % 2;    // Make sure we hit middle
-    float y = 0;
+    float y = 0.1;
     for (IndexType i = 0; i < IndexType(levels); ++i) {
         envelope()[i].first  = -y;  // Just reflect about the X axis...
         envelope()[i].second = y;
@@ -274,10 +279,10 @@ void MapData::EdgeData::buildDiamondEnvelope(int segments,
         y += dy;
     }
 
-    cerr << "Generating a diamond of length " << length() << " and ratio "
+/*    cerr << "Generating a diamond of length " << length() << " and ratio "
          << aspectRatio << " and " << segments << " segments:\n";
     for (IndexType i = 0; i < IndexType(envelope().size()); ++i)
-        cerr << '\t' << envelope()[i].second << endl;
+        cerr << '\t' << envelope()[i].second << endl;*/
 }
 
 
@@ -297,6 +302,16 @@ bool Map::Spike::operator==(const Spike &s) const {
 // Default constructor with optional map name
 Map::Map(const string &nm) {
     name = nm;
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Boundary refinement functions
+ *---------------------------------------------------------------------------*/
+void Map::refine() {
+    edge_iterator ei;
+    for (ei = edges().begin(); ei != edges().end(); ++ei)
+        (*ei)->refine();
 }
 
 

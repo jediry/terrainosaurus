@@ -29,21 +29,38 @@ BEGIN {
 
 # Load a CSV file into memory and return a structure describing the data
 # contained therein. The structure has the following fields:
-#   data    --  a 2D array (lines x columns) of the values
+#   data    --  a 2D array (rows x columns) of the values
 #   file    --  the filename of the source CSV file
 #   labels  --  an array of text labels read from the file (or undef if not present)
-#   lines   --  an integer specifying how many lines were in the file
-#   columns --  an integer specifying the number of columns on a line
-sub read_csv($) {
+#   rows    --  an integer specifying how many rows of data were in the file
+#               (labels do not count as a row)
+#   columns --  an integer specifying the number of columns in a row
+# The first argument is the filename. The second is an optional list of lines
+# to in the file to ignore (starting from one). Note that this is the actual
+# line number in the file, not the logical "row" number. So if the first line
+# in the file is the column labels and you ignore line #1, it will be as
+# though the file contained no labels. If this argument is undefined, then
+# no lines will be ignored.
+
+sub read_csv($@) {
     my $file = $_[0];
+    my @ignore = @{$_[1]};
     my $labels, $data = [], $columns = 0, $lines = 0;
 
     if (open INFILE, "$file") {         # Open the file
 
-        while (<INFILE>) {                  # For each line
+LINE:   while (<INFILE>) {                  # For each line
             chomp;                              # Take off the newline
-            my $row = [split /,/, $_];
             $lines++;
+
+            # See if this is a line we're supposed to ignore
+            for (my $i = 0; $i < @ignore; ++$i) {
+                if ($ignore[$i] == $lines) {
+                    next LINE;
+                }
+            }
+
+            my $row = [split /,/, $_];
             if (@$row != $columns) {            # Ensure consistent # fields
                 if ($columns == 0) {                # First time
                     $columns = @$row;
@@ -56,7 +73,6 @@ sub read_csv($) {
 
             if ($row->[0] =~ /[a-zA-Z]/) {  # Decide what this is
                 $labels = $row;                 # It's column labels
-                $lines--;                       # Oops...this wasn't a line
             } else {
                 push(@$data, $row);             # It's a new row of data
             }
@@ -81,58 +97,100 @@ sub read_csv($) {
         'file'      => $file,
         'labels'    => $labels,
         'data'      => $data,
-        'lines'     => $lines,
+        'rows'      => scalar(@$data),
         'columns'   => $columns,
     };
 }
 
 
-# Write two CSV files for each record, in the appropriate format for the
-# Statistical Pattern Recognition toolbox for Matlab. The first file ends
-# in ".data" and contains the data for all samples, with rows corresponding
-# to fields and columns corresponding to samples:
+# Write a pair of CSV files in the appropriate format for the Statistical
+# Pattern Recognition toolbox for Matlab. The first file ends in ".data"
+# and contains the data for all samples, with rows corresponding to fields
+# and columns corresponding to samples:
 #       Field1: S1F1, S2F1, S3F1...
 #       Field2: S1F2, S2F2, S3F2...
 #
 # The second file ends in ".class" and contains the class membership of each
 # sample as an integer.
 #
-# The argument is a reference to the hash of samples. Which class they belong
-# to is controlled by the 'class' field of the samples.
-sub write_matlab(%) {
-    my $data = $_[0];
-    my $columns = (values(%$data))[0]->{columns};
-    foreach my $key (keys(%$data)) {
-        my $basename = $key;
-        $basename =~ s/\.dem.*$//;
+# The first argument is a reference to the hash of samples.
+#
+# The second argument controls whether to generate a 2-class or an N-class
+# dataset. If undefined, then N sets of .data/.class/.label files are created, each
+# named based on one of the datasets, which is made class #1, and everything
+# else class #2. Otherwise, then only one set files is created, named
+# $name.data and $name.class, with each dataset in its own class.
+sub write_matlab(%$) {
+    my ($data, $name) = @_;
+    my $labels = (values(%$data))[0]->{'labels'};
 
-        open DATAFILE, ">$basename.data" or
-            die "Could not open data file $basename.data for writing";
-        for (my $i = 0; $i < $columns; ++$i) {
-            my $text;
+    if (! defined($name)) {
+        foreach my $key (keys(%$data)) {
+            my $basename = $key;
+            $basename =~ s/\.dem.*$//;
+            my %classes;
             foreach my $sample (keys(%$data)) {
-                for (my $line = 0; $line < $data->{$sample}->{lines}; ++$line) {
-                    $text .= "$data->{$sample}->{data}[$line][$i],";
-                }
+                # Class 1 only if we came from $basename.dem...2 otherwise
+                $classes{$sample} = 2 - ($sample eq $key);
             }
-            chop($text);
-            print DATAFILE "$text\n";
+            write_csv_set($labels, $data, \%classes, $basename);
         }
-        close DATAFILE;
 
-        open CLASSFILE, ">$basename.class" or
-            die "Could not open class file $basename.class for writing";
+    } else {
+        my $basename = $name;
+        my %classes;
+        my $label = 1;
+        foreach my $sample (keys(%$data)) {
+            # Copy over the class label from the input
+            $classes{$sample} = $data->{$sample}->{class};
+        }
+        write_csv_set($labels, $data, \%classes, $basename);
+    }
+}
+
+
+sub write_csv_set(@%%$) {
+    my ($labels, $data, $classes, $basename) = @_;
+
+    my $columns = @$labels;
+
+    open LABELFILE, ">$basename.label" or
+        die "Could not open lable file $basename.label for writing";
+    my $text;
+    foreach my $label (@$labels) {
+        $text .= "$label,";
+    }
+    chop($text);
+    print LABELFILE "$text\n";
+    close LABELFILE;
+
+    open DATAFILE, ">$basename.data" or
+        die "Could not open data file $basename.data for writing";
+    for (my $i = 0; $i < $columns; ++$i) {
         my $text;
         foreach my $sample (keys(%$data)) {
-            for (my $line = 0; $line < $data->{$sample}->{lines}; ++$line) {
-                $text .= (2 - ($sample eq $key)) . ',';
+            for (my $row = 0; $row < $data->{$sample}->{'rows'}; ++$row) {
+                $text .= "$data->{$sample}->{data}[$row][$i],";
             }
         }
         chop($text);
-        print CLASSFILE "$text\n";
-        close CLASSFILE;
+        print DATAFILE "$text\n";
     }
+    close DATAFILE;
+
+    open CLASSFILE, ">$basename.class" or
+        die "Could not open class file $basename.class for writing";
+    my $text;
+    foreach my $sample (keys(%$data)) {
+        for (my $row = 0; $row < $data->{$sample}->{'rows'}; ++$row) {
+            $text .= "$classes->{$sample},";
+        }
+    }
+    chop($text);
+    print CLASSFILE "$text\n";
+    close CLASSFILE;
 }
+
 
 
 # This subroutine takes a hash mapping labels -> CSV structures and returns
@@ -141,6 +199,7 @@ sub write_matlab(%) {
 # non-degenerate fields normalized according to their order of magnitude
 # (e.g., if the largest value for a fields is 1.3e20, all values will be
 # divided by 1.0e20).
+# HACK -- now we're normalizing to [0,1]
 sub normalize_dataset(%) {
     my $data = $_[0];
 
@@ -148,13 +207,13 @@ sub normalize_dataset(%) {
     # definitions and degenerate fields
     my $ref = (values(%$data))[0];
     my @ref = values(%$data);
-    my $refColumns  = (values(%$data))[0]->{columns};
-    my @refData     = @{(values(%$data))[0]->{data}[0]};
+    my $refColumns  = (values(%$data))[0]->{'columns'};
+    my @refData     = @{(values(%$data))[0]->{'data'}[0]};
     my $refFile, @refLabels;
     foreach my $value (values(%$data)) {
-        if (defined($value->{labels})) {
-            $refFile    = $value->{file};
-            @refLabels  = @{$value->{labels}};
+        if (defined($value->{'labels'})) {
+            $refFile    = $value->{'file'};
+            @refLabels  = @{$value->{'labels'}};
             last;
         }
     }
@@ -192,16 +251,16 @@ sub normalize_dataset(%) {
         # order of magnitude for that field.
         #
         # Since a record may have multiple rows, we must scan all of them.
-        for (my $line = 0; $line < $record->{lines}; ++$line) {
+        for (my $row = 0; $row < $record->{rows}; ++$row) {
             for (my $i = 0; $i < $refColumns; ++$i) {
-                if ($refData[$i] != $record->{data}[$line][$i]) {
+                if ($refData[$i] != $record->{data}[$row][$i]) {
                     $degenerate[$i] = 0;
                 }
-                my $size = abs($record->{data}[$line][$i]);
+                my $size = abs($record->{data}[$row][$i]);
                 if ($size > $max[$i]) {
-                    $max[$i] = abs($record->{data}[$line][$i]);
+                    $max[$i] = abs($record->{data}[$row][$i]);
                 } elsif ($size < $min[$i] and $size > 0) {
-                    $min[$i] = abs($record->{data}[$line][$i]);
+                    $min[$i] = abs($record->{data}[$row][$i]);
                 }
             }
         }
@@ -225,6 +284,7 @@ sub normalize_dataset(%) {
     }
     
     printf STDERR "%-25s%-10s%-10s%-10s%-10s%-10s\n", "column", "min", "max", "min-order", "max-order", "orders";
+    print STDERR ('-' x 78) . "\n";
     for (my $i = 0; $i < $refColumns; ++$i) {
         if ($omit{$refLabels[$i]} == 1) {
             printf STDERR "%-25s%-20s\n", $refLabels[$i], "     << omitted>>";
@@ -243,27 +303,37 @@ sub normalize_dataset(%) {
         my $oldRecord = $data->{$key};
         my $newRecord = {
             'file'      => $oldRecord->{file},
-            'lines'     => $oldRecord->{lines},
-            'columns'   => $nondegenerateColumnCount,
-            'labels'    => $nondegenerateLabels,
+            'rows'      => $oldRecord->{rows},
+            'class'     => $oldRecord->{class},
+            'columns'   => 0,
+            'labels'    => [ ],
             'data'      => [ ]
         };
-        for (my $line = 0; $line < $oldRecord->{lines}; ++$line) {
+        # Keep only the lables for the columns we use
+        for (my $i = 0; $i < $refColumns; ++$i) {
+            if (! $degenerate[$i] and $omit{$refLabels[$i]} != 1) {
+                push(@{$newRecord->{labels}}, $refLabels[$i]);
+                $newRecord->{columns}++;
+            }
+        }
+        # Condense the data
+        for (my $row = 0; $row < $oldRecord->{rows}; ++$row) {
             my $written = 0;
-            my @row = ();
+            my @rowData = ();
             for (my $i = 0; $i < $refColumns; ++$i) {
                 if (! $degenerate[$i] and $omit{$refLabels[$i]} != 1) {
-                    if ($orderRange > 2) {
-                        push(@row, log($oldRecord->{data}[$line][$i]));
+                    if (1) {
+                        push(@rowData, $oldRecord->{data}[$row][$i] / $max[$i]);
+                    } elsif ($orderRange > 2) {
+                        push(@rowData, log($oldRecord->{data}[$row][$i]));
                     } else {
-                        push(@row, $oldRecord->{data}[$line][$i] / $maxOrder[$i]);
+                        push(@rowData, $oldRecord->{data}[$row][$i] / $maxOrder[$i]);
                     }
                     $written++;
                 }
             }
-            push(@{$newRecord->{data}}, [ @row ]);
+            push(@{$newRecord->{data}}, [ @rowData ]);
         }
-
         $normalized{$key} = $newRecord;
     }
 

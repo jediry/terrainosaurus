@@ -14,7 +14,7 @@ using namespace inca::raster;
  *---------------------------------------------------------------------------*/
 // Constructor
 TerrainChromosome::TerrainChromosome()
-    : _alive(false), _map(NULL), _pattern(NULL) { }
+    : _alive(false) { }
 
 // Copy constructor
 TerrainChromosome::TerrainChromosome(const TerrainChromosome & tc) {
@@ -25,8 +25,10 @@ TerrainChromosome::TerrainChromosome(const TerrainChromosome & tc) {
     resize(tc.sizes(), false);
 
     // Copy pointers to data objects
-    setPattern(tc.pattern());
-    setMap(tc.map());
+    if (tc._pattern)
+        setPattern(tc.pattern());
+    if (tc._map)
+        setMap(tc.map());
 
     // Now copy tc's gene data
     genes() = tc.genes();
@@ -44,6 +46,31 @@ void TerrainChromosome::claimGenes() {
 
 
 /*---------------------------------------------------------------------------*
+ | Event listener (hacked in until ??)
+ *---------------------------------------------------------------------------*/
+void TerrainChromosome::addGAListener(GAListenerPtr p) {
+    _listener = p;
+}
+void TerrainChromosome::removeGAListener(GAListenerPtr p) {
+    _listener.reset();
+}
+
+// XXX HACK ought to be protected
+void TerrainChromosome::fireAdvanced(int timestep) {
+    if (_listener)
+        _listener->advanced(timestep);
+}
+void TerrainChromosome::fireMutated(Pixel idx, int timestep) {
+    if (_listener)
+        _listener->mutated(gene(idx), GAEvent(GAEvent::Mutation, timestep));
+}
+void TerrainChromosome::fireCrossed(Pixel idx, int timestep) {
+    if (_listener)
+        _listener->crossed(gene(idx), GAEvent(GAEvent::Crossover, timestep));
+}
+
+
+/*---------------------------------------------------------------------------*
  | Gene functions
  *---------------------------------------------------------------------------*/
 void TerrainChromosome::resize(const Dimension &sz,
@@ -57,11 +84,23 @@ void TerrainChromosome::resize(SizeType si, SizeType sj,
 }
 
 // Access to the multivariate fitness measure of the chromosome
-TerrainChromosome::FitnessMeasure & TerrainChromosome::fitness() {
+TerrainChromosome::ChromosomeFitnessMeasure &
+TerrainChromosome::fitness() {
     return _fitness;
 }
-const TerrainChromosome::FitnessMeasure & TerrainChromosome::fitness() const {
+const TerrainChromosome::ChromosomeFitnessMeasure &
+TerrainChromosome::fitness() const {
     return _fitness;
+}
+
+// Access to the multivariate fitness measure of the chromosome
+TerrainChromosome::RegionFitnessMeasure &
+TerrainChromosome::regionFitness(IDType regionID) {
+    return _regionFitnesses[regionID];
+}
+const TerrainChromosome::RegionFitnessMeasure &
+TerrainChromosome::regionFitness(IDType regionID) const {
+    return _regionFitnesses[regionID];
 }
 
 // What level of detail are we?
@@ -77,28 +116,36 @@ void TerrainChromosome::setLevelOfDetail(TerrainLOD lod) {
 
 // Access to the heightfield properties of the chromosome
 const Heightfield::SizeArray & TerrainChromosome::heightfieldSizes() const {
-    return pattern().sizes();
+    return map().sizes();
 }
 
 
 // Access to the pattern sample we're trying to match
 const TerrainSample::LOD & TerrainChromosome::pattern() const {
-    return *_pattern;
+    return (*_pattern)[levelOfDetail()];
 }
 void TerrainChromosome::setPattern(const TerrainSample::LOD & p) {
-    _pattern = &p;
-    if (_pattern)
-        setLevelOfDetail(_pattern->levelOfDetail());
+    if (&p != NULL) {
+        _pattern = p.getObject();
+        setLevelOfDetail(p.levelOfDetail());
+    } else {
+        _pattern.reset();
+    }
 }
 
 // Access to the rasterized map
 const MapRasterization::LOD & TerrainChromosome::map() const {
-    return *_map;
+    return (*_map)[levelOfDetail()];
 }
 void TerrainChromosome::setMap(const MapRasterization::LOD & m) {
-    _map = &m;
-    if (_map)
-        setLevelOfDetail(_map->levelOfDetail());
+    if (&m != NULL) {
+        _map = m.getObject();
+        setLevelOfDetail(m.levelOfDetail());
+        _regionFitnesses.resize(m.regionCount());
+    } else {
+        _map.reset();
+        _regionFitnesses.resize(0);
+    }
 }
 
 // Life and death kinda stuff
@@ -152,6 +199,16 @@ const TerrainSample::LOD & TerrainChromosome::Gene::terrainSample() const {
 }
 void TerrainChromosome::Gene::setTerrainSample(const TerrainSample::LOD & ts) {
     _terrainSample = & ts;
+}
+
+// How well do we match our pattern geometry?
+TerrainChromosome::GeneCompatibilityMeasure &
+TerrainChromosome::Gene::compatibility() {
+    return _compatibility;
+}
+const TerrainChromosome::GeneCompatibilityMeasure &
+TerrainChromosome::Gene::compatibility() const {
+    return _compatibility;
 }
 
 
@@ -229,22 +286,22 @@ const Offset & TerrainChromosome::Gene::jitter() const {
 }
 void TerrainChromosome::Gene::setJitter(const Offset & j) {
     _jitter = j;
-    _targetCenter  = indices() * geneSpacing(levelOfDetail()) + j;
+    _targetCenter  = indices() * blendPatchSpacing(levelOfDetail()) + j;
 }
 
 
 /*****************************************************************************
  * Free gene query functions
  *****************************************************************************/
-int terrainosaurus::geneSpacing(TerrainLOD lod) {
-    return int(2 * geneRadius(lod) * (1 - geneOverlapFactor(lod)));
-}
-scalar_t terrainosaurus::geneRadius(TerrainLOD lod) {
-    return windowSize(lod);
-}
-scalar_t terrainosaurus::geneOverlapFactor(TerrainLOD lod) {
-    return scalar_t(0.5);
-}
+// int terrainosaurus::geneSpacing(TerrainLOD lod) {
+//     return int(2 * blendRadius(lod) * (1 - blendOverlapFactor(lod)));
+// }
+//scalar_t terrainosaurus::geneRadius(TerrainLOD lod) {
+//    return windowSize(lod);
+//}
+//scalar_t terrainosaurus::geneOverlapFactor(TerrainLOD lod) {
+//    return scalar_t(0.5);
+//}
 
 void terrainosaurus::swap(TerrainChromosome::Gene & g1,
                           TerrainChromosome::Gene & g2) {

@@ -58,15 +58,29 @@ public:
     // functions that check/set them implicitly work on the "current"
     // TerrainType or TerrainSeam.
     enum PropertyType {
-        TTColor             = 0x0001,
-        TSNumChromosomes    = 0x0002,
-        TSSmoothness        = 0x0004,
-        TSMutationRatio     = 0x0008,
-        TSCrossoverRatio    = 0x0010,
-        TSSelectionRatio    = 0x0020,
-        TSAspectRatio       = 0x0040,
-    };
+        // Properties for TerrainType
+        TTColor                 = 0x00001,
 
+        // Properties for the TerrainSeam GA
+        TSSmoothness            = 0x00002,
+        TSAspectRatio           = 0x00004,
+
+        // General GA parameters
+        GAEvolutionCycles       = 0x00100,
+        GAPopulationSize        = 0x00200,
+        GAEliteRatio            = 0x00400,
+        GASelectionRatio        = 0x00800,
+        GAMutationRatio         = 0x01000,
+        GACrossoverRatio        = 0x02000,
+        GAMutationProbability   = 0x04000,
+        GACrossoverProbability  = 0x08000,
+
+        // Properties for the heightfield GA
+        HFMaxCrossoverWidth     = 0x10000,
+        HFMaxJitterPixels       = 0x20000,
+        HFMaxScaleFactor        = 0x40000,
+        HFMaxOffsetAmount       = 0x80000,
+    };
 
 
 /*---------------------------------------------------------------------------*
@@ -78,6 +92,7 @@ protected:
     // modifying the most recent TT or TS). They will throw exceptions if
     // an attempt is made to set/create something that has already been
     // set/created, thus effectively preventing duplicate entries
+    void beginGlobalSection(antlr::RefToken tt);
     void createTerrainType(antlr::RefToken tt);
     void createTerrainSeam(antlr::RefToken tt1, antlr::RefToken tt2);
     void endRecord(antlr::RefToken t);
@@ -90,6 +105,7 @@ protected:
     // The library we're populating, plus the current TT and TS, and a
     // record of which properties we've set on the current object
     TerrainLibrary * library;
+    bool inGlobal;
     TerrainTypePtr currentTT;
     TerrainSeamPtr currentTS;
     stl_ext::hash_map<TerrainSeamPtr, bool> initializedTSs;
@@ -125,22 +141,32 @@ public:
 	public: void blankLine();
 	public: void terrainTypeRecord();
 	public: void terrainSeamRecord();
+	public: void globalSectionRecord();
+	public: void globalSectionDeclaration();
+	public: void populationSize();
+	public: void evolutionCycles();
+	public: void selectionRatio();
+	public: void eliteRatio();
+	public: void mutationProbability();
+	public: void mutationRatio();
+	public: void crossoverProbability();
+	public: void crossoverRatio();
+	public: void maxCrossoverWidth();
+	public: void maxJitterPixels();
+	public: void maxScaleFactor();
+	public: void maxOffsetAmount();
 	public: void terrainTypeDeclaration();
 	public: void terrainColor();
 	public: void terrainSample();
 	public: void terrainSeamDeclaration();
-	public: void numChromosomes();
 	public: void smoothness();
-	public: void mutationRatio();
-	public: void crossoverRatio();
-	public: void selectionRatio();
 	public: void aspectRatio();
-	public: Color  color();
-	public: string  filename();
 	public: int  integer();
-	public: scalar_t  nFraction();
 	public: scalar_t  fraction();
 	public: scalar_t  scalar();
+	public: Color  color();
+	public: string  filename();
+	public: scalar_t  nFraction();
 public:
 	antlr::RefAST getAST()
 	{
@@ -152,10 +178,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 42;
+	static const int NUM_TOKENS = 55;
 #else
 	enum {
-		NUM_TOKENS = 42
+		NUM_TOKENS = 55
 	};
 #endif
 	

@@ -32,8 +32,17 @@
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
-    class TerrainFitnessMeasure;
+    class ChromosomeFitnessMeasure;
+    class RegionFitnessMeasure;
+    class GeneCompatibilityMeasure;
+    class GeneShape;
+    struct GAEvent;
+    class GAListener;
     class TerrainChromosome;
+
+    // Pointer typedefs
+    typedef shared_ptr<GAListener>       GAListenerPtr;
+    typedef shared_ptr<GAListener const> GAListenerConstPtr;
 };
 
 
@@ -48,24 +57,44 @@ namespace terrainosaurus {
 #include <terrainosaurus/data/MapRasterization.hpp>
 
 
+// This macro makes it easy to create named accessor functions in the fitness
+// measure classes
+#define NAMED_ACCESSOR(NAME, INDEX)                                         \
+    scalar_t & NAME()       { return (*this)[INDEX]; }                      \
+    scalar_t   NAME() const { return (*this)[INDEX]; }
+
+
 // The multivariate fitness measure for a TerrainChromosome
-class terrainosaurus::TerrainFitnessMeasure : public inca::Array<scalar_t, 5> {
+class terrainosaurus::ChromosomeFitnessMeasure : public inca::Array<scalar_t, 2> {
 public:
     // Base class
-    typedef inca::Array<scalar_t, 5>    Superclass;
+    typedef inca::Array<scalar_t, 2>    Superclass;
 
     // Default constructor
-    TerrainFitnessMeasure() : Superclass(scalar_t(0)) { }
+    ChromosomeFitnessMeasure() : Superclass(scalar_t(0)) { }
 
     // If this is used in a scalar context, we return the overall fitness. E.g.:
     //      scalar_t overallFitness = fitnessMeasure;
     operator scalar_t() const { return overall(); }
     operator scalar_t &()     { return overall(); }
 
-    // This macro makes it easy to create named accessor functions
-    #define NAMED_ACCESSOR(NAME, INDEX)                                     \
-        scalar_t & NAME()       { return (*this)[INDEX]; }                  \
-        scalar_t   NAME() const { return (*this)[INDEX]; }
+    // Aggregate fitness accessors
+    NAMED_ACCESSOR(overall,               0);
+    NAMED_ACCESSOR(normalized,            1);
+};
+
+class terrainosaurus::RegionFitnessMeasure : public inca::Array<scalar_t, 5> {
+public:
+    // Base class
+    typedef inca::Array<scalar_t, 5>    Superclass;
+
+    // Default constructor
+    RegionFitnessMeasure() : Superclass(scalar_t(0)) { }
+
+    // If this is used in a scalar context, we return the overall fitness. E.g.:
+    //      scalar_t overallFitness = fitnessMeasure;
+    operator scalar_t() const { return overall(); }
+    operator scalar_t &()     { return overall(); }
 
     // Aggregate fitness accessors
     NAMED_ACCESSOR(overall,               0);
@@ -75,8 +104,78 @@ public:
     NAMED_ACCESSOR(elevationRMS,          2);
     NAMED_ACCESSOR(gradientMagnitudeRMS,  3);
     NAMED_ACCESSOR(gradientAngleRMS,      4);
+};
 
-    #undef NAMED_ACCESSOR
+
+class terrainosaurus::GeneCompatibilityMeasure : public inca::Array<scalar_t, 5> {
+public:
+    // Base class
+    typedef inca::Array<scalar_t, 5>    Superclass;
+
+    // Default constructor
+    GeneCompatibilityMeasure() : Superclass(scalar_t(0)) { }
+
+    // If this is used in a scalar context, we return the overall fitness. E.g.:
+    //      scalar_t overallFitness = fitnessMeasure;
+    operator scalar_t() const { return overall(); }
+    operator scalar_t &()     { return overall(); }
+
+    // Aggregate compatibility accessors
+    NAMED_ACCESSOR(overall,               0);
+    NAMED_ACCESSOR(normalized,            1);
+
+    // Component compatibility accessors
+    NAMED_ACCESSOR(elevation,             2);
+    NAMED_ACCESSOR(angle,                 3);
+    NAMED_ACCESSOR(slope,                 4);
+};
+
+
+class terrainosaurus::GeneShape {
+public:
+    // The height and gradient in one segment of the shape
+    struct Cell {
+        scalar_t h, gx, gy;
+    };
+
+    // The grid of cells making up this Shape
+    typedef inca::MultiArray<Cell, 2> CellGrid;
+
+    // How many Cells along each axis
+    static const int segments = 3;
+
+    // Constructor
+    explicit GeneShape() : _grid(segments, segments) { }
+
+    // Cell accessors
+    Cell & operator()(IndexType i, IndexType j) {
+        return _grid(i, j);
+    }
+    const Cell & operator()(IndexType i, IndexType j) const {
+        return _grid(i, j);
+    }
+
+protected:
+    CellGrid _grid; // Our NxN grid of cells
+};
+
+
+// Clean up the preprocessor namespace
+#undef NAMED_ACCESSOR
+
+// Event class for sending to GA listeners
+struct terrainosaurus::GAEvent {
+    // Enumeration of the different event types
+    enum Type { None, Mutation, Crossover };
+
+    // Default constructor
+    explicit GAEvent() : type(None), timestep(0) { }
+
+    // Initializing constructor
+    explicit GAEvent(Type t, int ts) : type(t), timestep(ts) { }
+
+    Type type;      // What sort of event is this?
+    int timestep;   // When did it happen?
 };
 
 
@@ -92,8 +191,10 @@ public:
     // small patch of terrain.
     class Gene;
 
-    // Multivariate fitness measure
-    typedef TerrainFitnessMeasure       FitnessMeasure;
+    // Multivariate fitness & compatibility measures
+    typedef terrainosaurus::ChromosomeFitnessMeasure    ChromosomeFitnessMeasure;
+    typedef terrainosaurus::RegionFitnessMeasure        RegionFitnessMeasure;
+    typedef terrainosaurus::GeneCompatibilityMeasure    GeneCompatibilityMeasure;
 
     // Two dimensional grid of Genes
     typedef inca::MultiArray<Gene, 2>   GeneGrid;
@@ -108,13 +209,24 @@ public:
     TerrainChromosome();
     TerrainChromosome(const TerrainChromosome & tc);
 
-    // We're friends with the "random initialization" function
-    //friend void initializeChromosome(TerrainChromosome & c, IndexType lod,
-    //                                 const TerrainSample::LOD & pattern,
-    //                                 const MapRasterization::LOD & map);
-
 protected:
     void claimGenes();
+
+
+/*---------------------------------------------------------------------------*
+ | Event listener (hacked in until ??)
+ *---------------------------------------------------------------------------*/
+public:
+    void addGAListener(GAListenerPtr p);
+    void removeGAListener(GAListenerPtr p);
+
+    // XXX HACK ought to be protected
+    void fireAdvanced(int timestep);
+    void fireMutated(Pixel idx, int timestep);
+    void fireCrossed(Pixel idx, int timestep);
+
+protected:
+    GAListenerPtr _listener;
 
 
 /*---------------------------------------------------------------------------*
@@ -167,9 +279,12 @@ public:
  | Accessor functions
  *---------------------------------------------------------------------------*/
 public:
-    // Fitness measurement accessors
-          FitnessMeasure & fitness();
-    const FitnessMeasure & fitness() const;
+    // Fitness measurement accessors: whole HF and each region
+          ChromosomeFitnessMeasure & fitness();
+    const ChromosomeFitnessMeasure & fitness() const;
+          RegionFitnessMeasure & regionFitness(IDType regionID);
+    const RegionFitnessMeasure & regionFitness(IDType regionID) const;
+
 
     // What level of detail are we?
     TerrainLOD levelOfDetail() const;
@@ -190,12 +305,23 @@ public:
 
 protected:
     // The contents of this Chromosome
-    TerrainSample::LOD const *      _pattern;   // What we're trying to match
-    MapRasterization::LOD const *   _map;       // How the terrain is laid out
+    TerrainSampleConstPtr       _pattern;   // What we're trying to match
+    MapRasterizationConstPtr    _map;       // How the terrain is laid out
+    TerrainLOD                  _lod;       // What level of detail are we?
+
     GeneGrid        _genes;     // The genes making up this chromosome
-    TerrainLOD      _lod;       // What level of detail are we?
-    FitnessMeasure  _fitness;   // How fit is it?
     bool            _alive;     // Is it allowed to go to the next cycle?
+    std::vector<RegionFitnessMeasure>   _regionFitnesses;
+    ChromosomeFitnessMeasure            _fitness;
+};
+
+
+// Listener interface for observing the progress of the GA
+class terrainosaurus::GAListener {
+public:
+    virtual void advanced(int timestep) = 0;
+    virtual void mutated(const TerrainChromosome::Gene & g, GAEvent e) = 0;
+    virtual void crossed(const TerrainChromosome::Gene & g, GAEvent e) = 0;
 };
 
 
@@ -237,11 +363,14 @@ public:
     const TerrainSample::LOD & terrainSample() const;
     void setTerrainSample(const TerrainSample::LOD & ts);
 
+    // How compatibile are we with our pattern geometry?
+          GeneCompatibilityMeasure & compatibility();
+    const GeneCompatibilityMeasure & compatibility() const;
+
 protected:
     TerrainLOD                  _levelOfDetail;
     TerrainSample::LOD const *  _terrainSample;
-
-//    float                   _compatibility; // How compatible am I with my slot?
+    GeneCompatibilityMeasure    _compatibility;
 
 
 /*---------------------------------------------------------------------------*
@@ -297,13 +426,9 @@ protected:
 
 
 /*****************************************************************************
- * Free gene query functions
+ * Free gene functions
  *****************************************************************************/
 namespace terrainosaurus {
-    int geneSpacing(TerrainLOD lod);
-    scalar_t geneRadius(TerrainLOD lod);
-    scalar_t geneOverlapFactor(TerrainLOD lod);
-
     // Function to swap two genes
     void swap(TerrainChromosome::Gene & g1, TerrainChromosome::Gene & g2);
 }

@@ -13,14 +13,23 @@ include $(top_srcdir)/ac_tools/automake/manual.rules
 include $(top_srcdir)/config/src-catalog
 
 ## Program definitions
-bin_PROGRAMS = map_explorer
+bin_PROGRAMS = map_explorer verify_dem view_dem
 map_explorer_SOURCES = $(terrainosaurus_data_src) $(terrainosaurus_genetics_src) \
 		       $(terrainosaurus_io_src) \
-		       terrainosaurus/rendering/HeightfieldRendering.cpp \
+		       $(terrainosaurus_rendering_src) \
 		       terrainosaurus/ui/HackWindow.cpp \
+		       terrainosaurus/ui/GeneticsWindow.cpp \
+		       terrainosaurus/ui/MapEditorWindow.cpp \
 		       terrainosaurus/MapExplorer.cpp \
 		       terrainosaurus/TerrainosaurusComponent.cpp
 
+verify_dem_SOURCES = terrainosaurus/io/DEMInterpreter.cpp test/verify_dem.cpp
+
+view_dem_SOURCES = terrainosaurus/TerrainViewer.cpp $(terrainosaurus_data_src) \
+		       terrainosaurus/io/DEMInterpreter.cpp \
+		       terrainosaurus/rendering/HeightfieldRendering.cpp \
+		       terrainosaurus/ui/HackWindow.cpp
+
 check_PROGRAMS = analyze_dem
-analyze_dem_SOURCES = $(terrainosaurus_data_src) $(terrainosaurus_io_src) \
+analyze_dem_SOURCES = $(terrainosaurus_data_src) terrainosaurus/io/DEMInterpreter.cpp \
 		      test/analyze_dem.cpp

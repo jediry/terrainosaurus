@@ -35,9 +35,12 @@ void TerrainLibraryParser::recordList(
 	TerrainLibrary * lib
 ) {
 	
-#line 127 "TerrainLibrary.g"
+#line 143 "TerrainLibrary.g"
 	library = lib;
 #line 40 "TerrainLibraryParser.cpp"
+#line 144 "TerrainLibrary.g"
+	inGlobal = false;
+#line 43 "TerrainLibraryParser.cpp"
 	if (!( library != NULL ))
 		throw antlr::SemanticException(" library != NULL ");
 	{ // ( ... )*
@@ -59,6 +62,9 @@ void TerrainLibraryParser::recordList(
 		}
 		else if ((LA(1) == OPEN_SBRACKET) && (LA(2) == TERRAIN_SEAM)) {
 			terrainSeamRecord();
+		}
+		else if ((LA(1) == OPEN_SBRACKET) && (LA(2) == GLOBAL)) {
+			globalSectionRecord();
 		}
 		else {
 			goto _loop5;
@@ -98,11 +104,11 @@ void TerrainLibraryParser::terrainTypeRecord() {
 		}
 		default:
 		{
-			goto _loop8;
+			goto _loop11;
 		}
 		}
 	}
-	_loop8:;
+	_loop11:;
 	} // ( ... )*
 }
 
@@ -117,29 +123,9 @@ void TerrainLibraryParser::terrainSeamRecord() {
 			blankLine();
 			break;
 		}
-		case NUMBER:
-		{
-			numChromosomes();
-			break;
-		}
 		case SMOOTHNESS:
 		{
 			smoothness();
-			break;
-		}
-		case MUTATION:
-		{
-			mutationRatio();
-			break;
-		}
-		case CROSSOVER:
-		{
-			crossoverRatio();
-			break;
-		}
-		case SELECTION:
-		{
-			selectionRatio();
 			break;
 		}
 		case ASPECT:
@@ -147,14 +133,325 @@ void TerrainLibraryParser::terrainSeamRecord() {
 			aspectRatio();
 			break;
 		}
+		case POPULATION:
+		{
+			populationSize();
+			break;
+		}
+		case EVOLUTION:
+		{
+			evolutionCycles();
+			break;
+		}
+		case SELECTION:
+		{
+			selectionRatio();
+			break;
+		}
+		case CROSSOVER:
+		{
+			crossoverRatio();
+			break;
+		}
+		case MUTATION:
+		{
+			mutationRatio();
+			break;
+		}
 		default:
 		{
-			goto _loop11;
+			goto _loop14;
 		}
 		}
 	}
-	_loop11:;
+	_loop14:;
 	} // ( ... )*
+}
+
+void TerrainLibraryParser::globalSectionRecord() {
+	
+	globalSectionDeclaration();
+	{ // ( ... )*
+	for (;;) {
+		switch ( LA(1)) {
+		case EOL:
+		{
+			blankLine();
+			break;
+		}
+		case POPULATION:
+		{
+			populationSize();
+			break;
+		}
+		case EVOLUTION:
+		{
+			evolutionCycles();
+			break;
+		}
+		case SELECTION:
+		{
+			selectionRatio();
+			break;
+		}
+		case ELITE:
+		{
+			eliteRatio();
+			break;
+		}
+		default:
+			if ((LA(1) == MUTATION) && (LA(2) == PROBABILITY)) {
+				mutationProbability();
+			}
+			else if ((LA(1) == MUTATION) && (LA(2) == RATIO)) {
+				mutationRatio();
+			}
+			else if ((LA(1) == CROSSOVER) && (LA(2) == PROBABILITY)) {
+				crossoverProbability();
+			}
+			else if ((LA(1) == CROSSOVER) && (LA(2) == RATIO)) {
+				crossoverRatio();
+			}
+			else if ((LA(1) == MAX) && (LA(2) == CROSSOVER)) {
+				maxCrossoverWidth();
+			}
+			else if ((LA(1) == MAX) && (LA(2) == JITTER)) {
+				maxJitterPixels();
+			}
+			else if ((LA(1) == MAX) && (LA(2) == SCALE)) {
+				maxScaleFactor();
+			}
+			else if ((LA(1) == MAX) && (LA(2) == OFFSET)) {
+				maxOffsetAmount();
+			}
+		else {
+			goto _loop8;
+		}
+		}
+	}
+	_loop8:;
+	} // ( ... )*
+}
+
+void TerrainLibraryParser::globalSectionDeclaration() {
+	antlr::RefToken  n = antlr::nullToken;
+	
+	n = LT(1);
+	match(OPEN_SBRACKET);
+	match(GLOBAL);
+	match(CLOSE_SBRACKET);
+	match(EOL);
+#line 186 "TerrainLibrary.g"
+	beginGlobalSection(n);
+#line 246 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::populationSize() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 206 "TerrainLibrary.g"
+	int n;
+#line 253 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(POPULATION);
+	match(SIZE);
+	match(ASSIGN);
+	n=integer();
+	match(EOL);
+#line 208 "TerrainLibrary.g"
+	setIntegerProperty(GAPopulationSize, n, t->getLine());
+#line 263 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::evolutionCycles() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 211 "TerrainLibrary.g"
+	int n;
+#line 270 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(EVOLUTION);
+	match(CYCLES);
+	match(ASSIGN);
+	n=integer();
+	match(EOL);
+#line 213 "TerrainLibrary.g"
+	setIntegerProperty(GAEvolutionCycles, n, t->getLine());
+#line 280 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::selectionRatio() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 216 "TerrainLibrary.g"
+	scalar_t r;
+#line 287 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(SELECTION);
+	match(RATIO);
+	match(ASSIGN);
+	r=fraction();
+	match(EOL);
+#line 218 "TerrainLibrary.g"
+	setScalarProperty(GASelectionRatio, r, t->getLine());
+#line 297 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::eliteRatio() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 221 "TerrainLibrary.g"
+	scalar_t r;
+#line 304 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(ELITE);
+	match(RATIO);
+	match(ASSIGN);
+	r=fraction();
+	match(EOL);
+#line 223 "TerrainLibrary.g"
+	setScalarProperty(GAEliteRatio, r, t->getLine());
+#line 314 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::mutationProbability() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 236 "TerrainLibrary.g"
+	scalar_t p;
+#line 321 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(MUTATION);
+	match(PROBABILITY);
+	match(ASSIGN);
+	p=fraction();
+	match(EOL);
+#line 238 "TerrainLibrary.g"
+	setScalarProperty(GAMutationProbability, p, t->getLine());
+#line 331 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::mutationRatio() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 241 "TerrainLibrary.g"
+	scalar_t r;
+#line 338 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(MUTATION);
+	match(RATIO);
+	match(ASSIGN);
+	r=fraction();
+	match(EOL);
+#line 243 "TerrainLibrary.g"
+	setScalarProperty(GAMutationRatio, r, t->getLine());
+#line 348 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::crossoverProbability() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 226 "TerrainLibrary.g"
+	scalar_t p;
+#line 355 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(CROSSOVER);
+	match(PROBABILITY);
+	match(ASSIGN);
+	p=fraction();
+	match(EOL);
+#line 228 "TerrainLibrary.g"
+	setScalarProperty(GACrossoverProbability, p, t->getLine());
+#line 365 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::crossoverRatio() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 231 "TerrainLibrary.g"
+	scalar_t r;
+#line 372 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(CROSSOVER);
+	match(RATIO);
+	match(ASSIGN);
+	r=fraction();
+	match(EOL);
+#line 233 "TerrainLibrary.g"
+	setScalarProperty(GACrossoverRatio, r, t->getLine());
+#line 382 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::maxCrossoverWidth() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 250 "TerrainLibrary.g"
+	int n;
+#line 389 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(MAX);
+	match(CROSSOVER);
+	match(WIDTH);
+	match(ASSIGN);
+	n=integer();
+	match(EOL);
+#line 252 "TerrainLibrary.g"
+	setIntegerProperty(HFMaxCrossoverWidth, n, t->getLine());
+#line 400 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::maxJitterPixels() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 255 "TerrainLibrary.g"
+	int n;
+#line 407 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(MAX);
+	match(JITTER);
+	match(PIXELS);
+	match(ASSIGN);
+	n=integer();
+	match(EOL);
+#line 257 "TerrainLibrary.g"
+	setIntegerProperty(HFMaxJitterPixels, n, t->getLine());
+#line 418 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::maxScaleFactor() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 260 "TerrainLibrary.g"
+	scalar_t f;
+#line 425 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(MAX);
+	match(SCALE);
+	match(FACTOR);
+	match(ASSIGN);
+	f=scalar();
+	match(EOL);
+#line 262 "TerrainLibrary.g"
+	setScalarProperty(HFMaxScaleFactor, f, t->getLine());
+#line 436 "TerrainLibraryParser.cpp"
+}
+
+void TerrainLibraryParser::maxOffsetAmount() {
+	antlr::RefToken  t = antlr::nullToken;
+#line 265 "TerrainLibrary.g"
+	scalar_t a;
+#line 443 "TerrainLibraryParser.cpp"
+	
+	t = LT(1);
+	match(MAX);
+	match(OFFSET);
+	match(AMOUNT);
+	match(ASSIGN);
+	a=scalar();
+	match(EOL);
+#line 267 "TerrainLibrary.g"
+	setScalarProperty(HFMaxOffsetAmount, a, t->getLine());
+#line 454 "TerrainLibraryParser.cpp"
 }
 
 void TerrainLibraryParser::terrainTypeDeclaration() {
@@ -167,41 +464,41 @@ void TerrainLibraryParser::terrainTypeDeclaration() {
 	match(NAME);
 	match(CLOSE_SBRACKET);
 	match(EOL);
-#line 150 "TerrainLibrary.g"
+#line 191 "TerrainLibrary.g"
 	createTerrainType(n);
-#line 172 "TerrainLibraryParser.cpp"
+#line 469 "TerrainLibraryParser.cpp"
 }
 
 void TerrainLibraryParser::terrainColor() {
 	antlr::RefToken  t = antlr::nullToken;
-#line 165 "TerrainLibrary.g"
+#line 274 "TerrainLibrary.g"
 	Color c;
-#line 179 "TerrainLibraryParser.cpp"
+#line 476 "TerrainLibraryParser.cpp"
 	
 	t = LT(1);
 	match(COLOR);
 	match(ASSIGN);
 	c=color();
 	match(EOL);
-#line 167 "TerrainLibrary.g"
+#line 276 "TerrainLibrary.g"
 	setColorProperty(TTColor, c, t->getLine());
-#line 188 "TerrainLibraryParser.cpp"
+#line 485 "TerrainLibraryParser.cpp"
 }
 
 void TerrainLibraryParser::terrainSample() {
 	antlr::RefToken  t = antlr::nullToken;
 	
-#line 170 "TerrainLibrary.g"
+#line 279 "TerrainLibrary.g"
 	string s;
-#line 196 "TerrainLibraryParser.cpp"
+#line 493 "TerrainLibraryParser.cpp"
 	t = LT(1);
 	match(SAMPLE);
 	match(ASSIGN);
 	s=filename();
 	match(EOL);
-#line 172 "TerrainLibrary.g"
+#line 281 "TerrainLibrary.g"
 	addTerrainSample(s, t->getLine());
-#line 204 "TerrainLibraryParser.cpp"
+#line 501 "TerrainLibraryParser.cpp"
 }
 
 void TerrainLibraryParser::terrainSeamDeclaration() {
@@ -218,101 +515,32 @@ void TerrainLibraryParser::terrainSeamDeclaration() {
 	match(NAME);
 	match(CLOSE_SBRACKET);
 	match(EOL);
-#line 155 "TerrainLibrary.g"
+#line 196 "TerrainLibrary.g"
 	createTerrainSeam(n1, n2);
-#line 223 "TerrainLibraryParser.cpp"
-}
-
-void TerrainLibraryParser::numChromosomes() {
-	antlr::RefToken  t = antlr::nullToken;
-#line 179 "TerrainLibrary.g"
-	int n;
-#line 230 "TerrainLibraryParser.cpp"
-	
-	t = LT(1);
-	match(NUMBER);
-	match(OF);
-	match(CHROMOSOMES);
-	match(ASSIGN);
-	n=integer();
-	match(EOL);
-#line 181 "TerrainLibrary.g"
-	setIntegerProperty(TSNumChromosomes, n, t->getLine());
-#line 241 "TerrainLibraryParser.cpp"
+#line 520 "TerrainLibraryParser.cpp"
 }
 
 void TerrainLibraryParser::smoothness() {
 	antlr::RefToken  t = antlr::nullToken;
-#line 185 "TerrainLibrary.g"
+#line 288 "TerrainLibrary.g"
 	scalar_t n;
-#line 248 "TerrainLibraryParser.cpp"
+#line 527 "TerrainLibraryParser.cpp"
 	
 	t = LT(1);
 	match(SMOOTHNESS);
 	match(ASSIGN);
 	n=nFraction();
 	match(EOL);
-#line 187 "TerrainLibrary.g"
+#line 290 "TerrainLibrary.g"
 	setScalarProperty(TSSmoothness, n, t->getLine());
-#line 257 "TerrainLibraryParser.cpp"
-}
-
-void TerrainLibraryParser::mutationRatio() {
-	antlr::RefToken  t = antlr::nullToken;
-#line 191 "TerrainLibrary.g"
-	scalar_t n;
-#line 264 "TerrainLibraryParser.cpp"
-	
-	t = LT(1);
-	match(MUTATION);
-	match(RATIO);
-	match(ASSIGN);
-	n=nFraction();
-	match(EOL);
-#line 193 "TerrainLibrary.g"
-	setScalarProperty(TSMutationRatio, n, t->getLine());
-#line 274 "TerrainLibraryParser.cpp"
-}
-
-void TerrainLibraryParser::crossoverRatio() {
-	antlr::RefToken  t = antlr::nullToken;
-#line 197 "TerrainLibrary.g"
-	scalar_t n;
-#line 281 "TerrainLibraryParser.cpp"
-	
-	t = LT(1);
-	match(CROSSOVER);
-	match(RATIO);
-	match(ASSIGN);
-	n=nFraction();
-	match(EOL);
-#line 199 "TerrainLibrary.g"
-	setScalarProperty(TSCrossoverRatio, n, t->getLine());
-#line 291 "TerrainLibraryParser.cpp"
-}
-
-void TerrainLibraryParser::selectionRatio() {
-	antlr::RefToken  t = antlr::nullToken;
-#line 203 "TerrainLibrary.g"
-	scalar_t n;
-#line 298 "TerrainLibraryParser.cpp"
-	
-	t = LT(1);
-	match(SELECTION);
-	match(RATIO);
-	match(ASSIGN);
-	n=nFraction();
-	match(EOL);
-#line 205 "TerrainLibrary.g"
-	setScalarProperty(TSSelectionRatio, n, t->getLine());
-#line 308 "TerrainLibraryParser.cpp"
+#line 536 "TerrainLibraryParser.cpp"
 }
 
 void TerrainLibraryParser::aspectRatio() {
 	antlr::RefToken  t = antlr::nullToken;
-#line 209 "TerrainLibrary.g"
+#line 293 "TerrainLibrary.g"
 	scalar_t n;
-#line 315 "TerrainLibraryParser.cpp"
+#line 543 "TerrainLibraryParser.cpp"
 	
 	t = LT(1);
 	match(ASPECT);
@@ -320,19 +548,110 @@ void TerrainLibraryParser::aspectRatio() {
 	match(ASSIGN);
 	n=fraction();
 	match(EOL);
-#line 211 "TerrainLibrary.g"
+#line 295 "TerrainLibrary.g"
 	setScalarProperty(TSAspectRatio, n, t->getLine());
-#line 325 "TerrainLibraryParser.cpp"
+#line 553 "TerrainLibraryParser.cpp"
+}
+
+int  TerrainLibraryParser::integer() {
+#line 342 "TerrainLibrary.g"
+	int value;
+#line 559 "TerrainLibraryParser.cpp"
+	antlr::RefToken  n = antlr::nullToken;
+	
+	n = LT(1);
+	match(NUMBER);
+#line 342 "TerrainLibrary.g"
+	value = atoi(n->getText().c_str());
+#line 566 "TerrainLibraryParser.cpp"
+	return value;
+}
+
+scalar_t  TerrainLibraryParser::fraction() {
+#line 312 "TerrainLibrary.g"
+	scalar_t s;
+#line 573 "TerrainLibraryParser.cpp"
+	antlr::RefToken  w = antlr::nullToken;
+	antlr::RefToken  f = antlr::nullToken;
+	
+	w = LT(1);
+	match(NUMBER);
+	{
+	switch ( LA(1)) {
+	case DOT:
+	{
+		match(DOT);
+		f = LT(1);
+		match(NUMBER);
+		break;
+	}
+	case EOL:
+	case COMMA:
+	case CLOSE_ABRACKET:
+	{
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltException(LT(1), getFilename());
+	}
+	}
+	}
+#line 314 "TerrainLibrary.g"
+	string tmp(w->getText());           // Construct a composite string
+	if (f != NULL) {                    // If we have a fractional part,
+	tmp += '.';                     // then add it in
+	tmp += f->getText();
+	}
+	s = scalar_t(atof(tmp.c_str()));
+	
+#line 608 "TerrainLibraryParser.cpp"
+	return s;
+}
+
+scalar_t  TerrainLibraryParser::scalar() {
+#line 302 "TerrainLibrary.g"
+	scalar_t s;
+#line 615 "TerrainLibraryParser.cpp"
+	antlr::RefToken  sg = antlr::nullToken;
+	
+	{
+	switch ( LA(1)) {
+	case SIGN:
+	{
+		sg = LT(1);
+		match(SIGN);
+		break;
+	}
+	case NUMBER:
+	{
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltException(LT(1), getFilename());
+	}
+	}
+	}
+	s=fraction();
+#line 304 "TerrainLibrary.g"
+	
+	// If we have a sign token and it is negative, then negate 's'
+	if (sg != NULL && sg->getText() == "-")
+	s *= -1;
+	
+#line 643 "TerrainLibraryParser.cpp"
+	return s;
 }
 
 Color  TerrainLibraryParser::color() {
-#line 246 "TerrainLibrary.g"
+#line 330 "TerrainLibrary.g"
 	Color c;
-#line 331 "TerrainLibraryParser.cpp"
+#line 650 "TerrainLibraryParser.cpp"
 	
-#line 247 "TerrainLibrary.g"
+#line 331 "TerrainLibrary.g"
 	scalar_t r, g, b, a;
-#line 335 "TerrainLibraryParser.cpp"
+#line 654 "TerrainLibraryParser.cpp"
 	match(OPEN_ABRACKET);
 	r=nFraction();
 	match(COMMA);
@@ -342,18 +661,18 @@ Color  TerrainLibraryParser::color() {
 	match(COMMA);
 	a=nFraction();
 	match(CLOSE_ABRACKET);
-#line 253 "TerrainLibrary.g"
+#line 337 "TerrainLibrary.g"
 	typedef Color::scalar_t c_scalar_t;
 	c = Color(c_scalar_t(r), c_scalar_t(g),
 	c_scalar_t(b), c_scalar_t(a));
-#line 349 "TerrainLibraryParser.cpp"
+#line 668 "TerrainLibraryParser.cpp"
 	return c;
 }
 
 string  TerrainLibraryParser::filename() {
-#line 262 "TerrainLibrary.g"
+#line 346 "TerrainLibrary.g"
 	string path;
-#line 356 "TerrainLibraryParser.cpp"
+#line 675 "TerrainLibraryParser.cpp"
 	antlr::RefToken  q = antlr::nullToken;
 	antlr::RefToken  n = antlr::nullToken;
 	antlr::RefToken  i = antlr::nullToken;
@@ -361,52 +680,52 @@ string  TerrainLibraryParser::filename() {
 	antlr::RefToken  d = antlr::nullToken;
 	
 	{ // ( ... )+
-	int _cnt33=0;
+	int _cnt45=0;
 	for (;;) {
 		switch ( LA(1)) {
 		case QUOTED_STRING:
 		{
 			q = LT(1);
 			match(QUOTED_STRING);
-#line 263 "TerrainLibrary.g"
+#line 347 "TerrainLibrary.g"
 			path += q->getText();
-#line 373 "TerrainLibraryParser.cpp"
+#line 692 "TerrainLibraryParser.cpp"
 			break;
 		}
 		case NAME:
 		{
 			n = LT(1);
 			match(NAME);
-#line 264 "TerrainLibrary.g"
+#line 348 "TerrainLibrary.g"
 			path += n->getText();
-#line 382 "TerrainLibraryParser.cpp"
+#line 701 "TerrainLibraryParser.cpp"
 			break;
 		}
 		case NUMBER:
 		{
 			i = LT(1);
 			match(NUMBER);
-#line 265 "TerrainLibrary.g"
+#line 349 "TerrainLibrary.g"
 			path += i->getText();
-#line 391 "TerrainLibraryParser.cpp"
+#line 710 "TerrainLibraryParser.cpp"
 			break;
 		}
 		case COLON:
 		{
 			c = LT(1);
 			match(COLON);
-#line 266 "TerrainLibrary.g"
+#line 350 "TerrainLibrary.g"
 			path += c->getText();
-#line 400 "TerrainLibraryParser.cpp"
+#line 719 "TerrainLibraryParser.cpp"
 			break;
 		}
 		case DOT:
 		{
 			d = LT(1);
 			match(DOT);
-#line 267 "TerrainLibrary.g"
+#line 351 "TerrainLibrary.g"
 			path += d->getText();
-#line 409 "TerrainLibraryParser.cpp"
+#line 728 "TerrainLibraryParser.cpp"
 			break;
 		}
 		case BACKSLASH:
@@ -430,131 +749,39 @@ string  TerrainLibraryParser::filename() {
 			}
 			}
 			}
-#line 268 "TerrainLibrary.g"
+#line 352 "TerrainLibrary.g"
 			path += "/";
-#line 435 "TerrainLibraryParser.cpp"
+#line 754 "TerrainLibraryParser.cpp"
 			break;
 		}
 		case NBSP:
 		{
 			match(NBSP);
-#line 269 "TerrainLibrary.g"
+#line 353 "TerrainLibrary.g"
 			path += " ";
-#line 443 "TerrainLibraryParser.cpp"
+#line 762 "TerrainLibraryParser.cpp"
 			break;
 		}
 		default:
 		{
-			if ( _cnt33>=1 ) { goto _loop33; } else {throw antlr::NoViableAltException(LT(1), getFilename());}
+			if ( _cnt45>=1 ) { goto _loop45; } else {throw antlr::NoViableAltException(LT(1), getFilename());}
 		}
 		}
-		_cnt33++;
+		_cnt45++;
 	}
-	_loop33:;
+	_loop45:;
 	}  // ( ... )+
 	return path;
 }
 
-int  TerrainLibraryParser::integer() {
-#line 258 "TerrainLibrary.g"
-	int value;
-#line 461 "TerrainLibraryParser.cpp"
-	antlr::RefToken  n = antlr::nullToken;
-	
-	n = LT(1);
-	match(NUMBER);
-#line 258 "TerrainLibrary.g"
-	value = atoi(n->getText().c_str());
-#line 468 "TerrainLibraryParser.cpp"
-	return value;
-}
-
 scalar_t  TerrainLibraryParser::nFraction() {
-#line 240 "TerrainLibrary.g"
+#line 324 "TerrainLibrary.g"
 	scalar_t s;
-#line 475 "TerrainLibraryParser.cpp"
+#line 780 "TerrainLibraryParser.cpp"
 	
 	s=fraction();
 	if (!( s >= 0.0 && s <= 1.0 ))
 		throw antlr::SemanticException(" s >= 0.0 && s <= 1.0 ");
-	return s;
-}
-
-scalar_t  TerrainLibraryParser::fraction() {
-#line 228 "TerrainLibrary.g"
-	scalar_t s;
-#line 486 "TerrainLibraryParser.cpp"
-	antlr::RefToken  w = antlr::nullToken;
-	antlr::RefToken  f = antlr::nullToken;
-	
-	w = LT(1);
-	match(NUMBER);
-	{
-	switch ( LA(1)) {
-	case DOT:
-	{
-		match(DOT);
-		f = LT(1);
-		match(NUMBER);
-		break;
-	}
-	case antlr::Token::EOF_TYPE:
-	case EOL:
-	case COMMA:
-	case CLOSE_ABRACKET:
-	{
-		break;
-	}
-	default:
-	{
-		throw antlr::NoViableAltException(LT(1), getFilename());
-	}
-	}
-	}
-#line 230 "TerrainLibrary.g"
-	string tmp(w->getText());           // Construct a composite string
-	if (f != NULL) {                    // If we have a fractional part,
-	tmp += '.';                     // then add it in
-	tmp += f->getText();
-	}
-	s = scalar_t(atof(tmp.c_str()));
-	
-#line 522 "TerrainLibraryParser.cpp"
-	return s;
-}
-
-scalar_t  TerrainLibraryParser::scalar() {
-#line 218 "TerrainLibrary.g"
-	scalar_t s;
-#line 529 "TerrainLibraryParser.cpp"
-	antlr::RefToken  sg = antlr::nullToken;
-	
-	{
-	switch ( LA(1)) {
-	case SIGN:
-	{
-		sg = LT(1);
-		match(SIGN);
-		break;
-	}
-	case NUMBER:
-	{
-		break;
-	}
-	default:
-	{
-		throw antlr::NoViableAltException(LT(1), getFilename());
-	}
-	}
-	}
-	s=fraction();
-#line 220 "TerrainLibrary.g"
-	
-	// If we have a sign token and it is negative, then negate 's'
-	if (sg != NULL && sg->getText() == "-")
-	s *= -1;
-	
-#line 557 "TerrainLibraryParser.cpp"
 	return s;
 }
 
@@ -567,26 +794,39 @@ const char* TerrainLibraryParser::tokenNames[] = {
 	"<2>",
 	"NULL_TREE_LOOKAHEAD",
 	"OPEN_SBRACKET",
+	"\"global\"",
+	"CLOSE_SBRACKET",
+	"end of line",
 	"\"terraintype\"",
 	"COLON",
 	"name",
-	"CLOSE_SBRACKET",
-	"end of line",
 	"\"terrainseam\"",
 	"AND",
-	"\"color\"",
+	"\"population\"",
+	"\"size\"",
 	"ASSIGN",
-	"\"sample\"",
-	"\"number\"",
-	"\"of\"",
-	"\"chromosomes\"",
-	"\"smoothness\"",
-	"\"mutation\"",
-	"\"ratio\"",
-	"\"crossover\"",
+	"\"evolution\"",
+	"\"cycles\"",
 	"\"selection\"",
+	"\"ratio\"",
+	"\"elite\"",
+	"\"crossover\"",
+	"\"probability\"",
+	"\"mutation\"",
+	"\"max\"",
+	"\"width\"",
+	"\"jitter\"",
+	"\"pixels\"",
+	"\"scale\"",
+	"\"factor\"",
+	"\"offset\"",
+	"\"amount\"",
+	"\"color\"",
+	"\"sample\"",
+	"\"smoothness\"",
 	"\"aspect\"",
 	"SIGN",
+	"number",
 	"DOT",
 	"OPEN_ABRACKET",
 	"COMMA",

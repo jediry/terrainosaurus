@@ -16,6 +16,7 @@ using namespace terrainosaurus;
 // Import raster operators
 #include <inca/raster/generators/gaussian>
 #include <inca/raster/operators/select>
+#include <inca/raster/operators/arithmetic>
 using namespace inca::raster;
 
 
@@ -65,7 +66,23 @@ SizeType terrainosaurus::windowSize(TerrainLOD lod) {
     return 16;
 }
 
-#include <inca/raster/operators/statistic>
+scalar_t terrainosaurus::blendFalloffRatio(TerrainLOD lod) {
+    return scalar_t(0.4f);
+}
+
+scalar_t terrainosaurus::blendFalloffRadius(TerrainLOD lod) {
+    return windowSize(lod) * blendFalloffRatio(lod) * scalar_t(0.5);
+}
+
+scalar_t terrainosaurus::blendOverlapRatio(TerrainLOD lod) {
+    return scalar_t(0.25f);
+}
+
+DifferenceType terrainosaurus::blendPatchSpacing(TerrainLOD lod) {
+    return DifferenceType(windowSize(lod) * (1 - blendOverlapRatio(lod)));
+}
+
+//#include <inca/raster/operators/statistic>
 
 // Pixel blending masks
 const GrayscaleImage & terrainosaurus::gaussianMask(TerrainLOD lod) {
@@ -75,12 +92,42 @@ const GrayscaleImage & terrainosaurus::gaussianMask(TerrainLOD lod) {
     if (! initialized) {
         typedef inca::Array<scalar_t, 2> ScalarArray;
         for (TerrainLOD tl = TerrainLOD::minimum(); tl <= TerrainLOD::maximum(); ++tl) {
-            SizeType sz = windowSize(tl);
-            masks[tl] = select(gaussian(ScalarArray(scalar_t(sz) / 2),
-                                        ScalarArray(scalar_t(sz) / 8)),
-                               inca::Array<SizeType, 2>(sz));
+            SizeType winSize = windowSize(tl);
+            masks[tl] = select(gaussian(ScalarArray(blendFalloffRadius(lod)),
+                                        ScalarArray(scalar_t(winSize) / 2 - 1)),
+                               inca::Array<SizeType, 2>(winSize));
+            masks[tl] /= masks[tl](winSize / 2, winSize / 2);
         }
     }
 
     return masks[lod];
+}
+const GrayscaleImage & terrainosaurus::sphericalMask(TerrainLOD lod) {
+    // Only create these the first time
+    static bool initialized = false;
+    static std::vector<GrayscaleImage> masks(TerrainLOD::maximum() + 1);
+    if (! initialized) {
+        typedef inca::Array<scalar_t, 2> ScalarArray;
+        for (TerrainLOD tl = TerrainLOD::minimum(); tl <= TerrainLOD::maximum(); ++tl) {
+            GrayscaleImage & m = masks[tl];
+            SizeType winSize = windowSize(tl);
+            m.setSizes(winSize, winSize);
+            scalar_t radius = scalar_t(winSize) / 2;
+            Pixel px;
+            for (px[0] = 0; px[0] < winSize; ++px[0])
+                for (px[1] = 0; px[1] < winSize; ++px[1]) {
+                    Dimension d(winSize / 2 - px[0], winSize / 2 - px[1]);
+                    m(px) = std::max(scalar_t(0),
+                                     scalar_t(std::sqrt(radius*radius - d[0]*d[0] - d[1]*d[1])) / radius);
+                }
+        }
+    }
+
+    return masks[lod];
+}
+const GrayscaleImage & terrainosaurus::coneMask(TerrainLOD lod) {
+
+}
+const GrayscaleImage & terrainosaurus::exponentialMask(TerrainLOD lod) {
+
 }

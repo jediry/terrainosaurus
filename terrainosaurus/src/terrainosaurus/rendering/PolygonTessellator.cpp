@@ -11,20 +11,9 @@
 
 // Import class definition
 #include "PolygonTessellator.hpp"
+using namespace terrainosaurus;
 
-
-// Import OpenGL
-#if __MS_WINDOZE__
-    // Windows OpenGL seems to need this
-#   include <windows.h>
-
-    // I'd also rather VS didn't complain about casting to boolean
-#   pragma warning (disable : 4800)
-#endif
-#include <GL/gl.h>
-#include <GL/glu.h>
-
-
+#if 0
 /*---------------------------------------------------------------------------*
  | Constructor and properties
  *---------------------------------------------------------------------------*/
@@ -43,7 +32,7 @@ PolygonTessellator::~PolygonTessellator() {
     // Clean up the tessellator object
     glutDeleteTess(static_cast<GLUtessellator *>(tessellator));
 }
-
+#endif
 
 /*---------------------------------------------------------------------------*
  | Tessellation functions

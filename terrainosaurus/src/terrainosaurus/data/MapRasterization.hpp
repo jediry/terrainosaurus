@@ -61,9 +61,10 @@ public:
     typedef inca::raster::MultiArrayRaster<scalar_t, 2>     DistanceMap;
     typedef IDMap::SizeArray                                SizeArray;
     typedef IDMap::IndexArray                               IndexArray;
-    typedef inca::Region<2>                                 RegionBounds;
-    typedef std::vector<RegionBounds>                       RegionBoundsList;
+    typedef IDMap::Region                                   Region;
+    typedef std::vector<Region>                             RegionList;
     typedef std::vector<Pixel>                              PixelList;
+    typedef std::vector<SizeType>                           SizeList;
 
 
 /*---------------------------------------------------------------------------*
@@ -125,20 +126,23 @@ public:
     const SizeArray & sizes() const;
     const IndexArray & bases() const;
     const IndexArray & extents() const;
+    const Region & bounds() const;
 
     // Region accessors
     SizeType regionCount() const;
-    const TerrainType::LOD & regionTerrainType(IndexType i) const;
-    const RegionBounds & regionBounds(IndexType i) const;
-    const Pixel        & regionSeed(IndexType i) const;
-    GrayscaleImage regionMask(IndexType i, int border) const;
+    const TerrainType::LOD & regionTerrainType(IDType regionID) const;
+    const Region           & regionBounds(IDType regionID) const;
+    const Pixel            & regionSeed(IDType regionID) const;
+    SizeType                 regionArea(IDType regionID) const;
+    GrayscaleImage regionMask(IDType regionID, int border) const;
 
 protected:
     IDMap               _terrainTypeIDs;
     IDMap               _regionIDs;
     DistanceMap         _boundaryDistances;
-    RegionBoundsList    _regionBounds;
+    RegionList          _regionBounds;
     PixelList           _regionSeeds;
+    SizeList            _regionAreas;
 
 
 /*---------------------------------------------------------------------------*

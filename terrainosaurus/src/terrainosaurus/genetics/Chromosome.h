@@ -103,7 +103,8 @@ namespace GA
 		double averagedsmoothness = 0.0;
 		for(int i = 0; i < length; i++)
 		{
-			totalsmoothness -= (PI - AbsFloat(genes[i]));
+//`1			totalsmoothness -= (PI - AbsFloat(genes[i]));
+			totalsmoothness -= AbsFloat(genes[i]);
 		}
 		averagedsmoothness = totalsmoothness / perfectsmoothline;
 		if(averagedsmoothness >= 0.75)
@@ -114,6 +115,10 @@ namespace GA
 		{
 			fitness = f_UserSmoothnessParam * 1.0/averagedsmoothness;
 		}
+//                 cerr << "Perfect smoothness would be " << perfectsmoothline << endl;
+//                 cerr << "total smoothness is " << totalsmoothness << endl;
+//                 cerr << "averagedsmoothmnes is " << averagedsmoothness << endl;
+//                 cerr << "fitness uis " << fitness << endl << endl;
 		if(fitness < 0)
 			return 0.0;
 		return fitness;

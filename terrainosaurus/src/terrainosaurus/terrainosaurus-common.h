@@ -48,17 +48,13 @@ namespace terrainosaurus {
 
     // Raster types
     typedef inca::raster::MultiArrayRaster<float, 2>    GrayscaleImage;
+    typedef inca::raster::MultiArrayRaster<Color, 2>    ColorImage;
     typedef inca::raster::MultiArrayRaster<float, 3>    ScaleSpaceImage;
     typedef inca::raster::MultiArrayRaster<Vector2D, 2> VectorMap;
     typedef GrayscaleImage                              Heightfield;
-
 };
-
-// Import Boost smart-pointer utilities
-#include <boost/enable_shared_from_this.hpp>
 
 // Choose which GUI toolkit we will be using (for windows, etc.)
 #define GUI_TOOLKIT GLUT
-
 
 #endif

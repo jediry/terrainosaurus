@@ -218,6 +218,7 @@ void MapRasterization::LOD::analyze() {
         fill(_regionIDs, 1);            // Only one region fills the whole thing
         _regionBounds.push_back(bounds);
         _regionSeeds.push_back(Pixel(bounds.bases()));
+        _regionAreas.push_back(bounds.size());
         std::cerr << "Found only one solid, rectangular region\n";
 
     } else {
@@ -229,12 +230,16 @@ void MapRasterization::LOD::analyze() {
                 if (currentTTID != 0) {
                     IDType currentRegionID = _regionIDs(px);
                     if (currentRegionID == 0) { // Hey! We found a new region!
-                        RegionBounds rb = flood_fill(_regionIDs, px,
-                                                    EqualsValue<IDMap>(_terrainTypeIDs, currentTTID),
-                                                    constant<IDType, 2>(nextRegionID++));
-                        _regionBounds.push_back(rb);
+                        std::pair<Region, SizeType> result =
+                            flood_fill(_regionIDs, px,
+                                       EqualsValue<IDMap>(_terrainTypeIDs, currentTTID),
+                                       constant<IDType, 2>(nextRegionID++));
+                        _regionBounds.push_back(result.first);
                         _regionSeeds.push_back(px);
-                        std::cerr << "Found region spanning " << rb << std::endl;
+                        _regionAreas.push_back(result.second);
+                        std::cerr << "Found " << _regionAreas.back()
+                                  << " pixel region spanning "
+                                  << _regionBounds.back() << std::endl;
                     }
                 }
             }
@@ -350,6 +355,10 @@ const MapRasterization::LOD::IndexArray & MapRasterization::LOD::extents() const
     ensureLoaded();
     return _terrainTypeIDs.extents();
 }
+const MapRasterization::LOD::Region & MapRasterization::LOD::bounds() const {
+    ensureLoaded();
+    return _terrainTypeIDs.bounds();
+}
 
 // Per-cell data accessors
 const IDMap & MapRasterization::LOD::terrainTypeIDs() const {
@@ -371,40 +380,46 @@ SizeType MapRasterization::LOD::regionCount() const {
     return _regionBounds.size();
 }
 const TerrainType::LOD &
-MapRasterization::LOD::regionTerrainType(IndexType i) const {
+MapRasterization::LOD::regionTerrainType(IDType regionID) const {
     ensureAnalyzed();
-    INCA_BOUNDS_CHECK(0, _regionSeeds.size() - 1, i, -1,
-                      "regionTerrainType(" << i << ")")
-    return terrainType(_regionSeeds[i]);
+    INCA_BOUNDS_CHECK(0, _regionSeeds.size() - 1, regionID, -1,
+                      "regionTerrainType(" << regionID << ")")
+    return terrainType(_regionSeeds[regionID]);
 }
-const MapRasterization::LOD::RegionBounds &
-MapRasterization::LOD::regionBounds(IndexType i) const {
+const MapRasterization::LOD::Region &
+MapRasterization::LOD::regionBounds(IDType regionID) const {
     ensureAnalyzed();
-    INCA_BOUNDS_CHECK(0, _regionBounds.size() - 1, i, -1,
-                      "regionBounds(" << i << ")")
-    return _regionBounds[i];
+    INCA_BOUNDS_CHECK(0, _regionBounds.size() - 1, regionID, -1,
+                      "regionBounds(" << regionID << ")")
+    return _regionBounds[regionID];
 }
-const Pixel & MapRasterization::LOD::regionSeed(IndexType i) const {
+const Pixel & MapRasterization::LOD::regionSeed(IDType regionID) const {
     ensureAnalyzed();
-    INCA_BOUNDS_CHECK(0, _regionSeeds.size() - 1, i, -1,
-                      "regionSeed(" << i << ")")
-    return _regionSeeds[i];
+    INCA_BOUNDS_CHECK(0, _regionSeeds.size() - 1, regionID, -1,
+                      "regionSeed(" << regionID << ")")
+    return _regionSeeds[regionID];
 }
-GrayscaleImage MapRasterization::LOD::regionMask(IndexType i, int borderWidth) const {
+SizeType MapRasterization::LOD::regionArea(IDType regionID) const {
     ensureAnalyzed();
-    INCA_BOUNDS_CHECK(0, _regionBounds.size() - 1, i, -1,
-                      "regionMask(" << i << ")")
-    RegionBounds bounds = _regionBounds[i];                 // Get the region bounds
-    bounds.expand(borderWidth / 2);                         // Expand to hold fuzzy border
-    bounds.clipAgainst(_regionIDs.bounds());                // Keepin' it legal
+    INCA_BOUNDS_CHECK(0, _regionAreas.size() - 1, regionID, -1,
+                      "regionArea(" << regionID << ")")
+    return _regionAreas[regionID];
+}
+GrayscaleImage MapRasterization::LOD::regionMask(IDType regionID, int borderWidth) const {
+    ensureAnalyzed();
+    INCA_BOUNDS_CHECK(0, _regionBounds.size() - 1, regionID, -1,
+                      "regionMask(" << regionID << ")")
+    Region bounds = _regionBounds[regionID];        // Get the region bounds
+    bounds.expand(borderWidth / 2);                 // Expand to hold fuzzy border
+    bounds.clipAgainst(_regionIDs.bounds());        // Keepin' it legal
     GrayscaleImage mask(bounds);
     Pixel px;
     float scale = 2.0f / borderWidth;
     for (px[0] = mask.base(0); px[0] <= mask.extent(0); ++px[0])
         for (px[1] = mask.base(1); px[1] <= mask.extent(1); ++px[1])
-            if (_regionIDs(px) == i + 1)    // Inside region
+            if (_regionIDs(px) == regionID + 1) // Inside region
                 mask(px) = 0.5f * std::min(2.0f, 1.0f + _boundaryDistances(px) * scale);
-            else                            // Outside region
+            else                                // Outside region
                 mask(px) = 0.5f * std::max(0.0f, 1.0f - _boundaryDistances(px) * scale);
     return mask;
 }

@@ -118,6 +118,7 @@ public:
     double resolution[3];   // The X, Y, Z resolutions (world units per cell)
     double extents[2][2];   // The lower left and upper right corners of the
                             // full grid, in planimetric coordinates
+    double elevationExtrema[2]; // The min/max elevations
 
 
 /*---------------------------------------------------------------------------*

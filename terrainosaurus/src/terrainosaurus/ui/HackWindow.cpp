@@ -1,8 +1,7 @@
 // Import class definition
 #include "HackWindow.hpp"
-using namespace terrainosaurus;
 
-#include <terrainosaurus/rendering/CameraProjection.hpp>
+#include <inca/rendering/immediate-mode/CameraProjection.hpp>
 #include <terrainosaurus/MapExplorer.hpp>
 
 #include <inca/util/Timer>
@@ -17,6 +16,9 @@ using namespace terrainosaurus;
 #include <inca/integration/opengl/GL.hpp>
 #include <inca/ui.hpp>
 
+using namespace terrainosaurus;
+using namespace inca::rendering;
+
 // Constructor taking an image
 HackWindow::HackWindow(TerrainSampleConstPtr ts, MapRasterizationConstPtr mr,
                        TerrainLOD startLOD, const std::string & title)
@@ -27,11 +29,10 @@ HackWindow::HackWindow(TerrainSampleConstPtr ts, MapRasterizationConstPtr mr,
     renderer.rasterizer().setBackgroundColor(Color(0.0f, 0.0f, 0.0f, 0.0f));
     renderer.addAutoClearBuffer(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderer.rasterizer().setDepthBufferingEnabled(true);
-    std::cerr << "Z-buffer? " << renderer.rasterizer().isDepthBufferingEnabled() << endl;
 
     // Enable lighting and shading
     Renderer::LightingUnit & light0 = renderer.lightingUnit(0);
-    light0.setPosition(Point3D(1000.0f, 1000.0f, 1000.0f));
+    light0.setPosition(Point3D(1000.0f, 1000.0f, -2000.0f));
     light0.setDiffuseColor(Color(0.6f, 0.6f, 0.6f, 1.0f));
     light0.setEnabled(true);
 
@@ -41,13 +42,13 @@ HackWindow::HackWindow(TerrainSampleConstPtr ts, MapRasterizationConstPtr mr,
     light1.setEnabled(true);
 
     GL::glutSetCursor(GLUT_CURSOR_NONE);
-    setFullScreen(true);
+    //setFullScreen(true);
 
     // Set up the camera
-    camera.transform()->position = Point3D(500.0f, 500.0f, 300.0f);
+    camera.transform()->position = Point3D(1000.0f, 1000.0f, 500.0f);
     camera.nearClip = 50.0f;
     camera.farClip  = 100000.0f;
-    camera.transform()->lookAt(Point3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 1.0f));
+    camera.transform()->lookAt(Point3D(0.0f, 0.0f, 550.0f), Vector3D(0.0f, 0.0f, 1.0f));
 }
 
 // Setter for a real, 2D image
@@ -76,6 +77,7 @@ void HackWindow::mouseMotion(int x, int y) {
 }
 
 void HackWindow::passiveMotion(int x, int y) {
+#if 1
     Pixel center(getSize()[0] / 2);
     Dimension dx = Pixel(x, y) - center;
     dx[0] = -dx[0];
@@ -106,6 +108,7 @@ void HackWindow::passiveMotion(int x, int y) {
         GL::glutWarpPointer(center[0], center[1]);
         requestRedisplay();
     }
+#endif
 }
 
 void HackWindow::key(unsigned char k, int x, int y) {

@@ -1,37 +1,23 @@
-# This file is neato
+# This section sets the parameters of the heightfield generation GA
+[Global]
+population size         = 5     # How many chromosomes in our GA?
+evolution cycles        = 5     # How many iterations do we run?
+selection ratio         = 0.75  # What percent survive to the next round?
+elite ratio             = 0.2   # What percent "best" survive to the next round?
+mutation probability    = 0.1   # What are the odds of mutating a chromosome?
+mutation ratio          = 0.5   # What percent of the genes get mutated?
+crossover probability   = 0.2   # What are the odds of crossing a chromosome?
+crossover ratio         = 0.5   # What percentage of the genes get crossed?
 
-[TerrainType: Texas]
-color = <0.8, 0.5, 0.5, 1.0>
-sample = "/mnt/data/scratch/gis/dem/Canary, TX (30m).dem"
-#sample = "/mnt/data/scratch/gis/dem/Kurten, TX (30m).dem"
-#sample = "/mnt/data/scratch/gis/dem/Millican, TX (30m).dem"
-#sample = "/mnt/data/scratch/gis/dem/Independence, TX (30m).dem"
-#sample = "/mnt/data/scratch/gis/dem/Ferguson Crossing, TX (30m).dem"
+max crossover width     = 4     # How wide/long a chunk (measured in genes) can we crossover?
+max scale factor        = 1.1   # How much can we scale the elevations in a single mutation?
+max offset amount       = 50.0  # How much can we vertically offset a gene?
+max jitter pixels       = 0     # How much can we jitter the gene locations?
 
-[TerrainType: Utah]
-color = <0.8, 0.3, 0.8, 1.0>
-sample = "/mnt/data/scratch/gis/dem/Chandler (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/39111g1 - Colton, UT (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/39111e2 - Candland Mountain, UT (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/39110d1 - Chandler Falls, UT (30m).dem"
+# These sections define the different, logical "terrain types"
+[TerrainType: California_Coast_Hills]
+color = <0.6, 0.6, 0.3, 1.0>
+sample = "/mnt/data/scratch/gis/dem/35120e8 - Cypress Mountain, CA (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/35120f8 - Lime Mountain, CA (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/35121f1 - Pebblestone Shut-in, CA (30m).dem"
 
-[TerrainType: Florida]
-color = <1.0, 0.8, 0.0, 1.0>
-sample = "/mnt/data/scratch/gis/dem/29082d1 - Citra, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082d3 - Flemington, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082d5 - Bronson NE, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082e1 - Hawthorne, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082e4 - Arredondo, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082e5 - Archer, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082f3 - Gainesville East, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082f4 - Gainesville West, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082g4 - Alachua, FL (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/29082h3 - Brooker, FL (30m).dem"
-
-[TerrainSeam: Florida & Utah]
-Smoothness = 0.8
-Number of Chromosomes = 10
-Mutation Ratio = 0
-Crossover Ratio = 0.2
-Selection Ratio = 0.8
-Aspect Ratio = 2.0

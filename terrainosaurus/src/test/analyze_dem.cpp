@@ -1,33 +1,19 @@
 #include <terrainosaurus/terrainosaurus-common.h>
 
-#include <terrainosaurus/io/DEMInterpreter.hpp>
-
-#include <terrainosaurus/data/TerrainSample.hpp>
-
-#include <inca/raster/operators/resample>
-#include <inca/raster/operators/linear_map>
-#include <inca/raster/operators/magnitude>
-#include <inca/raster/operators/fourier>
-#include <inca/raster/operators/arithmetic>
-#include <inca/raster/operators/select>
-#include <inca/raster/generators/constant>
-
 // Import application framework
 #include <inca/ui.hpp>
 
-// Import OpenGL
-#define GL_HPP_IMPORT_GLUT
-#include <inca/integration/opengl/GL.hpp>
-
-#include <inca/util/metaprogramming/macros.hpp>
-#include <inca/util/multi-dimensional-macros.hpp>
-
-#include <terrainosaurus/ui/ImageWindow.hpp>
-
-using namespace inca::raster;
+// Import data class definitions
+#include <terrainosaurus/data/TerrainSample.hpp>
 using namespace terrainosaurus;
 
-typedef MultiArrayRaster<scalar_t, 3> HyperImage;
+// Import raster operator definitions
+#include <inca/raster/operators/select>
+using namespace inca::raster;
+
+// This is a console-only application
+//#undef GUI_TOOLKIT
+//#define GUI_TOOLKIT Console
 
 
 // Forward declaration
@@ -45,146 +31,153 @@ namespace terrainosaurus {
         return result;
     }
 
+namespace terrainosaurus {
+    void drawCurves(Heightfield & hf, const CurveTracker & ct) {
+        fill(hf, 0.0f);
+        scalar_t maxStrength = std::log(1.0f + ct.strengthStats.max());
+        for (int i = 0; i < ct.curves.size(); ++i) {
+            const CurveTracker::Curve & c = ct.curves[i];
+            for (int j = 0; j < c.points.size(); ++j) {
+                const CurveTracker::Curve::Point & p = c.points[j];
+//                hf(int(p[0]), int(p[1])) = 1.0f;
+                hf(int(p[0]), int(p[1])) = std::log(1.0f + p[3]) / maxStrength;
+            }
+        }
+    }
+}
+
 
 // The application class
 class terrainosaurus::AnalyzeDEMApplication : public APPLICATION(GUI_TOOLKIT) {
 public:
     void setup(int &argc, char **argv) {
-        if (argc <= 1)
-           header(std::cout);
-//             exit(1, "You must provide at least one .dem file");
-        else {
+        // Defaults
+        targetLOD = TerrainLOD_Underflow;
+        filename  = "";
 
-            // Write out the field descriptions
-            header(std::cout);
+        // Parse command-line arguments
+        for (int i = 0; i < argc; ++i) {
+            string arg(argv[i]);
+            if (arg == "-l") {      // It's a LOD specification
+                string arg2(argv[i+1]);
+                if (arg2 == "10")       targetLOD = LOD_10m;
+                else if (arg2 == "30")  targetLOD = LOD_30m;
+                else if (arg2 == "90")  targetLOD = LOD_90m;
+                else if (arg2 == "270") targetLOD = LOD_270m;
+                else if (arg2 == "810") targetLOD = LOD_810m;
+                else                    exit(1, "Unrecognized LOD " + arg2);
 
-            // Analyze the full heightfield
-            filename = argv[1];
-            sample = TerrainSampleConstPtr(new TerrainSample(filename));
-            sample->ensureLoaded(LOD_30m);
-            sample->ensureAnalyzed(LOD_30m);
-            dump(std::cout, sample);
-
-            // Analyze progressively smaller chunks
-            TerrainSamplePtr chunk;
-            SizeArray size;
-            scalar_t fraction(0.75);
-            size[0] = SizeType(sample->sizes(LOD_30m)[0] * fraction);
-            size[1] = SizeType(sample->sizes(LOD_30m)[1] * fraction);
-            chunk.reset(new TerrainSample(select(sample->elevations(LOD_30m), size), LOD_30m));
-            chunk->ensureAnalyzed(LOD_30m);
-            dump(std::cout, chunk);
-
-            fraction = scalar_t(0.5);
-            size[0] = SizeType(sample->sizes(LOD_30m)[0] * fraction);
-            size[1] = SizeType(sample->sizes(LOD_30m)[1] * fraction);
-            chunk.reset(new TerrainSample(select(sample->elevations(LOD_30m), size), LOD_30m));
-            chunk->ensureAnalyzed(LOD_30m);
-            dump(std::cout, chunk);
-
-            fraction = scalar_t(0.25);
-            size[0] = SizeType(sample->sizes(LOD_30m)[0] * fraction);
-            size[1] = SizeType(sample->sizes(LOD_30m)[1] * fraction);
-            chunk.reset(new TerrainSample(select(sample->elevations(LOD_30m), size), LOD_30m));
-            chunk->ensureAnalyzed(LOD_30m);
-            dump(std::cout, chunk);
-
-            fraction = scalar_t(0.1);
-            size[0] = SizeType(sample->sizes(LOD_30m)[0] * fraction);
-            size[1] = SizeType(sample->sizes(LOD_30m)[1] * fraction);
-            chunk.reset(new TerrainSample(select(sample->elevations(LOD_30m), size), LOD_30m));
-            chunk->ensureAnalyzed(LOD_30m);
-            dump(std::cout, chunk);
+            } else {                // It's a DEM filename
+                filename = arg;
+            }
         }
-//        ::exit(0);
+
+        // Make sure we have a DEM file, and load it
+        if (filename == "")
+            exit(1, "You must provide at least one terrain file");
+        sample = TerrainSamplePtr(new TerrainSample(filename));
+        sample->ensureFileLoaded();
+
+        // If no LOD was specified, default to the LOD in the file
+        if (targetLOD == TerrainLOD_Underflow)
+            targetLOD = sample->nearestLoadedLODBelow(TerrainLOD_Overflow);
+        sample->ensureAnalyzed(targetLOD);
+
+        // Write out the field descriptions
+        header(std::cout);
+
+        // Analyze the full heightfield
+        dump(std::cout, (*sample)[targetLOD]);
+//        histogram(std::cout, (*sample)[lod]);
+
+        // Analyze progressively smaller chunks
+        dumpSubdivisions(targetLOD, 0.5f);
+        dumpSubdivisions(targetLOD, 0.25f);
+
+        ::exit(0);
     }
 
-
     void header(std::ostream & os) {
+        int fields = 60, norms = 3;
         char * field[] = {
                 "EdgeCurves", "RidgeCurves",
-                "SumElevation", "MinElevation", "MaxElevation", "MeanElevation", "VarElevation",
-                "SumSlope", "MinSlope", "MaxSlope", "MeanSlope", "VarSlope",
-                "SumEdgeLength", "MinEdgeLength", "MaxEdgeLength", "MeanEdgeLength", "VarEdgeLength",
-                "SumEdgeScale", "MinEdgeScale", "MaxEdgeScale", "MeanEdgeScale", "VarEdgeScale",
-                "SumEdgeStrength", "MinEdgeStrength", "MaxEdgeStrength", "MeanEdgeStrength", "VarEdgeStrength",
-                "SumRidgeLength", "MinRidgeLength", "MaxRidgeLength", "MeanRidgeLength", "VarRidgeLength",
-                "SumRidgeScale", "MinRidgeScale", "MaxRidgeScale", "MeanRidgeScale", "VarRidgeScale",
-                "SumRidgeStrength", "MinRidgeStrength", "MaxRidgeStrength", "MeanRidgeStrength", "VarRidgeStrength",
+                "SumElevation", "MinElevation", "MaxElevation", "RangeElevation", "MeanElevation", "VarElevation",
+                "SumSlope", "MinSlope", "MaxSlope", "RangeSlope", "MeanSlope", "VarSlope",
+                "SumEdgeLength", "MinEdgeLength", "MaxEdgeLength", "RangeEdgeLength", "MeanEdgeLength", "VarEdgeLength",
+                "SumEdgeScale", "MinEdgeScale", "MaxEdgeScale", "RangeEdgeScale", "MeanEdgeScale", "VarEdgeScale",
+                "SumEdgeStrength", "MinEdgeStrength", "MaxEdgeStrength", "RangeEdgeStrength", "MeanEdgeStrength", "VarEdgeStrength",
+                "SumRidgeLength", "MinRidgeLength", "MaxRidgeLength", "RangeRidgeLength", "MeanRidgeLength", "VarRidgeLength",
+                "SumRidgeScale", "MinRidgeScale", "MaxRidgeScale", "RangeRidgeScale", "MeanRidgeScale", "VarRidgeScale",
+                "SumRidgeStrength", "MinRidgeStrength", "MaxRidgeStrength", "RangeRidgeStrength", "MeanRidgeStrength", "VarRidgeStrength",
                 "FFT0", "FFT1", "FFT2", "FFT3", "FFT4", "FFT5", "FFT6", "FFT7", "FFT8", "FFT9" };
-        char * tag[] = { "plain", "per_width", "per_height", "per_area" };
-//        for (int i = 0; i < 4; ++i)
-            for (int j = 0; j < 52; ++j) {
-                os << field[j];
-//                os << tag[i] << '_' << field[j];
-//                if (j < 51 || i < 4)
-                if (j < 51)
+        char * norm[] = { "plain", "per_length", "per_area" };
+        for (int i = 0; i < norms; ++i)
+            for (int j = 0; j < fields; ++j) {
+                os << norm[i] << '_' << field[j];
+                if (j < fields - 1 || i < norms - 1)
                     os << ',';
             }
         os << std::endl;
     }
 
-    void dump(std::ostream & os, TerrainSampleConstPtr s) {
-        int div[4];
-        div[0] = 1;
-        div[1] = s->sizes(LOD_30m)[0];
-        div[2] = s->sizes(LOD_30m)[1];
-        div[3] = s->sizes(LOD_30m)[0] * s->sizes(LOD_30m)[1];
+    void dump(std::ostream & os, const TerrainSample::LOD tsl) {
+        int norms = 3;
+        int norm[3];
+        norm[0] = 1;
+        norm[1] = tsl.sizes()[0] + tsl.sizes()[1];
+        norm[2] = tsl.sizes()[0] * tsl.sizes()[1];
 
-        for (int i = 0; i < 1; ++i) {
-            os << s->edges.curves.size() / div[i] << ',' << s->ridges.curves.size() / div[i] << ','
-               << (s->globalElevationStatistics(LOD_30m) / div[i]).stringifyElements(",") << ','
-               << (s->globalSlopeStatistics(LOD_30m) / div[i]).stringifyElements(",") << ','
-               << (s->edges.lengthStats / div[i]).stringifyElements(",") << ','
-               << (s->edges.scaleStats / div[i]).stringifyElements(",") << ','
-               << (s->edges.strengthStats / div[i]).stringifyElements(",") << ','
-               << (s->ridges.lengthStats / div[i]).stringifyElements(",") << ','
-               << (s->ridges.scaleStats / div[i]).stringifyElements(",") << ','
-               << (s->ridges.strengthStats / div[i]).stringifyElements(",") << ','
-               << (s->frequencyContent / div[i]).stringifyElements(",");
-//            if (i < 3)
-//                os << ',';
+        for (int i = 0; i < norms; ++i) {
+            os << tsl.edges().curves.size() / norm[i] << ',' << tsl.ridges().curves.size() / norm[i] << ','
+               << (tsl.globalElevationStatistics() / norm[i]).stringifyElements(",") << ','
+               << (tsl.globalSlopeStatistics() / norm[i]).stringifyElements(",") << ','
+               << (tsl.edges().lengthStats / norm[i]).stringifyElements(",") << ','
+               << (tsl.edges().scaleStats / norm[i]).stringifyElements(",") << ','
+               << (tsl.edges().strengthStats / norm[i]).stringifyElements(",") << ','
+               << (tsl.ridges().lengthStats / norm[i]).stringifyElements(",") << ','
+               << (tsl.ridges().scaleStats / norm[i]).stringifyElements(",") << ','
+               << (tsl.ridges().strengthStats / norm[i]).stringifyElements(",") << ','
+               << (tsl.frequencyContent() / norm[i]).stringifyElements(",");
+            if (i < norms - 1)
+                os << ',';
         }
         os << std::endl;
     }
 
+    void dumpSubdivisions(TerrainLOD lod, scalar_t fraction) {
+        int cells = int(1 / fraction);
+        SizeArray size = (*sample)[lod].sizes();
+        size[0] = int(size[0] * fraction);
+        size[1] = int(size[1] * fraction);
+        if (size[0] % 2 != 0)   size[0]--;
+        if (size[1] % 2 != 0)   size[1]--;
 
-    void constructInterface() {
-        typedef inca::Array<IndexType, 2> IndexArray;
-//        Heightfield output = sample->elevations(0);
-/*        Heightfield output(346, 346);
-        fill(output, 0.0f);
-        selectBE(output, IndexArray(50,50), IndexArray(100,100)) = select(constant<scalar_t, 2>(1.0f), IndexArray(100, 100));
-        inca::ui::WindowPtr win1(new ImageWindow(output, "Heightfield"));
-        registerWindow(win1);*/
-//         inca::ui::WindowPtr winA(new ImageWindow(log(cmagnitude(dft(output))+1), "DFT"));
-//         registerWindow(winA);
-//         inca::ui::WindowPtr winB(new ImageWindow(idft(dft(output)), "DFT n back"));
-//         registerWindow(winB);
+        std::cerr << "Dumping " << (cells * cells) << " subsets of " << lod << endl;
 
-/*        inca::ui::WindowPtr win2(new ImageWindow(sample->ridgeImage, "Ridges"));
-        registerWindow(win2);
-        inca::ui::WindowPtr win3(new ImageWindow(sample->edgeImage, "Edges"));
-        registerWindow(win3);
-        inca::ui::WindowPtr win4(new ImageWindow(sample->hyper, "Hyper"));
-        registerWindow(win4);*/
-/*        Heightfield hf = select(sample->elevations(LOD_30m), IndexArray(45, 62));
-        inca::ui::WindowPtr w;
-        w.reset(new ImageWindow(hf, "Actual Size"));
-        registerWindow(w);
-        w.reset(new ImageWindow(resample(hf, 2), "x2"));
-        registerWindow(w);
-        w.reset(new ImageWindow(resample(hf, 1.1f), "x1.1"));
-        registerWindow(w);
-        w.reset(new ImageWindow(resample(hf, 0.5f), "x0.5"));
-        registerWindow(w);
-        w.reset(new ImageWindow(resample(hf, Array<float, 2>(0.5f, 1.8f)), "diff"));
-        registerWindow(w);*/
+        TerrainSamplePtr chunk;
+        for (int x = 0; x < cells; x++)
+            for (int y = 0; y < cells; y++) {
+                SizeArray bases(x * size[0], y * size[1]);
+                chunk.reset(new TerrainSample(selectBS((*sample)[lod].elevations(), bases, size), lod));
+                chunk->ensureAnalyzed(lod);
+                dump(std::cout, (*chunk)[lod]);
+            }
+    }
+
+    void histogram(std::ostream & os, const TerrainSample::LOD & tsl) {
+        const TerrainSample::LOD::ScalarStatistics & stat = tsl.globalElevationStatistics();
+        for (int i = 0; i < stat.histogram().size(); ++i) {
+            os << stat.histogram()[i];
+            if (i != stat.histogram().size() - 1)
+                os << ',';
+        }
+        os << std::endl;
     }
 
 protected:
-    TerrainSampleConstPtr sample;
-    std::string filename;
+    TerrainSampleConstPtr   sample;
+    TerrainLOD              targetLOD;
+    std::string             filename;
 };
 
 

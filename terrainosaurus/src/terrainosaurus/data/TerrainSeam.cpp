@@ -18,4 +18,7 @@ TerrainSeam::TerrainSeam(TerrainLibraryPtr lib, IDType id1, IDType id2)
     : terrainLibrary(this, lib), tt1(id1), tt2(id2),
       numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
       mutationRatio(this), crossoverRatio(this), selectionRatio(this),
-      aspectRatio(this) { };
+      aspectRatio(this) {
+
+//    smoothness = 0.8f;
+};

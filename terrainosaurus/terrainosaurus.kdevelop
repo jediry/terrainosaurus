@@ -21,7 +21,7 @@
       <mainprogram/>
       <directoryradio>build</directoryradio>
       <customdirectory>/</customdirectory>
-      <programargs>../../data/test.ttl ../../data/test.map</programargs>
+      <programargs>&quot;../../data/gis/dem/35121e1 - Cambria, CA (30m).dem&quot;</programargs>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
       <envvars/>

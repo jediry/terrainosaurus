@@ -89,8 +89,9 @@ public:
     typedef Curve::Point    Point;
 
 
-    CurveTracker() { }
-    CurveTracker(GrayscaleImage * img, std::vector<scalar_t> sc);
+    // Constructors
+    CurveTracker();
+    CurveTracker(const std::vector<scalar_t> & sc, GrayscaleImage * img = NULL);
 
     // Data
     std::vector<scalar_t> scales;
@@ -128,6 +129,7 @@ public:
 
     typedef Heightfield::SizeArray              SizeArray;
     typedef Heightfield::IndexArray             IndexArray;
+    typedef Heightfield::Region                 Region;
     typedef Heightfield::ElementType            Scalar;
     typedef VectorMap::ElementType              Vector;
     typedef math::Statistics<Scalar>            ScalarStatistics;
@@ -165,6 +167,20 @@ public:
     void ensureLoaded() const;
     void ensureAnalyzed() const;
 
+    // Lazy, extra-thorough study mechanism
+    bool studied() const;
+    void study();
+    void ensureStudied() const;
+
+    // Cache filename
+    const std::string & cacheFilename() const;
+    void setCacheFilename(const std::string & f);
+
+protected:
+    // Filename for caching analysis results
+    std::string _cacheFilename;
+    bool _studied;
+
 
 /*---------------------------------------------------------------------------*
  | Loaded & analyzed data
@@ -178,6 +194,7 @@ public:
     const SizeArray & sizes() const;
     const IndexArray & bases() const;
     const IndexArray & extents() const;
+    const Region & bounds() const;
 
     // FIXME Orphaned function (needs other versions)
     void setSizes(const SizeArray & sz);
@@ -198,6 +215,8 @@ public:
     const CurveTracker & edges() const;
     const CurveTracker & ridges() const;
 
+    Heightfield _edgeImage;
+    ScaleSpaceImage scaleSpace;
 protected:
     // Per-cell sample data
     Heightfield _elevations, _localElevationMeans;

@@ -1,5 +1,5 @@
 /*
- * File: TerrainosaurusRenderer.cpp
+ * File: MapRendering.cpp
  *
  * Author: Ryan L. Saunders
  *
@@ -10,28 +10,63 @@
  */
 
 // Import class definition
-#include "TerrainosaurusRenderer.hpp"
+#include "MapRendering.hpp"
 
-// Import Application class definition
-#include "MapExplorer.hpp"
+namespace terrainosaurus {
+    // Template specialization forward declarations
+    template <> Color MapRendering::baseColor<Map::Face>(Map::Face const * f) const;
+    template <> Color MapRendering::baseColor<Map::Edge>(Map::Edge const * e) const;
+    template <> Color MapRendering::baseColor<Map::Vertex>(Map::Vertex const * v) const;
+}
 
 
-// Import OpenGL FIXME
-#if __MS_WINDOZE__
-    // Windows OpenGL seems to need this
-#   include <windows.h>
+// Import OpenGL
+#define GL_HPP_IMPORT_GLU 1
+#include <inca/integration/opengl/GL.hpp>
+using namespace GL;
 
-    // I'd also rather VS didn't complain about casting to boolean
-#   pragma warning (disable : 4800)
-#endif
-#include <GL/gl.h>
-#include <GL/glu.h>
+
+// Features that we support
+#define VERTICES                0
+#define EDGES                   1
+#define FACES                   2
+#define REFINEMENTS             3
+#define ENVELOPES               4
+#define TANGENTS                5
+#define SELECTIONS              6
+#define CLICK_SELECTED_ELEMENTS 7
+#define HOVER_SELECTED_ELEMENTS 8
+#define LASSO_SELECTED_ELEMENTS 9
+#define FEATURE_COUNT           10
+
+// Scalar values that can be set
+#define VERTEX_RADIUS       0
+#define EDGE_WIDTH          1
+#define REFINEMENT_WIDTH    2
+#define ENVELOPE_WIDTH      3
+#define TANGENT_WIDTH       4
+#define VERTEX_SEL_RADIUS   5
+#define EDGE_SEL_RADIUS     6
+#define SCALAR_COUNT        7
+
+// Colors that can be set
+#define VERTEX_COLOR            0
+#define EDGE_COLOR              1
+#define REFINEMENT_COLOR        2
+#define ENVELOPE_COLOR          3
+#define TANGENT_COLOR           4
+#define LASSO_COLOR             5
+#define SELECT_HILIGHT_COLOR    6
+#define HOVER_HILIGHT_COLOR     7
+#define LASSO_HILIGHT_COLOR     8
+#define COLOR_COUNT             9
 
 
 using namespace terrainosaurus;
-using namespace inca::rendering;
+//using namespace inca::rendering;
 
-typedef TerrainosaurusRenderer TR;  // Shorthand for a long name
+#include <list>
+#define CALLBACK
 
 void CALLBACK printTessError(GLenum errorCode) {
     cerr << gluErrorString(errorCode) << endl;
@@ -46,24 +81,8 @@ void CALLBACK combineTessPoly(GLdouble coords[3], GLdouble *vertexData[4],
     *dataOut = vtx;
 }
 
-TR::TerrainosaurusRenderer() :
-    // Map element rendering/selection properties
-    vertexColor(this), edgeColor(this),
-    vertexDiameter(this), edgeWidth(this),
-    vertexSelectionRadius(this), edgeSelectionRadius(this),
-
-    // Refinement rendering properties
-    refinedEdgeColor(this), envelopeBorderColor(this), tangentLineColor(this),
-    refinedEdgeWidth(this), envelopeBorderWidth(this), tangentLineWidth(this),
-
-    // Selected element hilight colors
-    selectHilight(this), hoverSelectHilight(this), lassoSelectHilight(this),
-
-    // Other thingy properties
-    lassoColor(this),
-    minorGridTickColor(this), majorGridTickColor(this),
-    minorGridTickWidth(this), majorGridTickWidth(this)
-{
+MapRendering::MapRendering() {
+    setDefaults();
 
     GLUtesselator * tess = gluNewTess();
     gluTessCallback(tess, GLU_TESS_VERTEX,(GLvoid (CALLBACK*) ( )) &glVertex2dv);
@@ -75,95 +94,117 @@ TR::TerrainosaurusRenderer() :
     tesselator = tess;
 }
 
-TR::~TerrainosaurusRenderer() {
+MapRendering::MapRendering(MapConstPtr m,
+                           MeshSelectionConstPtr ps,
+                           MeshSelectionConstPtr ts) {
+    setDefaults();
+    setMap(m);
+    setPersistentSelection(ps);
+    setTransientSelection(ts);
+}
+
+MapRendering::~MapRendering() {
     gluDeleteTess(static_cast<GLUtesselator *>(tesselator));
+}
+
+
+void MapRendering::setDefaults() {
+    _features.resize(FEATURE_COUNT);
+    _features.at(VERTICES)      = true;
+    _features.at(EDGES)         = true;
+    _features.at(FACES)         = true;
+    _features.at(REFINEMENTS)   = true;
+    _features.at(ENVELOPES)     = true;
+    _features.at(TANGENTS)      = true;
+    _features.at(SELECTIONS)    = true;
+    _features.at(CLICK_SELECTED_ELEMENTS)   = true;
+    _features.at(HOVER_SELECTED_ELEMENTS)   = true;
+    _features.at(LASSO_SELECTED_ELEMENTS)   = true;
+
+    _scalars.resize(SCALAR_COUNT);
+    _scalars.at(VERTEX_RADIUS)      = 4.0f;
+    _scalars.at(EDGE_WIDTH)         = 4.0f;
+    _scalars.at(REFINEMENT_WIDTH)   = 2.0f;
+    _scalars.at(ENVELOPE_WIDTH)     = 1.0f;
+    _scalars.at(TANGENT_WIDTH)      = 2.0f;
+    _scalars.at(VERTEX_SEL_RADIUS)  = 5.0f;
+    _scalars.at(EDGE_SEL_RADIUS)    = 4.0f;
+
+    _colors.resize(COLOR_COUNT);
+    _colors.at(VERTEX_COLOR)            = Color(0.7f, 0.7f, 1.0f, 1.0f);
+    _colors.at(EDGE_COLOR)              = Color(0.0f, 0.5f, 0.5f, 1.0f);
+    _colors.at(REFINEMENT_COLOR)        = Color(0.3f, 0.3f, 1.0f, 1.0f);
+    _colors.at(ENVELOPE_COLOR)          = Color(0.8f, 0.8f, 0.4f, 0.7f);
+    _colors.at(TANGENT_COLOR)           = Color(0.8f, 0.1f, 0.1f, 1.0f);
+    _colors.at(LASSO_COLOR)             = Color(0.1f, 1.0f, 0.1f, 0.5f);
+    _colors.at(SELECT_HILIGHT_COLOR)    = Color(1.0f, 1.0f, 0.5f, 0.7f);
+    _colors.at(HOVER_HILIGHT_COLOR)     = Color(1.0f, 1.0f, 0.5f, 0.8f);
+    _colors.at(LASSO_HILIGHT_COLOR)     = Color(1.0f, 1.0f, 0.5f, 0.5f);
+}
+
+bool MapRendering::toggle(const std::string & feature) {
+    IndexType index = -1;
+    if (feature == "Vertices")
+        index = VERTICES;
+    else if (feature == "Edges")
+        index = EDGES;
+    else if (feature == "Faces")
+        index = FACES;
+    else if (feature == "Refinements")
+        index = REFINEMENTS;
+    else if (feature == "Envelopes")
+        index = ENVELOPES;
+    else if (feature == "Tangents")
+        index = TANGENTS;
+    else if (feature == "Selections")
+        index = SELECTIONS;
+    else if (feature == "ClickSelectedElements")
+        index = CLICK_SELECTED_ELEMENTS;
+    else if (feature == "LassoSelectedElements")
+        index = LASSO_SELECTED_ELEMENTS;
+    else if (feature == "HoverSelectedElements")
+        index = HOVER_SELECTED_ELEMENTS;
+
+    if (index != -1) {
+        _features.at(index) = ! _features.at(index);
+        cerr << feature << ": " << (_features.at(index) ? "on" : "off") << endl;
+    }
+}
+
+void MapRendering::setScalar(const std::string & name, scalar_arg_t s) {
+
+}
+void MapRendering::setColor(const std::string & name, const Color & c) {
+
+}
+
+
+MapConstPtr MapRendering::map() const {
+    return _map;
+}
+MeshSelectionConstPtr MapRendering::persistentSelection() const {
+    return _persistentSelection;
+}
+MeshSelectionConstPtr MapRendering::transientSelection() const {
+    return _transientSelection;
+}
+void MapRendering::setMap(MapConstPtr m) {
+    _map = m;
+}
+void MapRendering::setPersistentSelection(MeshSelectionConstPtr s) {
+    _persistentSelection = s;
+}
+void MapRendering::setTransientSelection(MeshSelectionConstPtr s) {
+    _transientSelection = s;
 }
 
 
 /*---------------------------------------------------------------------------*
  | Rendering functions
  *---------------------------------------------------------------------------*/
-// Render a visible representation of the grid we're using
-void TR::renderGrid() {
-    // Render a regular grid over the window
-    Point ps, pe;
-    PlanarGridConstPtr g = grid();
-    Vector extents = g->extents();
-    scalar_t halfX = extents[0] / 2.0,
-             halfY = extents[1] / 2.0;
-    scalar_t dx, dy,
-             minorTickSpacing = g->minorTickSpacing(),
-             majorTickSpacing = g->majorTickSpacing();
 
-    // Render minor grid ticks
-    if (minorTickSpacing > 0.0) {
-        rasterizer().setLineWidth(minorGridTickWidth());
-        rasterizer().setColor(minorGridTickColor());
-        dx = dy = minorTickSpacing;
-
-        beginRenderImmediate(Lines);
-
-            // Draw horizontal grid lines
-            ps[0] = -halfX; pe[0] = halfX;
-            for (scalar_t y = 0; y <= halfY; y += dy) {
-                ps[1] = pe[1] = y;
-                vertexAt(ps);
-                vertexAt(pe);
-                ps[1] = pe[1] = -y;
-                vertexAt(ps);
-                vertexAt(pe);
-            }
-
-            // Draw vertical grid lines
-            ps[1] = -halfY; pe[1] = halfY;
-            for (scalar_t x = 0; x <= halfX; x += dx) {
-                ps[0] = pe[0] = x;
-                vertexAt(ps);
-                vertexAt(pe);
-                ps[0] = pe[0] = -x;
-                vertexAt(ps);
-                vertexAt(pe);
-            }
-
-        endRenderImmediate();
-    }
-
-    // Render minor grid ticks
-    if (majorTickSpacing > 0.0) {
-        rasterizer().setLineWidth(majorGridTickWidth());
-        rasterizer().setColor(majorGridTickColor());
-        dx = dy = majorTickSpacing;
-
-        beginRenderImmediate(Lines);
-
-            // Draw horizontal grid lines
-            ps[0] = -halfX; pe[0] = halfX;
-            for (scalar_t y = 0; y <= halfY; y += dy) {
-                ps[1] = pe[1] = y;
-                vertexAt(ps);
-                vertexAt(pe);
-                ps[1] = pe[1] = -y;
-                vertexAt(ps);
-                vertexAt(pe);
-            }
-
-            // Draw vertical grid lines
-            ps[1] = -halfY; pe[1] = halfY;
-            for (scalar_t x = 0; x <= halfX; x += dx) {
-                ps[0] = pe[0] = x;
-                vertexAt(ps);
-                vertexAt(pe);
-                ps[0] = pe[0] = -x;
-                vertexAt(ps);
-                vertexAt(pe);
-            }
-
-        endRenderImmediate();
-    }
-}
-
-
-void TR::renderLasso(Pixel p1, Pixel p2) {
+#if 0
+void MapRendering::renderLasso(Pixel p1, Pixel p2) {
     // Find the four corner points of the lasso FIXME
     Point2D ll(std::min(p1[0], p2[0]), std::min(p1[1], p2[1]));
     Point2D ur(std::max(p1[0], p2[0]), std::max(p1[1], p2[1]));
@@ -176,7 +217,7 @@ void TR::renderLasso(Pixel p1, Pixel p2) {
     projectionMatrix().push(screenspace);
     viewMatrix().push();
     viewMatrix().reset();
-    
+
     rasterizer().setColor(lassoColor());
     beginRenderImmediate(LineLoop);
         vertexAt(ll);
@@ -188,49 +229,58 @@ void TR::renderLasso(Pixel p1, Pixel p2) {
     projectionMatrix.pop();
     viewMatrix.pop();
 }
+#endif
 
-void TR::renderMap(unsigned int flags) {
-    // Set up rendering properties
-    rasterizer().setLineSmoothingEnabled(true);
-    rasterizer().setPointSmoothingEnabled(true);
-    beginRenderPass(Transparency);
-        renderFaces<false>(flags);
-        renderEdges<false>(flags);
-        renderVertices<false>(flags);
-        renderRefinements(flags);
-    endRenderPass();
+void MapRendering::operator()(Renderer & renderer) {
+    Renderer::Rasterizer & rasterizer = renderer.rasterizer();
+    rasterizer.setLineSmoothingEnabled(true);
+    rasterizer.setPointSmoothingEnabled(true);
+    rasterizer.setAlphaBlendingEnabled(true);
+    GL::glEnable(GL_POINT_SMOOTH);
+    GL::glEnable(GL_LINE_SMOOTH);
+    GL::glEnable(GL_BLEND);
+    GL::glDisable(GL_DEPTH_TEST);
+
+    renderFaces<false>(renderer);
+    renderEdges<false>(renderer);
+    renderVertices<false>(renderer);
+    renderRefinements<false>(renderer);
 }
 
-
 template <bool forSelection>
-void TR::renderVertices(unsigned int flags) {
-    if (! (flags & RenderVertices))
+void MapRendering::renderVertices(Renderer & renderer) {
+    if (! _features.at(VERTICES))
         return;                     // Not supposed to draw these...leave!
 
+    Renderer::Rasterizer & rasterizer = renderer.rasterizer();
+
     // Set up the appropriate point size
-    if (!forSelection)  setPointDiameter(vertexDiameter);
+    if (forSelection)   rasterizer.setPointDiameter(2 * _scalars.at(VERTEX_SEL_RADIUS));
+    else                rasterizer.setPointDiameter(2 * _scalars.at(VERTEX_RADIUS));
 
     // Render each vertex
-    const Map::VertexPtrList &vertices = map()->vertices();
+    const Map::VertexPtrList & vertices = map()->vertices();
     Map::VertexPtrList::const_iterator vs;
     for (vs = vertices.begin(); vs != vertices.end(); ++vs) {
         Map::VertexPtr v = *vs;
-        
+
         // Set either selection ID, or color, depending on mode
-        if (forSelection)       setSelectionID(v->id());
-        else                    setColor(pickColor(v, flags));
+        if (forSelection)   rasterizer.setSelectionID(v->id());
+        else                rasterizer.setCurrentColor(pickColor(v));
 
         // Render the vertex
-        beginRenderImmediate(Points);
-            vertexAt(v->position());
-        endRenderImmediate();
+        rasterizer.beginPrimitive(inca::rendering::Points);
+            rasterizer.vertexAt(v->position());
+        rasterizer.endPrimitive();
     }
 }
 
 template <bool forSelection>
-void TR::renderFaces(unsigned int flags) {
-    if (! (flags & RenderFaces))
+void MapRendering::renderFaces(Renderer & renderer) {
+    if (! _features.at(FACES))
         return;                     // Not supposed to draw these...leave!
+
+    Renderer::Rasterizer & rasterizer = renderer.rasterizer();
 
     const Map::FacePtrList & faces = map()->faces();
     Map::FacePtrList::const_iterator fs;
@@ -238,23 +288,25 @@ void TR::renderFaces(unsigned int flags) {
         Map::FacePtr f = *fs;
 
         // Set either selection ID, or color, depending on mode
-        if (forSelection)       setSelectionID(f->id());
-        else                    setColor(pickColor(f, flags));
+        if (forSelection)   rasterizer.setSelectionID(f->id());
+        else                rasterizer.setCurrentColor(pickColor(f));
 
         // Draw the region
-        //beginRenderImmediate(Polygon);
-        //    SizeType count = r.vertexCount();
-        //    for (IndexType i = 0; i < IndexType(count); ++i)
-        //        // This could DEFINITELY be done faster...but this'll get ripped
-        //        // out anyway once we support concave polys
-        //        vertexAt(r.vertex(i).position());
-        //endRenderImmediate();
+//         rasterizer.beginPrimitive(inca::rendering::Polygon);
+//             Map::Face::ccw_vertex_iterator vs, done;
+//             for (vs = f->verticesCCW(); vs != done; ++vs)
+//                 // This could DEFINITELY be done faster...but this'll get ripped
+//                 // out anyway once we support concave polys
+//                 rasterizer.vertexAt(vs->position());
+//         rasterizer.endPrimitive();
+//         continue;
+
         GLUtesselator * tess = static_cast<GLUtesselator *>(tesselator);
-        gluTessBeginPolygon(tess, NULL); 
+        gluTessBeginPolygon(tess, NULL);
             gluTessBeginContour(tess);
 
             // Go through each edge of the face and draw each vertex
-            list<GLdouble *> vtx;
+            std::list<GLdouble *> vtx;
             Map::Face::ccw_edge_iterator es, end_e;
             for (es = f->edgesCCW(); es != end_e; ++es) {
                 Map::EdgePtr e = *es;
@@ -273,7 +325,7 @@ void TR::renderFaces(unsigned int flags) {
                             gluTessVertex(tess, vert, vert);
                         }
                     } else {
-                        Point p = e->endVertex()->position();
+                        Map::Point p = e->endVertex()->position();
                         GLdouble * vert = new GLdouble[2];
                         vtx.push_back(vert);
                         vert[0] = p[0];
@@ -293,7 +345,7 @@ void TR::renderFaces(unsigned int flags) {
                             gluTessVertex(tess, vert, vert);
                         }
                     } else {
-                        Point p = e->startVertex()->position();
+                        Map::Point p = e->startVertex()->position();
                         GLdouble * vert = new GLdouble[2];
                         vtx.push_back(vert);
                         vert[0] = p[0];
@@ -305,7 +357,7 @@ void TR::renderFaces(unsigned int flags) {
 
             gluTessEndContour(tess);
         gluTessEndPolygon(tess);
-        list<GLdouble *>::iterator pt;
+        std::list<GLdouble *>::iterator pt;
 //        cerr << "Deleting " << vtx.size() << " pointers:\n";
         for (pt = vtx.begin(); pt != vtx.end(); ++pt) {
 //            cerr << "\t" << (*pt)[0] << ", " << (*pt)[1] << endl;
@@ -315,68 +367,76 @@ void TR::renderFaces(unsigned int flags) {
 }
 
 template <bool forSelection>
-void TR::renderEdges(unsigned int flags) {
-    if (! (flags & RenderEdges))
+void MapRendering::renderEdges(Renderer & renderer) {
+    if (! _features.at(EDGES))
         return;                     // Not supposed to draw these...leave!
 
+    Renderer::Rasterizer & rasterizer = renderer.rasterizer();
+
     // Set up the appropriate line width
-    if (forSelection)   rasterizer().setLineWidth(edgeSelectionRadius());
-    else                rasterizer().setLineWidth(edgeWidth());
+    if (forSelection)   rasterizer.setLineWidth(2 * _scalars.at(EDGE_SEL_RADIUS));
+    else                rasterizer.setLineWidth(_scalars.at(EDGE_WIDTH));
 
     // Render each edge
-    const Map::EdgePtrList &edges = map()->edges();
+    const Map::EdgePtrList & edges = map()->edges();
     Map::EdgePtrList::const_iterator es;
     for (es = edges.begin(); es != edges.end(); ++es) {
         Map::EdgePtr e = *es;
 
         // Set either selection ID, or color, depending on mode
-        if (forSelection)       setSelectionID(e->id());
-        else                    setColor(pickColor(e, flags));
+        if (forSelection)   rasterizer.setSelectionID(e->id());
+        else                rasterizer.setCurrentColor(pickColor(e));
 
         // Render the line
-        beginRenderImmediate(Lines);
-            vertexAt(e->startVertex()->position());
-            vertexAt(e->endVertex()->position());
-        endRenderImmediate();
+        rasterizer.beginPrimitive(inca::rendering::Lines);
+            rasterizer.vertexAt(e->startVertex()->position());
+            rasterizer.vertexAt(e->endVertex()->position());
+        rasterizer.endPrimitive();
     }
 }
 
 // Render map refinements and decorations
-void TR::renderRefinements(unsigned int flags) {
-    if (! (flags & RefinementMask))
-        return;                     // Not supposed to draw these...leave!
+template <bool forSelection>
+void MapRendering::renderRefinements(Renderer & renderer) {
+//    if (! _features.at(REFINEMENTS))
+//        return;                     // Not supposed to draw these...leave!
+
+    Renderer::Rasterizer & rasterizer = renderer.rasterizer();
 
     // Some tools for later
-    const Map::VertexPtrList &vertices = map()->vertices();
-    const Map::EdgePtrList &edges = map()->edges();
+    const Map::VertexPtrList & vertices = map()->vertices();
+    const Map::EdgePtrList & edges = map()->edges();
     Map::VertexPtrList::const_iterator vi;
     Map::EdgePtrList::const_iterator ei;
 
     // Render edges with refinements
-    if (flags & RenderRefinedEdges) {
+    if (_features.at(REFINEMENTS)) {
         // Set up the appropriate line width & color
-        rasterizer().setLineWidth(refinedEdgeWidth());
-        rasterizer().setColor(refinedEdgeColor());
+        rasterizer.setLineWidth(_scalars.at(REFINEMENT_WIDTH));
+        rasterizer.setCurrentColor(_colors.at(REFINEMENT_COLOR));
 
         // Draw each existing Edge refinement
         for (ei = edges.begin(); ei != edges.end(); ++ei) {
             Map::EdgeConstPtr e = *ei;
             if (e->isRefined()) {
-                beginRenderImmediate(LineStrip);
+                rasterizer.beginPrimitive(inca::rendering::LineStrip);
                     const Map::PointList & refinement = e->refinement();
                     Map::PointList::const_iterator pt;
                     for (pt = refinement.begin(); pt != refinement.end(); ++pt)
-                        vertexAt(*pt);
-                endRenderImmediate();
+                        rasterizer.vertexAt(*pt);
+                rasterizer.endPrimitive();
             }
         }
     }
 
     // Render Edge envelopes
-    if (flags & RenderEnvelopeBorders) {
+    if (_features.at(ENVELOPES)) {
         // Set up the appropriate line width & color
-        rasterizer().setLineWidth(envelopeBorderWidth());
-        rasterizer().setColor(envelopeBorderColor());
+        rasterizer.setLineWidth(_scalars.at(ENVELOPE_WIDTH));
+        rasterizer.setCurrentColor(_colors.at(ENVELOPE_COLOR));
+
+        // Get a referenec to the view transformation matrix
+        Renderer::MatrixStack & viewMatrix = renderer.viewMatrix();
 
         // Draw each Edge envelope
         Vector3D Z(0, 0, 1);    // Rotate around this
@@ -384,17 +444,17 @@ void TR::renderRefinements(unsigned int flags) {
             Map::EdgeConstPtr e = *ei;
             const Map::RangeList & envelope = e->envelope();
             if (envelope.size() > 1) {
-                viewMatrix().push();
+                viewMatrix.push();
                     Point2D p2 = e->startPoint();
-                    api::apply_translation(Point3D(p2[0], p2[1], 0.0));
-                    api::apply_rotation(e->angle(), Z);
+                    viewMatrix.translate(Point3D(p2[0], p2[1], 0.0));
+                    viewMatrix.rotate(e->angle(), Z);
                     scalar_t dx = e->length() / (envelope.size() - 1);
-                    Point p(0.0);
-                    beginRenderImmediate(LineLoop);
+                    Point3D p(scalar_t(0));
+                    rasterizer.beginPrimitive(inca::rendering::LineLoop);
                         Map::RangeList::const_iterator ri;
                         for (ri = envelope.begin(); ri != envelope.end(); ++ri) {
                             p[1] = ri->first;
-                            vertexAt(p);
+                            rasterizer.vertexAt(p);
                             p[0] += dx;
                         }
 
@@ -402,67 +462,51 @@ void TR::renderRefinements(unsigned int flags) {
                         for (rri = envelope.rbegin(); rri != envelope.rend(); ++rri) {
                             p[0] -= dx;
                             p[1] = rri->second;
-                            vertexAt(p);
+                            rasterizer.vertexAt(p);
                         }
-                    endRenderImmediate();
-                viewMatrix().pop();
+                    rasterizer.endPrimitive();
+                viewMatrix.pop();
             }
         }
     }
 
     // Render Vertex tangent lines
-    if (flags & RenderTangentLines) {
+    if (_features.at(TANGENTS)) {
         // Set up the appropriate line width & color
-        rasterizer().setLineWidth(tangentLineWidth());
-        rasterizer().setColor(tangentLineColor());
+        rasterizer.setLineWidth(_scalars.at(TANGENT_WIDTH));
+        rasterizer.setCurrentColor(_colors.at(TANGENT_COLOR));
 
         // Draw each valence-2 Vertex tangent line
         for (vi = vertices.begin(); vi != vertices.end(); ++vi) {
             Map::VertexConstPtr v = *vi;
             if (v->edgeCount() == 2) {
-               beginRenderImmediate(LineStrip);
+               rasterizer.beginPrimitive(inca::rendering::LineStrip);
 //                const Map::RangeList & envelope = e->envelope();
 //                Map::RangeList::const_iterator rg;
 //                for (rg = refinement.begin(); rg != refinement.end(); ++rg)
 //                    vertexAt(*pt);
-                endRenderImmediate();
+                rasterizer.endPrimitive();
             }
         }
     }
 }
 
-// UGLY HACK! ICK! XXX
-template <>
-void TR::renderMapElements<Map::Face>(bool const forSelection, unsigned int flags) {
-    if (forSelection)   renderFaces<true>(flags);
-    else                renderFaces<false>(flags);
-}
-template <>
-void TR::renderMapElements<Map::Edge>(bool const forSelection, unsigned int flags) {
-    if (forSelection)   renderEdges<true>(flags);
-    else                renderEdges<false>(flags);
-}
-template <>
-void TR::renderMapElements<Map::Vertex>(bool const forSelection, unsigned int flags) {
-    if (forSelection)   renderVertices<true>(flags);
-    else                renderVertices<false>(flags);
-}
 
 template <class ElementType>
-Color TR::pickColor(ElementType const * e, unsigned int flags) const {
+Color MapRendering::pickColor(ElementType const * e) const {
     // If we're not rendering selected things at all, we can quit now
-    if (! (flags & SelectionMask))
+    if (! _features.at(SELECTIONS))
         return baseColor(e);
 
     // If we are 'selected', we might want to draw that
-    else if (persistentSelection()->isSelected(e) && (flags & RenderSelected))
+    else if (persistentSelection()->isSelected(e) && _features.at(CLICK_SELECTED_ELEMENTS))
         return selectedColor(e);
 
     // Otherwise, this might be a "semi" selected element
     else if (transientSelection()->isSelected(e))
-        if (flags & RenderLassoSelected)        // ...then  within the lasso
+        if (_features.at(LASSO_SELECTED_ELEMENTS))      // ...then  within the lasso
             return lassoSelectedColor(e);
-        else if (flags & RenderHoverSelected)   // ...then under the mouse
+        else if (_features.at(HOVER_SELECTED_ELEMENTS)) // ...then under the mouse
             return hoverSelectedColor(e);
 
     // Failing all that, just return the base color
@@ -471,52 +515,52 @@ Color TR::pickColor(ElementType const * e, unsigned int flags) const {
 
 // Base color for a Face (map region)
 template <>
-Color TR::baseColor<Map::Face>(Map::Face const * f) const {
+Color MapRendering::baseColor<Map::Face>(Map::Face const * f) const {
     return f->terrainType()->color();
 }
 
 // Base color for an Edge (map edge)
 template <>
-Color TR::baseColor<Map::Edge>(Map::Edge const * e) const {
-    return edgeColor();
+Color MapRendering::baseColor<Map::Edge>(Map::Edge const * e) const {
+    return _colors.at(EDGE_COLOR);
 }
 
 // Base color for a Vertex
 template <>
-Color TR::baseColor<Map::Vertex>(Map::Vertex const * v) const {
-    return vertexColor();
+Color MapRendering::baseColor<Map::Vertex>(Map::Vertex const * v) const {
+    return _colors.at(VERTEX_COLOR);
 }
 
 // Selected color (calculated from base color and selection hilight)
 template <class ElementType>
-Color TR::selectedColor(ElementType const * e) const {
-    return baseColor(e) % selectHilight();
+Color MapRendering::selectedColor(ElementType const * e) const {
+    return baseColor(e) % _colors.at(SELECT_HILIGHT_COLOR);
 }
 
 // Lasso-selected color (calculated from base color and lasso hilight)
 template <class ElementType>
-Color TR::lassoSelectedColor(ElementType const * e) const {
-    return baseColor(e) % lassoSelectHilight();
+Color MapRendering::lassoSelectedColor(ElementType const * e) const {
+    return baseColor(e) % _colors.at(LASSO_HILIGHT_COLOR);
 }
 
 // Mouse-hover color (calculated from base color and hover hilight)
 template <class ElementType>
-Color TR::hoverSelectedColor(ElementType const * e) const {
-    return baseColor(e) % hoverSelectHilight();
+Color MapRendering::hoverSelectedColor(ElementType const * e) const {
+    return baseColor(e) % _colors.at(HOVER_HILIGHT_COLOR);
 }
 
-
+#if 0
 /*---------------------------------------------------------------------------*
  | Selection/geometric functions
  *---------------------------------------------------------------------------*/
 template <class ElementType>
-void TR::mapElementsAroundPoint(Point2D p, Vector2D size, MeshSelection &s) {
+void MapRendering::mapElementsAroundPoint(Point2D p, Vector2D size, MeshSelection &s) {
     // Sanity-check the picking criteria
     if (size[0] < 1)    size[0] = 1;    // If any dimension is zero, the pick
     if (size[1] < 1)    size[1] = 1;    // region is degenerate so fix it
 
     projectionMatrix().push();
-    projectionMatrix().preMultiply(pickingMatrix(??, ??));
+    projectionMatrix().preMultiply(pickingMatrix(, ));
 
     beginRenderPass(Selection);
         renderMapElements<ElementType>(true, RenderAll);
@@ -530,7 +574,7 @@ void TR::mapElementsAroundPoint(Point2D p, Vector2D size, MeshSelection &s) {
     checkForError();
 }
 
-void TR::mapElementsAroundPixel(Pixel p, MeshSelection &s) {
+void MapRendering::mapElementsAroundPixel(Pixel p, MeshSelection &s) {
     scalar_t size;      // How wide a region around the pixel to look
     Point2D point(p[0], height() - p[1]);
 
@@ -554,7 +598,7 @@ void TR::mapElementsAroundPixel(Pixel p, MeshSelection &s) {
     }
 }
 
-void TR::mapElementsWithinLasso(Pixel start, Pixel end, MeshSelection &s) {
+void MapRendering::mapElementsWithinLasso(Pixel start, Pixel end, MeshSelection &s) {
     // Translate the lasso bounds into a center/size combination
     Point2D pStart(start[0], height() - start[1]),
             pEnd(end[0], height() - end[1]);
@@ -585,7 +629,7 @@ void TR::mapElementsWithinLasso(Pixel start, Pixel end, MeshSelection &s) {
 
 // Create a spike at the specifed pixel, handling snapping to any nearby
 // Map::Vertex or Map::Edge
-Map::Spike TR::spikeAtPixel(Pixel p) {
+Map::Spike MapRendering::spikeAtPixel(Pixel p) {
     Map::Spike spike;   // The result we're looking for
     MeshSelection temp;  // A temporary selection to hold the result
     Vector2D size;      // How far around the pixel center to look
@@ -604,7 +648,7 @@ Map::Spike TR::spikeAtPixel(Pixel p) {
         size = Vector2D(edgeSelectionRadius() * 2);
         mapElementsAroundPoint<Map::Edge>(point, size, temp);
     }
-    
+
     // Now, if we actually hit anything, snap to it
     if (temp.size() > 0) {
         switch (temp.elementType()) {
@@ -653,7 +697,7 @@ Map::Spike TR::spikeAtPixel(Pixel p) {
 }
 
 // Find the 2D point on the ground plane
-TR::Point TR::pointOnGroundPlane(Pixel p) {
+MapRendering::Point MapRendering::pointOnGroundPlane(Pixel p) {
     Point3D screen(p[0], height() - p[1], 1.0);
     Point3D p0 = screenToWorld(screen); // Unproject at two different Z values
     screen[2] = 2.0;
@@ -664,3 +708,5 @@ TR::Point TR::pointOnGroundPlane(Pixel p) {
     return Point2D(p0[0] + (p1[0] - p0[0]) * t,     // The point at that T value
                    p0[1] + (p1[1] - p0[1]) * t);
 }
+
+#endif

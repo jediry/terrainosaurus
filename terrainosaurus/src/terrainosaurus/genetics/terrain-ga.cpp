@@ -25,23 +25,12 @@
 using namespace inca::math;
 using namespace terrainosaurus;
 typedef TerrainChromosome::Gene             Gene;
-typedef TerrainFitnessMeasure               FitnessMeasure;
-//typedef TerrainChromosome::FitnessMeasure   FitnessMeasure;
 
 #include <inca/raster/operators/arithmetic>
 #include <inca/raster/operators/statistic>
 
-// Some fixed parameters for the GA
-#define POPULATION_SIZE     5
-#define EVOLUTION_CYCLES    5
-#define MAX_CROSSOVER_WIDTH 4
-
-#define MAX_JITTER  0
-#define MAX_SCALE   1.1f
-#define MAX_OFFSET  50.0f
-
-// HACKED compare-to sample
-terrainosaurus::TerrainSamplePtr matchSample;
+// GLOBAL timestep
+int timestep;
 
 // HACK -- should be in math
 namespace std {
@@ -49,6 +38,23 @@ namespace std {
         return terrainosaurus::Vector2D(std::pow(v[0], f), std::pow(v[1], f));
     }
 }
+
+// GA global parameters, which may be set from the TTL file
+int      terrainosaurus::POPULATION_SIZE        = 5;
+int      terrainosaurus::EVOLUTION_CYCLES       = 5;
+scalar_t terrainosaurus::SELECTION_RATIO        = 0.75f;
+scalar_t terrainosaurus::ELITE_RATIO            = 0.2f;
+scalar_t terrainosaurus::MUTATION_PROBABILITY   = 0.1f;
+scalar_t terrainosaurus::MUTATION_RATIO         = 0.5f;
+scalar_t terrainosaurus::CROSSOVER_PROBABILITY  = 0.2f;
+scalar_t terrainosaurus::CROSSOVER_RATIO        = 0.5f;
+
+// Crossover/mutation operator limits
+int      terrainosaurus::MAX_CROSSOVER_WIDTH    = 4;
+int      terrainosaurus::MAX_JITTER_PIXELS      = 0;
+scalar_t terrainosaurus::MAX_SCALE_FACTOR       = 1.1f;
+scalar_t terrainosaurus::MAX_OFFSET_AMOUNT      = 50.0f;
+
 
 // This function runs the entire GA for a particular level of detail
 Heightfield terrainosaurus::refineHeightfield(const TerrainSample::LOD & pattern,
@@ -59,14 +65,8 @@ Heightfield terrainosaurus::refineHeightfield(const TerrainSample::LOD & pattern
     // The set of chromosomes we're evolving (initially all 'dead')
     Population population(POPULATION_SIZE);
 
-    scalar_t mutationProbability  = 0.1f;   // Odds of being mutated
-    scalar_t crossoverProbability = 0.2f;   // Odds of being crossed
-//    scalar_t mutationProbability  = 0.0f;   // Odds of being mutated
-//    scalar_t crossoverProbability = 0.0f;   // Odds of being crossed
-    scalar_t mutationRatio  = 0.5f;         // % of genes to mutate
-    scalar_t crossoverRatio = 0.5f;         // % of genes to cross
-    scalar_t selectionRatio = 0.75f;        // % of chromosomes to keep
-    scalar_t eliteRatio     = 0.2f;         // % of 'best' chromosomes to keep
+    timestep = 0;
+
     RandomUniform<scalar_t>  randomFraction(0, 1);
     RandomUniform<IndexType> randomChromosome(0, population.size() - 1);
     for (int cycle = 0; cycle < EVOLUTION_CYCLES; ++cycle) {
@@ -82,30 +82,30 @@ Heightfield terrainosaurus::refineHeightfield(const TerrainSample::LOD & pattern
         // percent of the chromosomes to continue to the next cycle and kill
         // off the rest (the top 'eliteRatio' percent are guaranteed to be
         // kept).
-        prunePopulation(population, selectionRatio, eliteRatio);
+        prunePopulation(population, SELECTION_RATIO, ELITE_RATIO);
 
         // Step 3:
         // Cross genetic material between chromosomes in the population.
         // Approximately 2*'crossoverProbability' percent of the population
         // will be crossed, with at most 'crossoverRatio' percent of the genes
         // exchanged between them.
-        if (crossoverProbability > 0) {
+        if (CROSSOVER_PROBABILITY > 0) {
             for (IndexType i = 0; i < population.size(); ++i)
                 // XXX This may cross with a 'dead' chromosome...but I'm lazy
-                if (population[i].isAlive() && randomFraction() < crossoverProbability)
+                if (population[i].isAlive() && randomFraction() < CROSSOVER_PROBABILITY)
                     cross(population[i],
                           population[randomChromosome()],
-                          crossoverRatio);
+                          CROSSOVER_RATIO);
         }
 
         // Step 4:
         // Mutate genes within the chromosomes themselves. Approximately
         // 'mutationProbability' percent of the population will be mutated,
         // with at most 'mutationRatio' percent of the genes being affected.
-        if (mutationProbability > 0) {
+        if (MUTATION_PROBABILITY > 0) {
             for (IndexType i = 0; i < population.size(); ++i)
-                if (population[i].isAlive() && randomFraction() < mutationProbability)
-                    mutate(population[i], mutationRatio);
+                if (population[i].isAlive() && randomFraction() < MUTATION_PROBABILITY)
+                    mutate(population[i], MUTATION_RATIO);
         }
     }
 
@@ -176,7 +176,7 @@ void terrainosaurus::prunePopulation(Population & population,
         // Now, we randomly choose the remaining amount to select from among
         // the non-elites.
         RandomUniform<scalar_t> randomFraction(0.0f, 1.0f);
-        CumulativeFitness cumulativeFitness = getCumulativeFitness(population);
+        PMF pmf = getFitnessPMF(population);
         int attempts = 0;
         while (numberSelected < numberToSelect) {
             // Select an individual from the old population to carry over
@@ -192,7 +192,7 @@ void terrainosaurus::prunePopulation(Population & population,
                 // picked, since they occupy a larger proportion of the
                 // cumulative probability distribution.
                 scalar_t pickPoint = randomFraction();
-                index = cumulativeFitness.indexFor(pickPoint);
+                index = pmf.indexFor(pickPoint);
                 attempts++;
             } while (selected[index]);  // Keep trying 'til we get a new one
 
@@ -225,14 +225,14 @@ void terrainosaurus::createChromosome(TerrainChromosome & c,
     // Make this chromosome alive
     c.setAlive(true);
 
-    // Point the Chromosome to its pattern LOD
+    // Point the Chromosome to its pattern LOD & terrain-type map
     c.setPattern(pattern);
     c.setMap(map);
 
     // Figure out how many genes we want in each direction
     Dimension hfSize(pattern.sizes());
-    SizeType spacing = geneSpacing(c.levelOfDetail());
-    Dimension size = hfSize / spacing;
+    SizeType spacing = blendPatchSpacing(pattern.levelOfDetail());
+    Dimension size = hfSize / spacing + Dimension(1);
     if (hfSize[0] % spacing != 0) size[0]++;    // Round up # of genes
     if (hfSize[1] % spacing != 0) size[1]++;
     c.resize(size);
@@ -241,7 +241,44 @@ void terrainosaurus::createChromosome(TerrainChromosome & c,
     Pixel idx;
     for (idx[0] = 0; idx[0] < c.size(0); ++idx[0])
         for (idx[1] = 0; idx[1] < c.size(1); ++idx[1])
-            randomize(c.gene(idx), map.terrainType(idx));
+            randomize(c(idx), map.terrainType(c(idx).targetCenter()));
+
+    cerr << "Initialized chromosome with " << c.size(0) << "x" << c.size(1) << " genes\n";
+}
+
+
+void terrainosaurus::createChromosome(TerrainChromosome & c,
+                                      const TerrainSample::LOD & sample) {
+    // Create a very boring map
+    TerrainLibraryPtr tl = const_cast<TerrainSample::LOD &>(sample).getObject()
+                            ->terrainType()->terrainLibrary();
+    MapRasterizationPtr map(new MapRasterization(tl));
+    MapRasterization::LOD::IDMap terrainTypes(sample.bounds());
+    fill(terrainTypes, sample.terrainType().terrainTypeID());
+    (*map)[sample.levelOfDetail()].createFromRaster(terrainTypes);
+
+    // Make this chromosome alive
+    c.setAlive(true);
+
+    // Point the Chromosome to its pattern LOD & terrain-type map
+    c.setPattern(sample);
+    c.setMap((*map)[sample.levelOfDetail()]);
+
+    // Figure out how many genes we want in each direction
+    Dimension hfSize(sample.sizes());
+    SizeType spacing = blendPatchSpacing(sample.levelOfDetail());
+    Dimension size = hfSize / spacing;
+    if (hfSize[0] % spacing != 0) size[0]++;    // Round up # of genes
+    if (hfSize[1] % spacing != 0) size[1]++;
+    c.resize(size);
+
+    // Populate the gene grid with the sample data
+    Pixel idx;
+    for (idx[0] = 0; idx[0] < c.size(0); ++idx[0])
+        for (idx[1] = 0; idx[1] < c.size(1); ++idx[1]) {
+            c(idx).setTerrainSample(sample);
+            reset(c(idx));
+        }
 
     cerr << "Initialized chromosome with " << c.size(0) << "x" << c.size(1) << " genes\n";
 }
@@ -270,13 +307,6 @@ terrainosaurus::createGene(const TerrainSample::LOD & ts, const Pixel & p) {
 }
 
 
-// This function creates a random Gene given a terrain type and LOD
-TerrainChromosome::Gene
-terrainosaurus::createRandomGene(const TerrainType::LOD & tt) {
-
-
-    return g;
-}
 #endif
 
 // Calculate the fitness for each individual in the population, then
@@ -291,9 +321,9 @@ IndexType terrainosaurus::calculateFitness(Population & population) {
     scalar_t maxFitness = 0;
     for (int i = 0; i < population.size(); ++i) {
         calculateFitness(population[i]);            // Calculate this guy's fitness
-        popStats(population[i].fitness().overall());    // Incorporate into the stats
+        popStats(population[i].fitness());          // Incorporate into the stats
         if (population[i].fitness().overall() > maxFitness) {   // Update 'max'
-            maxFitness = population[i].fitness().overall();
+            maxFitness = population[i].fitness();
             mostFit = i;
         }
     }
@@ -308,10 +338,9 @@ IndexType terrainosaurus::calculateFitness(Population & population) {
                  "\tMean:       " << popStats.mean() << "\n"
                  "\tVariance:   " << popStats.variance() << std::endl;
 
-    // Calculate the normalized fitness for each individual
+    // Calculate the normalized fitness for each individual (s.t. sum(pop) == 1.0)
     for (int i = 0; i < population.size(); ++i)
-        population[i].fitness().normalized()
-            = (population[i].fitness().overall() - popStats.min()) / popStats.max();
+        population[i].fitness().normalized() = population[i].fitness() / popStats.sum();
 
     // Print the results
     std::cout << "Population normalized fitness:\n";
@@ -321,41 +350,89 @@ IndexType terrainosaurus::calculateFitness(Population & population) {
     return mostFit;
 }
 
+#include <inca/raster/generators/gaussian>
+// Helper function for fitness evaluation
+scalar_t normalCurveProject(scalar_t mean, scalar_t variance, scalar_t value) {
+    scalar_t stddev(std::sqrt(variance));
+    scalar_t projection = std::exp(-(value-mean) * (value-mean)) / (2 * variance);
+//    std::cerr << "gaussian of (" << mean << ", " << variance << ", " << value << ") is " << projection << std::endl;
+    return projection;
+}
+
+
 // This function determines how "good" a chromosome is
 void terrainosaurus::calculateFitness(TerrainChromosome & c) {
     // First, turn the TerrainChromosome back into a heightfield
-    RandomUniform<scalar_t> randomValue(0.0f, 1.0f);
-    c.fitness().overall() = randomValue();
-//    return;
-
-//    Heightfield & orig = const_cast<Heightfield &>(c.gene(0,0).sourceSample->elevation(c.levelOfDetail()));
-//    const Heightfield & orig = c.gene(0,0).sourceSample.elevations();
-
-    // Calculate the fitness of each individual terrain region
-    // TODO: per-region fitness
-
-    // Calculate the fitness of each individual terrain seam
-    // TODO: per-seam fitness
-
-    // Calculate global fitness estimates
-    // TODO: global fitness
-
-    // Determine the aggregate fitness estimate
-    // TODO: aggregate fitness
-
     Heightfield hf;
     renderChromosome(hf, c);
-    const Heightfield & orig = (*matchSample)[c.levelOfDetail()].elevations();
-    scalar_t _rms = rms(orig - hf);
-    float _fitness = 1.0f - std::log10(1.0f + _rms) / 3.0f;
-    std::cerr << "calculateFitness(" << hf.sizes() << "): " << _fitness << " (rms: " << _rms << ")" << endl;
-    std::cerr << "hf rms is " << rms(hf) << endl;
-    if (_fitness < 0.0f) {
-        _fitness = 0.0f;
-        std::cerr << "    returning 0.0f\n";
+
+    // Do analysis of it
+    TerrainSamplePtr ts(new TerrainSample(hf, c.levelOfDetail()));
+    ts->ensureAnalyzed(c.levelOfDetail());
+
+    // Calculate the area-weighted mean fitness of each terrain region
+    scalar_t rf = 0;
+    for (IDType i = 0; i < c.map().regionCount(); ++i) {
+        calculateRegionFitness(c, i);
+        rf += c.regionFitness(i).normalized();
     }
-    c.fitness().overall() = _fitness;
+
+    // Calculate mean gene compatibility
+    scalar_t gc = 0;
+    Pixel idx;
+    for (idx[1] = 0; idx[1] < c.size(1); ++idx[1])
+        for (idx[0] = 0; idx[0] < c.size(0); ++idx[0]) {
+            calculateCompatibility(c(idx));
+            gc += c(idx).compatibility().overall();
+        }
+    gc /= c.size();
+
+    // Calculate the RMS difference from the pattern (mostly for amusement)
+    scalar_t rmsDiff = rms(c.pattern().elevations() - hf);
+
+    // The aggregate fitness estimate is a weighted average of these
+    scalar_t alpha = 0.5f;
+    c.fitness().overall() = alpha * gc + (1 - alpha) * rf;
+
+    std::cout << "Fitness evaluation:\n"
+              << "\tArea-averaged region fitnesses: " << rf << '\n'
+              << "\tAveraged gene compatibilities:  " << gc << '\n'
+              << "\tRMS difference from pattern:    " << rmsDiff << '\n'
+              << "\tAggregate fitness:              " << c.fitness().overall() << std::endl;
 }
+
+
+// Calculate the fitness measure for a single region
+void terrainosaurus::calculateRegionFitness(TerrainChromosome & c,
+                                            IDType regionID) {
+    RegionFitnessMeasure & rf = c.regionFitness(regionID);
+    const MapRasterization::LOD & m = c.map();
+
+    // Calculate the bare fitness measure
+    rf.overall() = 1.0f;
+
+    // Calculate the area-normalized quantity
+    rf.normalized() = rf.overall() * m.regionArea(regionID) / m.size();
+}
+
+
+// Calculate the compatibility measure for a single gene
+void terrainosaurus::calculateCompatibility(TerrainChromosome::Gene & g) {
+    const TerrainChromosome & c = g.parent();
+    IndexType i = g.indices()[0];
+    IndexType j = g.indices()[1];
+    GeneCompatibilityMeasure & gc = g.compatibility();
+
+    // Calculate the bare compatibility measure
+    Vector2D gGrad = gradientMean(g),
+             cGrad = gradientMean(c, i, j),
+             xAxis(1.0f, 0.0f);
+    scalar_t ce = normalCurveProject(elevationMean(c, i, j), 150.0f, elevationMean(g));
+    scalar_t cs = normalCurveProject(magnitude(cGrad), 30.0f, magnitude(gGrad));
+    scalar_t ca = normalCurveProject(signedAngle(cGrad, xAxis), PI<scalar_t>() / 3, signedAngle(gGrad, xAxis));
+    gc.overall() = (ce + cs + ca) / 3;
+}
+
 
 // This comparison functor is used by the following function to
 // sort the FitnessMap vector by decreasing fitness.
@@ -378,13 +455,15 @@ FitnessMap terrainosaurus::getFitnessMap(const Population & population) {
 }
 
 
-// Create a vector of scalar values between 0.0 and 1.0, representing
-// the normalized, cumulative fitness distribution.
-CumulativeFitness terrainosaurus::getCumulativeFitness(const Population & population) {
-    CumulativeFitness cumFit;
+// Create a probability mass function (valid over [0,1]) from the
+// overall fitnesses of the chromosomes in the population. This PMF
+// may be used to randomly pick chromosomes, giving a probabilistic
+// preference to the more fit chromosomes.
+PMF terrainosaurus::getFitnessPMF(const Population & population) {
+    PMF pmf;
     for (int i = 0; i < population.size(); ++i)
-        cumFit.add(population[i].fitness().overall());
-    return cumFit;
+        pmf.add(population[i].fitness().overall());
+    return pmf;
 }
 
 
@@ -475,6 +554,8 @@ void terrainosaurus::cross(TerrainChromosome & c1,
     Dimension regionSize;
     int crossed = 0;
     for (int k = 0; k < num; ++k) {
+        timestep++;
+
         // Pick a random starting X,Y point...
         start[0] = randomInt(0, chromoSizes[0] - 1);
         start[1] = randomInt(0, chromoSizes[1] - 1);
@@ -491,6 +572,8 @@ void terrainosaurus::cross(TerrainChromosome & c1,
         for (idx[0] = start[0]; idx[0] <= end[0]; ++idx[0])
             for (idx[1] = start[1]; idx[1] <= end[1]; ++idx[1]) {
                 swap(c1(idx), c2(idx));
+                c1.fireCrossed(idx, timestep);
+                c2.fireCrossed(idx, timestep);
                 ++crossed;
             }
     }
@@ -508,6 +591,8 @@ void terrainosaurus::mutate(TerrainChromosome & c, float ratio) {
     Pixel idx;
     for (idx[0] = 0; idx[0] < c.size(0); ++idx[0])
         for (idx[1] = 0; idx[1] < c.size(1); ++idx[1])
+            timestep++;
+
             // Decide whether or not to mutate this gene
             if(randomFraction() <= ratio) {
                 // OK, we're gonna do it. Decide how.
@@ -525,6 +610,8 @@ void terrainosaurus::mutate(TerrainChromosome & c, float ratio) {
                     scale(c(idx), 0.9f, 1.1f);
                 else
                     translate(c(idx), Offset(-1, -1), Offset(1, 1));
+
+                c.fireMutated(idx, timestep);
             }
 }
 
@@ -537,20 +624,35 @@ void terrainosaurus::randomize(Gene & g, const TerrainType::LOD & tt) {
     RandomUniform<scalar_t>  randomScalar;
 
     // First, pick a random sample from the requested TerrainType
-    g.setTerrainSample(tt.randomTerrainSample());
+//    g.setTerrainSample(tt.randomTerrainSample());
+    g.setTerrainSample(tt.terrainSample(0));
 
     // Pick a random X,Y coordinate pair within the safe region of that sample
     Dimension sampleSizes(g.terrainSample().sizes());
-    SizeType radius = SizeType(geneRadius(tt.levelOfDetail()));
+    SizeType radius = SizeType(blendFalloffRadius(tt.levelOfDetail()));
     g.setSourceCenter(Pixel(sampleSizes[0] / 2, sampleSizes[1] / 2));
     translate(g, Offset(-sampleSizes[0] / 2 + radius, -sampleSizes[1] / 2 + radius),
                  Offset( sampleSizes[0] / 2 - radius,  sampleSizes[1] / 2 - radius));
 
     // Pick (bounded) random values for the transformation parameters
-    g.setRotation(0);       rotate(g, 0, 2 * PI<scalar_t>());
-    g.setOffset(0);         offset(g, -MAX_OFFSET, MAX_OFFSET);
-    g.setScale(1);          scale(g, 1 / MAX_SCALE, MAX_SCALE);
-    g.setJitter(Offset(0)); jitter(g, Offset(-MAX_JITTER), Offset(MAX_JITTER));
+    g.setRotation(0);       //rotate(g, 0, 2 * PI<scalar_t>());
+    g.setOffset(0);         offset(g, -MAX_OFFSET_AMOUNT, MAX_OFFSET_AMOUNT);
+    g.setScale(1);          scale(g, 1 / MAX_SCALE_FACTOR, MAX_SCALE_FACTOR);
+    g.setJitter(Offset(0)); jitter(g, Offset(-MAX_JITTER_PIXELS), Offset(MAX_JITTER_PIXELS));
+}
+
+
+// This gene operator effectively generates a new gene, with the same
+// TerrainType as the old one.
+void terrainosaurus::reset(Gene & g) {
+    // Set all transformation parameters to defaults
+    g.setRotation(0);
+    g.setOffset(0);
+    g.setScale(1);
+    g.setJitter(Offset(0));
+
+    // Set source coordinates equal to target coordinates
+    g.setSourceCenter(g.targetCenter());
 }
 
 // This gene operator offsets the gene by a random amount between 'min' and 'max'

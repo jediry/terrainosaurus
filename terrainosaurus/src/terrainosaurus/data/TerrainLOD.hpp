@@ -49,6 +49,9 @@
 // Import upgraded enumeration type
 #include <inca/util/Enumeration.hpp>
 
+// Import shared_ptr utilities
+#include <boost/enable_shared_from_this.hpp>
+
 
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
@@ -74,6 +77,22 @@ namespace terrainosaurus {
 
     // Window size in pixels at a specific LOD
     SizeType windowSize(TerrainLOD lod);
+
+    // At what percentage from the center of the patch to the perimeter the
+    // blend function falls off. This is used to compute the blend falloff
+    // radius.
+    scalar_t blendFalloffRatio(TerrainLOD lod);
+
+    // How "spread out" the blending function is at a specific LOD.
+    // This is the standard deviation of the gaussian function.
+    scalar_t blendFalloffRadius(TerrainLOD lod);
+
+    // What percentage of a terrain patch should overlap with the
+    // neighboring patch.
+    scalar_t blendOverlapRatio(TerrainLOD lod);
+
+    // How far apart should patches be placed, such that they overlap correctly
+    DifferenceType blendPatchSpacing(TerrainLOD lod);
 
     // Pixel blending masks of different sizes and shapes
     const GrayscaleImage & gaussianMask(TerrainLOD lod);
@@ -179,16 +198,22 @@ namespace terrainosaurus {
         }
 
         // Bulk lazy loading & analysis of a range of consituent LODs
-        void ensureLoaded(TerrainLOD min = TerrainLOD::minimum(),
-                          TerrainLOD max = TerrainLOD::maximum()) const {
-            for (TerrainLOD lod = min; lod <= max; ++lod)
-                (*this)[lod].ensureLoaded();
+        void ensureLoaded() const {
+            ensureLoaded(TerrainLOD::minimum(), TerrainLOD::maximum());
         }
-        void ensureAnalyzed(TerrainLOD min = TerrainLOD::minimum(),
-                            TerrainLOD max = TerrainLOD::maximum()) const {
-            for (TerrainLOD lod = min; lod <= max; ++lod)
-                (*this)[lod].ensureAnalyzed();
+        void ensureAnalyzed() const {
+            ensureAnalyzed(TerrainLOD::minimum(), TerrainLOD::maximum());
         }
+        void ensureLoaded(TerrainLOD min, TerrainLOD max) const {
+            for (TerrainLOD lod = min; lod <= max; ++lod)
+                ensureLoaded(lod);
+        }
+        void ensureAnalyzed(TerrainLOD min, TerrainLOD max) const {
+            for (TerrainLOD lod = min; lod <= max; ++lod)
+                ensureAnalyzed(lod);
+        }
+        void ensureLoaded(TerrainLOD lod)   const { (*this)[lod].ensureLoaded(); }
+        void ensureAnalyzed(TerrainLOD lod) const { (*this)[lod].ensureAnalyzed(); }
 
     protected:
         void initialize() {

@@ -1,5 +1,5 @@
 /*
- * File: HeightfieldRendering.hpp
+ * File: GeneShapeRendering.hpp
  *
  * Author: Ryan L. Saunders
  *
@@ -10,8 +10,8 @@
  *      FIXME: This class needs a different name. This is sorta just a hack until I figure out the "right" way to do this.
  */
 
-#ifndef TERRAINOSAURUS_RENDERING_HEIGHTFIELD
-#define TERRAINOSAURUS_RENDERING_HEIGHTFIELD
+#ifndef TERRAINOSAURUS_RENDERING_GENE_SHAPE
+#define TERRAINOSAURUS_RENDERING_GENE_SHAPE
 
 // Import Inca library configuration
 #include <terrainosaurus/terrainosaurus-common.h>
@@ -19,7 +19,7 @@
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
-    class HeightfieldRendering;
+    class GeneShapeRendering;
 };
 
 // Import rendering primitive definitions
@@ -33,7 +33,7 @@ namespace terrainosaurus {
 // Import container definitions
 #include <vector>
 
-class terrainosaurus::HeightfieldRendering
+class terrainosaurus::GeneShapeRendering
     : public rendering::PrimitiveGrid<Point3D,
                                       Vector3D,
                                       Nothing,
@@ -44,15 +44,13 @@ public:
     typedef inca::rendering::OpenGLRenderer Renderer;
 
     // Default constructor
-    HeightfieldRendering();
+    GeneShapeRendering();
 
     // Initializing constructor
-    HeightfieldRendering(const TerrainSample::LOD & ts,
-                         const MapRasterization::LOD & map);
+    GeneShapeRendering(const GeneShape & g);
 
     // Initialize the grid with values from the heightfield
-    void load(const TerrainSample::LOD & ts,
-              const MapRasterization::LOD & map);
+    void load(const GeneShape & g);
 
     bool toggle(const std::string & feature);
 
@@ -64,3 +62,4 @@ protected:
 };
 
 #endif
+

@@ -215,7 +215,7 @@ void DEMInterpreter::parseRecordTypeA() {
     //       Normally code 2 (meters) for 7.5-minute, 30-minute, 1-degree
     //       and Alaska DEMs."
     verticalUnits = readInteger(6);
-//    cerr << "Vertical units: " << verticalUnits << endl;
+    cerr << "Vertical units: " << (verticalUnits == 1 ? "feet" : "meters") << endl;
 
     // Element 16: Number of sides in boundary polygon -- 6 bytes => 1 integer
     //      "Set to n = 4."
@@ -255,11 +255,11 @@ void DEMInterpreter::parseRecordTypeA() {
     //       unit of measure given by data element [15] in this record and are
     //       the algebraic result of the method outlined in data element 6,
     //       logical record B [forward reference to record type B]."
-    double elevationExtrema[2];
+    elevationExtrema[2];
     for (IndexType i = 0; i < 2; i++)
         elevationExtrema[i] = readDouble(24);
-//    cerr << "Elevation extrema: " << elevationExtrema[0]
-//                        << " => " << elevationExtrema[1] << endl;
+    cerr << "Elevation extrema: " << elevationExtrema[0]
+                        << " => " << elevationExtrema[1] << endl;
 
 
     // Element 19: Deviation angle -- 24 bytes => 1 24-byte real

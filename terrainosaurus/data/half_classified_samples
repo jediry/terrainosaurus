@@ -1,0 +1,45 @@
+#!/bin/sh
+
+if [ "$1" = "-i" ]; then
+    ignore="-i 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22"
+    name="half"
+else
+    name="half_s"
+fi
+
+./make_csv.pl -n csv/$name  $ignore                                       \
+    "log/35120e8 - Cypress Mountain, CA (30m).log"                        \
+    "log/35120f8 - Lime Mountain, CA (30m).log"                           \
+    "log/35121f1 - Pebblestone Shut-in, CA (30m).log" --                  \
+    "log/38104f8 - Mount Big Chief, CO (30m).log"                         \
+    "log/38105f2 - Cripple Creek South, CO (30m).log"                     \
+    "log/38105g1 - Pikes Peak, CO (30m).log"                              \
+    "log/38105h1 - Woodland Park, CO (30m).log"                           \
+    "log/39105a3 - Hackett Mountain, CO (30m).log" --                     \
+    "log/29082d1 - Citra, FL (30m).log"                                   \
+    "log/29082e4 - Arredondo, FL (30m).log"                               \
+    "log/29082f3 - Gainesville East, FL (30m).log"                        \
+    "log/29082f4 - Gainesville West, FL (30m).log" --                     \
+    "log/30096c3 - Independence, TX (30m).log"                            \
+    "log/30096d2 - Millican, TX (30m).log"                                \
+    "log/30096d3 - Clay, TX (30m).log"                                    \
+    "log/30096g2 - Clear Lake, TX (30m).log"                              \
+    "log/30096g3 - Kurten, TX (30m).log"                                  \
+    "log/30096h2 - Canary, TX (30m).log"                                  \
+    "log/30096h3 - Edge, TX (30m).log" --                                 \
+    "log/34092e4 - Bryant, AR (30).log"                                   \
+    "log/34101f1 - Willow Arroyo, TX (30m).log"                           \
+    "log/34101f2 - Hardscrabble Creek, TX (30m).log"                      \
+    "log/34101g1 - Tate Arroyo, TX (30m).log"                             \
+    "log/43116e2 - Boise South, ID (30).log"                              \
+    "log/34101h1 - Buffalo Arroyo, TX (30m).log" --                       \
+    "log/39110d1 - Chandler Falls, UT (30m).log"                          \
+    "log/39111e2 - Candland Mountain, UT (30m).log"                       \
+    "log/39111g1 - Colton, UT (30m).log" --                               \
+    "log/44104e5 - Sherrard Hill, WY (30m).log"                           \
+    "log/44104e6 - Devils Tower, WY (30m).log"                            \
+    "log/44104f5 - Hulett, WY (30m).log"                                  \
+    "log/44104f6 - Moore Hill, WY (30m).log"                              \
+    "log/44104f7 - New Haven, WY (30m).log" --                            \
+    "log/46121g5 - Chinook Pass, WA (30m).log"                            \
+    "log/46121h5 - White River Park, WA (30m).log"                        \

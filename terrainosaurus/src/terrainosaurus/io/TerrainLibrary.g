@@ -80,15 +80,29 @@ public:
     // functions that check/set them implicitly work on the "current"
     // TerrainType or TerrainSeam.
     enum PropertyType {
-        TTColor             = 0x0001,
-        TSNumChromosomes    = 0x0002,
-        TSSmoothness        = 0x0004,
-        TSMutationRatio     = 0x0008,
-        TSCrossoverRatio    = 0x0010,
-        TSSelectionRatio    = 0x0020,
-        TSAspectRatio       = 0x0040,
-    };
+        // Properties for TerrainType
+        TTColor                 = 0x00001,
 
+        // Properties for the TerrainSeam GA
+        TSSmoothness            = 0x00002,
+        TSAspectRatio           = 0x00004,
+
+        // General GA parameters
+        GAEvolutionCycles       = 0x00100,
+        GAPopulationSize        = 0x00200,
+        GAEliteRatio            = 0x00400,
+        GASelectionRatio        = 0x00800,
+        GAMutationRatio         = 0x01000,
+        GACrossoverRatio        = 0x02000,
+        GAMutationProbability   = 0x04000,
+        GACrossoverProbability  = 0x08000,
+
+        // Properties for the heightfield GA
+        HFMaxCrossoverWidth     = 0x10000,
+        HFMaxJitterPixels       = 0x20000,
+        HFMaxScaleFactor        = 0x40000,
+        HFMaxOffsetAmount       = 0x80000,
+    };
 
 
 /*---------------------------------------------------------------------------*
@@ -100,6 +114,7 @@ protected:
     // modifying the most recent TT or TS). They will throw exceptions if
     // an attempt is made to set/create something that has already been
     // set/created, thus effectively preventing duplicate entries
+    void beginGlobalSection(antlr::RefToken tt);
     void createTerrainType(antlr::RefToken tt);
     void createTerrainSeam(antlr::RefToken tt1, antlr::RefToken tt2);
     void endRecord(antlr::RefToken t);
@@ -112,6 +127,7 @@ protected:
     // The library we're populating, plus the current TT and TS, and a
     // record of which properties we've set on the current object
     TerrainLibrary * library;
+    bool inGlobal;
     TerrainTypePtr currentTT;
     TerrainSeamPtr currentTS;
     stl_ext::hash_map<TerrainSeamPtr, bool> initializedTSs;
@@ -125,8 +141,27 @@ protected:
 // Entire file format (call this as the start rule)
 recordList [TerrainLibrary * lib]:
     { library = lib; }      // Set this as the library we're gonna use
+    { inGlobal = false; }   // Start out NOT in the global section
     { library != NULL }?    // Make sure it isn't NULL!
-    (blankLine)* ( terrainTypeRecord | terrainSeamRecord )* EOF ;
+    (blankLine)* ( terrainTypeRecord
+                 | terrainSeamRecord
+                 | globalSectionRecord )* EOF ;
+
+// A globals section declaration, followed by one or more properties
+globalSectionRecord:
+    globalSectionDeclaration ( blankLine
+                             | populationSize
+                             | evolutionCycles
+                             | selectionRatio
+                             | eliteRatio
+                             | mutationProbability
+                             | mutationRatio
+                             | crossoverProbability
+                             | crossoverRatio
+                             | maxCrossoverWidth
+                             | maxJitterPixels
+                             | maxScaleFactor
+                             | maxOffsetAmount )* ;
 
 // A TerrainType declaration, followed by one or more properties
 terrainTypeRecord:
@@ -137,12 +172,18 @@ terrainTypeRecord:
 // A TerrainSeam declaration, followed by one or more properties
 terrainSeamRecord:
     terrainSeamDeclaration  ( blankLine
-                            | numChromosomes
                             | smoothness
-                            | mutationRatio
-                            | crossoverRatio
+                            | aspectRatio
+                            | populationSize
+                            | evolutionCycles
                             | selectionRatio
-                            | aspectRatio )* ;
+                            | crossoverRatio
+                            | mutationRatio )* ;
+
+// [Global]
+globalSectionDeclaration:
+    n:OPEN_SBRACKET GLOBAL CLOSE_SBRACKET EOL
+    { beginGlobalSection(n); } ;
 
 // [TerrainType: Snow]
 terrainTypeDeclaration:
@@ -156,6 +197,74 @@ terrainSeamDeclaration:
 
 // A line with nothing important on it
 blankLine: EOL ;
+
+
+/*---------------------------------------------------------------------------*
+ | Genetic algorithm parameters
+ *---------------------------------------------------------------------------*/
+// population size = n
+populationSize { int n; }:
+    t:POPULATION SIZE ASSIGN n=integer EOL
+    { setIntegerProperty(GAPopulationSize, n, t->getLine()); } ;
+
+// evolution cycles = n
+evolutionCycles { int n; }:
+    t:EVOLUTION CYCLES ASSIGN n=integer EOL
+    { setIntegerProperty(GAEvolutionCycles, n, t->getLine()); } ;
+
+// selection ratio = r
+selectionRatio { scalar_t r; }:
+    t:SELECTION RATIO ASSIGN r=fraction EOL
+    { setScalarProperty(GASelectionRatio, r, t->getLine()); } ;
+
+// selection ratio = r
+eliteRatio { scalar_t r; }:
+    t:ELITE RATIO ASSIGN r=fraction EOL
+    { setScalarProperty(GAEliteRatio, r, t->getLine()); } ;
+
+// crossover probability = p
+crossoverProbability { scalar_t p; }:
+    t:CROSSOVER PROBABILITY ASSIGN p=fraction EOL
+    { setScalarProperty(GACrossoverProbability, p, t->getLine()); } ;
+
+// crossover ratio = r
+crossoverRatio { scalar_t r; }:
+    t:CROSSOVER RATIO ASSIGN r=fraction EOL
+    { setScalarProperty(GACrossoverRatio, r, t->getLine()); } ;
+
+// mutation probability = p
+mutationProbability { scalar_t p; }:
+    t:MUTATION PROBABILITY ASSIGN p=fraction EOL
+    { setScalarProperty(GAMutationProbability, p, t->getLine()); } ;
+
+// mutation ratio = r
+mutationRatio { scalar_t r; }:
+    t:MUTATION RATIO ASSIGN r=fraction EOL
+    { setScalarProperty(GAMutationRatio, r, t->getLine()); } ;
+
+
+/*---------------------------------------------------------------------------*
+ | Heightfield GA limits
+ *---------------------------------------------------------------------------*/
+// max crossover width = n
+maxCrossoverWidth { int n; }:
+    t:MAX CROSSOVER WIDTH ASSIGN n=integer EOL
+    { setIntegerProperty(HFMaxCrossoverWidth, n, t->getLine()); } ;
+
+// max jitter pixels = n
+maxJitterPixels { int n; }:
+    t:MAX JITTER PIXELS ASSIGN n=integer EOL
+    { setIntegerProperty(HFMaxJitterPixels, n, t->getLine()); } ;
+
+// max scale factor = f
+maxScaleFactor { scalar_t f; }:
+    t:MAX SCALE FACTOR ASSIGN f=scalar EOL
+    { setScalarProperty(HFMaxScaleFactor, f, t->getLine()); } ;
+
+// max scale factor = f
+maxOffsetAmount { scalar_t a; }:
+    t:MAX OFFSET AMOUNT ASSIGN a=scalar EOL
+    { setScalarProperty(HFMaxOffsetAmount, a, t->getLine()); } ;
 
 
 /*---------------------------------------------------------------------------*
@@ -175,35 +284,10 @@ terrainSample: { string s; }
 /*---------------------------------------------------------------------------*
  | TerrainSeam properties
  *---------------------------------------------------------------------------*/
-// Number of Chromosomes = 10
-numChromosomes { int n; }:
-    t:NUMBER OF CHROMOSOMES ASSIGN n=integer EOL
-    { setIntegerProperty(TSNumChromosomes, n, t->getLine()); } ;
-
-
 // Smoothness = 0.5
 smoothness { scalar_t n; }:
     t:SMOOTHNESS ASSIGN n=nFraction EOL
     { setScalarProperty(TSSmoothness, n, t->getLine()); } ;
-
-
-// Mutation Ratio = 0.3
-mutationRatio { scalar_t n; }:
-    t:MUTATION RATIO ASSIGN n=nFraction EOL
-    { setScalarProperty(TSMutationRatio, n, t->getLine()); } ;
-
-
-// Crossover Ratio = 0.3
-crossoverRatio { scalar_t n; }:
-    t:CROSSOVER RATIO ASSIGN n=nFraction EOL
-    { setScalarProperty(TSCrossoverRatio, n, t->getLine()); } ;
-
-
-// Selection Ratio = 0.3
-selectionRatio { scalar_t n; }:
-    t:SELECTION RATIO ASSIGN n=nFraction EOL
-    { setScalarProperty(TSSelectionRatio, n, t->getLine()); } ;
-
 
 // Aspect Ratio = 1.0
 aspectRatio { scalar_t n; }:
@@ -289,21 +373,37 @@ tokens {
     // Record type declarations
     TERRAIN_TYPE = "terraintype" ;
     TERRAIN_SEAM = "terrainseam" ;
+    GLOBAL       = "global" ;
 
     // TerrainType property keywords
     COLOR       = "color" ;
     SAMPLE      = "sample" ;
 
     // TerrainSeam property keywords
-    NUMBER      = "number" ;
-    OF          = "of" ;
-    CHROMOSOMES = "chromosomes" ;
     SMOOTHNESS  = "smoothness" ;
+    ASPECT      = "aspect" ;
+
+    // Genetic algorithm parameter keywords
+    POPULATION  = "population" ;
+    SIZE        = "size" ;
+    EVOLUTION   = "evolution" ;
+    CYCLES      = "cycles" ;
     MUTATION    = "mutation" ;
     CROSSOVER   = "crossover" ;
     SELECTION   = "selection" ;
-    ASPECT      = "aspect" ;
+    ELITE       = "elite" ;
     RATIO       = "ratio" ;
+    PROBABILITY = "probability" ;
+
+    // Heightfield cross/mutate limit keywords
+    MAX     = "max" ;
+    WIDTH   = "width" ;
+    SCALE   = "scale" ;
+    FACTOR  = "factor" ;
+    OFFSET  = "offset" ;
+    AMOUNT  = "amount" ;
+    JITTER  = "jitter" ;
+    PIXELS  = "pixels" ;
 }
 
 // Primitive character classes

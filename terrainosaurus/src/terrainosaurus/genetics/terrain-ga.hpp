@@ -34,25 +34,38 @@
 
 // Import statistical object definitions
 #include <inca/math/statistics/Statistics>
-#include <inca/math/statistics/CumulativeProbability>
+#include <inca/math/statistics/ProbabilityMass>
 
 // Import Map, TerrainLibrary, and terrain GA data structures
 #include <terrainosaurus/data/Map.hpp>
 #include <terrainosaurus/data/TerrainLibrary.hpp>
 #include "TerrainChromosome.hpp"
 
-// TOTALLY HACKED IN
-extern terrainosaurus::TerrainSamplePtr matchSample;
-
 // Genetic algorithm functions for building a heightfield
 namespace terrainosaurus {
+    // GA global parameters, which may be set from the TTL file
+    extern int      POPULATION_SIZE;
+    extern int      EVOLUTION_CYCLES;
+    extern scalar_t SELECTION_RATIO;
+    extern scalar_t ELITE_RATIO;
+    extern scalar_t MUTATION_PROBABILITY;
+    extern scalar_t MUTATION_RATIO;
+    extern scalar_t CROSSOVER_PROBABILITY;
+    extern scalar_t CROSSOVER_RATIO;
+
+    // Crossover/mutation operator limits
+    extern int      MAX_CROSSOVER_WIDTH;
+    extern int      MAX_JITTER_PIXELS;
+    extern scalar_t MAX_SCALE_FACTOR;
+    extern scalar_t MAX_OFFSET_AMOUNT;
+
 
     // Declare types for the population of TerrainChromosomes and their fitness
     // statistics. These make the later function declarations shorter and
     // more readable.
     typedef std::vector<TerrainChromosome>                  Population;
     typedef inca::math::Statistics<scalar_t, true>          PopulationStatistics;
-    typedef inca::math::CumulativeProbability<scalar_t>     CumulativeFitness;
+    typedef inca::math::ProbabilityMass<scalar_t>           PMF;
     typedef std::vector< std::pair<IndexType, scalar_t> >   FitnessMap;
 
 
@@ -97,6 +110,12 @@ namespace terrainosaurus {
                           const TerrainSample::LOD & pattern,
                           const MapRasterization::LOD & map);
 
+    // Initialize a Chromosome to accurately represent 'sample'. That is, each
+    // gene points to the location it would write back to, with no
+    // transformation applied.
+    void createChromosome(TerrainChromosome & c,
+                          const TerrainSample::LOD & sample);
+
 //     // Create a random Gene by chosing a random location within a terrain
 //     // sample of the given terrain type and LOD
 //     TerrainChromosome::Gene createRandomGene(const TerrainType::LOD & tt);
@@ -115,8 +134,11 @@ namespace terrainosaurus {
     // It returns the index of the most fit chromosome in the population.
     IndexType calculateFitness(Population & population);
 
-    // Calculate the fitness measure for a single chromosome.
+    // Calculate the fitness measure for an entire chromosome.
     void calculateFitness(TerrainChromosome & c);
+
+    // Calculate the fitness measure for a single region
+    void calculateRegionFitness(TerrainChromosome & c, IDType regionID);
 
     // Calculate the compatibility measure for a single gene
     void calculateCompatibility(TerrainChromosome::Gene & g);
@@ -126,9 +148,11 @@ namespace terrainosaurus {
     // on this vector, without copying the chromosomes themselves.
     FitnessMap getFitnessMap(const Population & population);
 
-    // Create a vector of scalar values between 0.0 and 1.0, representing
-    // the normalized, cumulative fitness distribution.
-    CumulativeFitness getCumulativeFitness(const Population & population);
+    // Create a probability mass function (valid over [0,1]) from the
+    // overall fitnesses of the chromosomes in the population. This PMF
+    // may be used to randomly pick chromosomes, giving a probabilistic
+    // preference to the more fit chromosomes.
+    PMF getFitnessPMF(const Population & population);
 
     // Calculate a value in [0, 1] representing the compatibility of a Gene
     // with a slot in a Chromosome
@@ -154,6 +178,11 @@ namespace terrainosaurus {
     // Effectively replace the gene with a new one of the specified TerrainType,
     // with a randomized transformation.
     void randomize(TerrainChromosome::Gene & g, const TerrainType::LOD & tt);
+
+    // Make a gene's source and target coordinates identical, with no
+    // transformation. This can be used to construct a chromosome that exactly
+    // represents a heightfield.
+    void reset(TerrainChromosome::Gene & g);
 
     // Offset the gene vertically from its current mean value
     void offset(TerrainChromosome::Gene & g, scalar_t min, scalar_t max);
