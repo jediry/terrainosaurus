@@ -204,6 +204,13 @@ size_t Map::RefinedBoundary::size() const {
     return _refinement->size();
 }
 
+Map::PointList & Map::RefinedBoundary::points() {
+    return *_refinement;
+}
+const Map::PointList & Map::RefinedBoundary::points() const {
+    return *_refinement;
+}
+
 Map::Point & Map::RefinedBoundary::operator[](index_t index) {
     PointList::iterator i;
     if (_guide.isReversed())
@@ -264,7 +271,7 @@ Map::RefinedBoundary::fromStart(index_t index) {
     // Range check
     if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromStart(" << index
-                << "): Index out of range\n";
+             << "): Index out of range [0, " << _refinement->size() << "]\n";
         return _refinement->end();
     }
 
@@ -280,7 +287,7 @@ Map::RefinedBoundary::fromStart(index_t index) const {
     // Range check
     if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromStart(" << index
-                << "): Index out of range\n";
+             << "): Index out of range [0, " << _refinement->size() << "]\n";
         return _refinement->end();
     }
 
@@ -296,7 +303,7 @@ Map::RefinedBoundary::fromEnd(index_t index) {
     // Range check
     if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromEnd(" << index
-                << "): Index out of range\n";
+             << "): Index out of range [0, " << _refinement->size() << "]\n";
         return _refinement->end();
     }
 
@@ -312,7 +319,7 @@ Map::RefinedBoundary::fromEnd(index_t index) const {
     // Range check
     if (index >= index_t(_refinement->size())) {
         cerr << "Map::RefinedBoundary::fromEnd(" << index
-                << "): Index out of range\n";
+             << "): Index out of range [0, " << _refinement->size() << "]\n";
         return _refinement->end();
     }
 
@@ -397,8 +404,9 @@ Map::RefinedBoundary Map::refinementOf(const Boundary &b) const {
 void Map::refineMap() {
     // Go do that thing you do on each boundary
     BoundaryList bs = boundaries();
-    for (index_t i = 0; i < index_t(bs.size()); i++)
-        refineBoundary(bs[i]);
+    //for (index_t i = 0; i < index_t(bs.size()); i++)
+    //    refineBoundary(bs[i]);
+        refineBoundary(bs[3]);
 
     // Now that all the b's are done, do the i's
     IntersectionList is = intersections();
@@ -415,10 +423,10 @@ void Map::refineMap() {
 void Map::refineBoundary(const Boundary &b) {
     RefinedBoundary rb = b.refinement();
 
-    // Make sure it’s empty
+    // Make sure it's empty
     rb.clear();
 
-    // Get the endpoints ‘n’ stuff
+    // Get the endpoints 'n' stuff
     Point start = b.startIntersection().vertex()->location();
     Point end = b.endIntersection().vertex()->location();
     Vector guide = end - start;
@@ -445,11 +453,16 @@ void Map::refineBoundary(const Boundary &b) {
                               mutationRate(), crossoverRate(),
                               selectionRatio());
     GA::Point sPt, ePt;
-    sPt.x = 0;
-    sPt.y = 0;
-    ePt.x = int(guideLength * resolution());
-    ePt.y = 0;
-    float* line = population.MakeLine(sPt, ePt, numberOfCycles());
+    sPt.x = -2;
+    sPt.y = 1;
+    ePt.x = 20;
+    ePt.y = 3;
+    //ePt.x = int(guideLength * resolution());
+    float* angles = population.MakeLine(sPt, ePt, numberOfCycles());
+    float line1[22] = {
+        3.0, 3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,
+3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,
+3.0,3.0,3.0};
 
     // Decode the angles into points (initially aligned semi-arbitrarily)
     Point p(0.0, 0.0);
@@ -457,17 +470,23 @@ void Map::refineBoundary(const Boundary &b) {
     scalar_t accumulatedAngle = 0.0;
     rb.push_back(p);
     for(int i = 0; i < ePt.x; i++) {
-        accumulatedAngle += 3.1415962 - line[i];
+        accumulatedAngle += angles[i];
         Vector dp(cos(accumulatedAngle), sin(accumulatedAngle));   // Find motion in X / Y
         p += dp;            // Move us by this amound and place a point here
         rb.push_back(p);    // Stick it in
         path += dp;         // Update our path vector
-	}
+        logger << "Angle[" << i << "]: " << angles[i] << " -> " << accumulatedAngle << endl
+               << "  p is " << p;
+        logger.debug();
+    }
 
     double pathLength = magnitude(path);          // Length of the edge
     double pathAngle = angle(path, Vector(1.0, 0.0));
     if (path[1] < 0.0)      // The angle might be negative
         pathAngle = -pathAngle;
+
+    scalar_t scaleFactor = guideLength / pathLength;
+    scalar_t rotationAngle = guideAngle - pathAngle;
     logger << "Result:" << endl
            << "   Start: " << start << ", end: " << end << endl
            << "   Guide length: " << guideLength << endl
@@ -477,6 +496,25 @@ void Map::refineBoundary(const Boundary &b) {
            << "   Scale factor: " << scaleFactor << endl
            << "   Rotation angle: " << rotationAngle << endl;
     logger.info();
+
+    inca::math::Matrix<scalar_t, 3, 3, true> T, R, S, X;
+    loadTranslation(T, start - Point(0.0, 0.0));
+    loadScaling(S, Vector(scaleFactor, scaleFactor));
+    loadRotation2D(R, rotationAngle);
+    X = T % (R % S);
+    logger << "S: -------------" << endl << S << endl;
+    logger << "R: -------------" << endl << R << endl;
+    logger << "T: -------------" << endl << T << endl;
+    logger << "X: -------------" << endl << X << endl;
+    logger.info();
+
+    // Now go back and finesse the points into place
+    Map::PointList::iterator pt;
+    Map::PointList & points = rb.points();
+    for (pt = points.begin(); pt != points.end(); pt++) {
+        (*pt) = X % (*pt);
+        cerr << *pt << endl;
+    }
 }
 
 // Smooth out the intersection of all the RefinedBoundaries that meet here
@@ -487,9 +525,9 @@ void Map::refineIntersection(Intersection &in) {
     Point p(0.0, 0.0);
     for (index_t i = 0; i < index_t(bCount); i++)
         p += in.boundary(i).refinement()[1];
-    p /= bCount;
+//    p /= bCount;
 
     // Modify the start point of each boundary refinement
-    for (index_t i = 0; i < index_t(bCount); i++)
-        in.boundary(i).refinement()[0] = p;
+//    for (index_t i = 0; i < index_t(bCount); i++)
+//        in.boundary(i).refinement()[0] = p;
 }

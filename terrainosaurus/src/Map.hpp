@@ -254,6 +254,8 @@ public:
         Boundary guide() const { return _guide; }
 
         // Points comprising the refinement
+        PointList & points();
+        const PointList & points() const;
         size_t size() const;                   // Number of points
         Point & operator[](index_t index);   // Array syntax accessors
         const Point & operator[](index_t index) const;

@@ -25,7 +25,7 @@ catalog :
 
 bin_PROGRAMS = map_editor
 
-map_editor_SOURCES = DEMInterpreter.cpp GLUTMapEditor.cpp Map.cpp MapEditorWidget.cpp
+map_editor_SOURCES = GLUTMapEditor.cpp Map.cpp MapEditorWidget.cpp
 map_editor_LDADD = -L/home/jediry/Documents/Development/Media/libinca/src \
 		   -linca -lGL -lGLU -lglut
 

@@ -68,8 +68,10 @@ void MapEditorWidget::initializeView() {
     renderer.initialize();
     renderer.setBackgroundColor(backgroundColor());
     renderer.setShadingMode(Paint);
+    renderer.enableDepthBuffering(false);
     renderer.enableLineSmoothing(true);
     renderer.enablePointSmoothing(true);
+    renderer.enableAlphaBlending(true);
 }
 
 void MapEditorWidget::resizeView(size_t w, size_t h) {
@@ -110,6 +112,7 @@ void MapEditorWidget::renderView() {
             for (it = rs.begin(); it != rs.end(); it++) {
                 Map::Region r = *it;
                 //renderer.setColor(terrainColor[r.terrainType()]);
+                renderer.setColor(Color(0.5f, 0.5f, 0.0f, 1.0f));
                 renderer.beginRenderImmediate(Polygon);
                     for (index_t i = 0; i < index_t(r.intersectionCount()); i++)
                         renderer.renderVertex(r.intersection(i).location());
@@ -141,11 +144,15 @@ void MapEditorWidget::renderView() {
             renderer.setLineWidth(refinedBoundaryWidth());
 
             for (it = bs.begin(); it != bs.end(); it++) {
-                Map::RefinedBoundary rb = it->refinement();
-                renderer.beginRenderImmediate(LineStrip);
-                    for (index_t i = 0; i < index_t(rb.size()); i++)
-                        renderer.renderVertex(rb[i]);
-                renderer.endRenderImmediate();
+                if (it->isRefined()) {
+                    Map::RefinedBoundary rb = it->refinement();
+                    renderer.beginRenderImmediate(LineStrip);
+                        Map::PointList::const_iterator pt;
+                        const Map::PointList & points = rb.points();
+                        for (pt = points.begin(); pt != points.end(); pt++)
+                            renderer.renderVertex(*pt);
+                    renderer.endRenderImmediate();
+                }
             }
         }
 
@@ -255,19 +262,23 @@ void MapEditorWidget::loadMap(const string &filename) {
 
     Map::PolygonMeshPtr mesh = map->mesh();
     mesh->createVertex(Point(0.0, 0.0));
-    mesh->createVertex(Point(1.0, 0.0));
-    mesh->createVertex(Point(1.0, 1.0));
-    mesh->createVertex(Point(0.0, 1.0));
-    mesh->createVertex(Point(0.5, 0.5));
+    mesh->createVertex(Point(1.5, -1.5));
+    mesh->createVertex(Point(3.0, 0.0));
+    mesh->createVertex(Point(1.5, 1.5));
+    mesh->createVertex(Point(-1.5, 1.5));
+    mesh->createVertex(Point(-3.0, 0.0));
+    mesh->createVertex(Point(-1.5, -1.5));
     Map::PolygonMesh::FaceVertexPtrList list;
     list.push_back(mesh->createFaceVertex(mesh->vertex(0)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(1)));
-    list.push_back(mesh->createFaceVertex(mesh->vertex(4)));
-    mesh->createFace(list);
-    list.clear();
     list.push_back(mesh->createFaceVertex(mesh->vertex(2)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(3)));
+    mesh->createFace(list);
+    list.clear();
+    list.push_back(mesh->createFaceVertex(mesh->vertex(0)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(4)));
+    list.push_back(mesh->createFaceVertex(mesh->vertex(5)));
+    list.push_back(mesh->createFaceVertex(mesh->vertex(6)));
     mesh->createFace(list);
 
 
