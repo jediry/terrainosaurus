@@ -155,18 +155,6 @@ Heightfield terrainosaurus::naiveBlend(const MapRasterization::LOD & map,
 }
 
 
-Heightfield terrainosaurus::renderSoloGene(const TerrainChromosome::Gene & g) {
-    Dimension size(g.mask->sizes());
-    Pixel stS = g.sourceCoordinates - size / 2,
-          edS = stS + size;
-    Heightfield result = *(g.mask) * select(linearMap(
-                                                rotate(g.sourceSample->elevation(g.levelOfDetail), g.rotation),
-                                                g.scale, g.offset
-                                            ),
-                                            stS, edS);
-    return result;
-}
-
 void terrainosaurus::renderChromosome(Heightfield & hf,
                                       const TerrainChromosome & c) {
     // Augment the heightfield with an alpha channel
