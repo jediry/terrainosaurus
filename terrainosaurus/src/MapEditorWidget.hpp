@@ -20,7 +20,7 @@
 #include "terrainosaurus-common.h"
 
 // This is part of the Terrainosaurus terrain generation engine
-namespace Terrainosaurus {
+namespace terrainosaurus {
     // Forward declarations
     class MapEditorWidget;
     
@@ -33,26 +33,44 @@ namespace Terrainosaurus {
 #include "Map.hpp"
 
 
-class Terrainosaurus::MapEditorWidget
-         : public Inca::Interface::CameraControl,
-           virtual public Inca::Interface::Widget {
+class terrainosaurus::MapEditorWidget
+         : public CameraControl,
+           virtual public Widget {
+private:
+    typedef MapEditorWidget ThisType;
+
+public:
+    // Import types from Map
+    typedef Map::Point  Point;
+    typedef Map::Vector Vector;
+
+
 /*---------------------------------------------------------------------------*
- | Constructor
+ | Constructor and properties
  *---------------------------------------------------------------------------*/
 public:
+    // Default constructor
     MapEditorWidget();
 
+    typedef inca::imaging::Color<float, inca::imaging::sRGB, true> Color;
 
-/*---------------------------------------------------------------------------*
- | Accessor functions
- *---------------------------------------------------------------------------*/
-public:
-    MapPtr map() const { return _map; }
+    // The map
+    rw_ptr_property(Map, map, /* */);
 
+    // Rendering properties
+    rw_list_property(Color, terrainColors);
+    rw_property(Color, backgroundColor,         Color(0.1f, 0.1f, 0.1f, 1.0f));
+    rw_property(Color, intersectionColor,       Color(1.0f, 1.0f, 1.0f, 1.0f));
+    rw_property(Color, boundaryColor,           Color(0.0f, 0.0f, 0.3f, 1.0f));
+    rw_property(Color, refinedBoundaryColor,    Color(0.0f, 0.0f, 1.0f, 1.0f));
+    rw_property(Color, gridColor,               Color(0.8f, 0.8f, 0.8f, 0.5f));
 
-protected:
-    MapPtr _map;                              // The terrain map drawn by the user
-    Inca::World::SolidObject2DPtr mapObject;  // Inca's full-blown object for it
+    // Rendering switches
+    rw_property(bool, renderRegions,            true);
+    rw_property(bool, renderIntersections,      true);
+    rw_property(bool, renderBoundaries,         true);
+    rw_property(bool, renderRefinedBoundaries,  true);
+    rw_property(bool, renderGrid,               true);
 
 
 /*---------------------------------------------------------------------------*
@@ -60,30 +78,24 @@ protected:
  *---------------------------------------------------------------------------*/
 public:
     void initializeView();
-    void resizeView(unsigned int w, unsigned int h);
+    void resizeView(size_t w, size_t h);
     void renderView();
+    void resetCameraProjection();
 
 protected:
-    Inca::Rendering::GLRenderer renderer;     // We use this for some OpenGL tasks
-    Inca::Rendering::GLRenderer::ObjectProxyPtr mapProxy;
-    Inca::Rendering::GLRenderer::CameraProxyPtr cameraProxy;
+    inca::rendering::OpenGLRenderer renderer;     // We use this for some OpenGL tasks
 
 
 /*---------------------------------------------------------------------------*
  | Event-handlers
  *---------------------------------------------------------------------------*/
 public:
-    void mouseDragged(unsigned int x, unsigned int y);
-    void mouseTracked(unsigned int x, unsigned int y);
-    void buttonPressed(Inca::Interface::MouseButton button,
-                       unsigned int x, unsigned int y);
-    void keyPressed(Inca::Interface::KeyCode k,
-                    unsigned int x, unsigned int y);
-
-protected:
-    // Input modes
-//    enum EditMode {
-        
+    void mouseDragged(index_t x, index_t y);
+    void mouseTracked(index_t x, index_t y);
+    void buttonPressed(inca::ui::MouseButton button,
+                       index_t x, index_t y);
+    void keyPressed(inca::ui::KeyCode k,
+                    index_t x, index_t y);
 
 /*---------------------------------------------------------------------------*
  | Map I/O functions

@@ -16,7 +16,7 @@
 #include "terrainosaurus-common.h"
 
 // This is part of the Terrainosaurus terrain engine
-namespace Terrainosaurus {
+namespace terrainosaurus {
     // Forward declarations
     class ElevationModelHandler;
 
@@ -27,10 +27,10 @@ namespace Terrainosaurus {
 
 // Import ElevationMap class definition
 #include "ElevationMap.hpp"
-using namespace Terrainosaurus;
+using namespace terrainosaurus;
 
 
-class Terrainosaurus::ElevationModelHandler {
+class terrainosaurus::ElevationModelHandler {
 public:
     ElevationModelHandler
 };

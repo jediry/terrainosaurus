@@ -2,11 +2,18 @@
 
 ###############################################################################
 ##
-## Build configuration variables
+## Automatic source file tracking stuff
 ##
 ###############################################################################
-# Final output binaries go here
-distdir=$(top_srcdir)/dist
+## Include the source file catalog
+include $(top_srcdir)/src_catalog
+
+# Make the Makefile depend on the src catalog
+Makefile.in : Makefile.am $(top_srcdir)/src_catalog
+
+# Rebuild the src catalog
+catalog :
+	( cd $(top_srcdir) ; make catalog )
 
 
 ###############################################################################
@@ -14,13 +21,13 @@ distdir=$(top_srcdir)/dist
 ## Source file definitions
 ##
 ###############################################################################
-## Include the source file catalog
-include $(top_srcdir)/src_catalog
 
 
-dist_PROGRAMS = map_editor
+bin_PROGRAMS = map_editor
 
-map_editor_SOURCES = $(src)
+map_editor_SOURCES = DEMInterpreter.cpp GLUTMapEditor.cpp Map.cpp MapEditorWidget.cpp
+map_editor_LDADD = -L/home/jediry/Documents/Development/Media/libinca/src \
+		   -linca -lGL -lGLU -lglut
 
 
 
@@ -29,13 +36,6 @@ map_editor_SOURCES = $(src)
 ## Special build target definitions
 ##
 ###############################################################################
-# Make the Makefile depend on the src catalog
-Makefile.in : $(top_srcdir)/src_catalog
-
-# Rebuild the src catalog
-catalog :
-	( cd $(top_srcdir) ; make catalog )
-
 # Reset the dependency information that make uses
 clean-deps :
 	for file in .deps/*; do echo > $$file ; done

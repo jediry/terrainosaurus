@@ -12,7 +12,7 @@
 
 // Import class definition
 #include "Map.hpp"
-using namespace Terrainosaurus;
+using namespace terrainosaurus;
 
 
 /*---------------------------------------------------------------------------*
@@ -23,12 +23,12 @@ Map::TerrainType Map::Region::terrainType() const {
 }
 
 // Boundary objects, looked up by index (CCW around the Region)
-unsigned int Map::Region::boundaryCount() const {
+size_t Map::Region::boundaryCount() const {
     return _face->getEdgeCount();
 }
 
-Map::Boundary Map::Region::boundary(unsigned int index) const {
-    unsigned int i = 0;
+Map::Boundary Map::Region::boundary(index_t index) const {
+    index_t i = 0;
     EdgePtr e = _face->getLinkEdge();
     VertexPtr v = e->getCWVertex(_face);
 
@@ -64,12 +64,12 @@ Map::Boundary Map::Region::boundaryCW(const Boundary &from) const {
 }
 
 // Intersection objects, looked up by index (CCW around the Region)
-unsigned int Map::Region::intersectionCount() const {
+size_t Map::Region::intersectionCount() const {
     return _face->getVertexCount();
 }
 
-Map::Intersection Map::Region::intersection(unsigned int index) const {
-    unsigned int i = 0;
+Map::Intersection Map::Region::intersection(index_t index) const {
+    index_t i = 0;
     EdgePtr e = _face->getLinkEdge();
     VertexPtr v = e->getCWVertex(_face);
 
@@ -98,19 +98,19 @@ Map::Intersection Map::Region::intersectionCW(const Intersection &from) const {
 /*---------------------------------------------------------------------------*
  | Intersection functions
  *---------------------------------------------------------------------------*/
-const Map::Point2D & Map::Intersection::location() const {
-    return _vertex->getLocation();
+const Map::Point & Map::Intersection::location() const {
+    return _vertex->location();
 }
 
-unsigned int Map::Intersection::boundaryCount() const {
+size_t Map::Intersection::boundaryCount() const {
     return _vertex->getAdjacentEdgeCount();
 }
 
 // Boundary objects, looked up by index (CCW around the Intersection)
 // The resulting Boundary will have this intersection as its 'start'
-Map::Boundary Map::Intersection::boundary(unsigned int index) const {
+Map::Boundary Map::Intersection::boundary(index_t index) const {
     EdgePtr e = _vertex->getLinkEdge();
-    for (unsigned int i = 0; i < index; i++)
+    for (index_t i = 0; i < index; i++)
         e = e->getCCWEdge(_vertex);
     return Boundary(map(), e, _vertex);
 }
@@ -127,11 +127,11 @@ Map::Boundary Map::Intersection::boundaryCW(const Boundary &from) const {
     return Boundary(map(), e, _vertex);
 }
 
-unsigned int Map::Intersection::regionCount() const {
+size_t Map::Intersection::regionCount() const {
     return _vertex->getAdjacentEdgeCount();
 }
 
-Map::Region Map::Intersection::region(unsigned int index) const {
+Map::Region Map::Intersection::region(index_t index) const {
     EdgePtr e = _vertex->getLinkEdge();
     int i = -1;
     while (i < static_cast<int>(index)) {
@@ -147,8 +147,8 @@ Map::Region Map::Intersection::region(unsigned int index) const {
  *---------------------------------------------------------------------------*/
 // Properties of the Boundary
 double Map::Boundary::length() const {
-    return magnitude(_vertex->getLocation() -
-                     _edge->getOtherVertex(_vertex)->getLocation());    
+    return magnitude(_vertex->location() -
+                     _edge->getOtherVertex(_vertex)->location());    
 }
 
 // Get the same boundary, but oriented the other way (end -> start)
@@ -196,11 +196,11 @@ Map::Region Map::Boundary::rightRegion() const {
 /*---------------------------------------------------------------------------*
  | RefinedBoundary functions
  *---------------------------------------------------------------------------*/
-unsigned int Map::RefinedBoundary::size() const {
+size_t Map::RefinedBoundary::size() const {
     return _refinement->size();
 }
 
-Map::Point2D & Map::RefinedBoundary::operator[](unsigned int index) {
+Map::Point & Map::RefinedBoundary::operator[](index_t index) {
     PointList::iterator i;
     if (_guide.isReversed())
         i = fromEnd(index);
@@ -209,7 +209,7 @@ Map::Point2D & Map::RefinedBoundary::operator[](unsigned int index) {
     return *i;
 }
 
-const Map::Point2D & Map::RefinedBoundary::operator[](unsigned int index) const {
+const Map::Point & Map::RefinedBoundary::operator[](index_t index) const {
     PointList::const_iterator i;
     if (_guide.isReversed())
         i = fromEnd(index);
@@ -218,14 +218,14 @@ const Map::Point2D & Map::RefinedBoundary::operator[](unsigned int index) const 
     return *i;
 }
 
-void Map::RefinedBoundary::push_front(Point2D p) {
+void Map::RefinedBoundary::push_front(Point p) {
     if (_guide.isReversed())    // This means the opposite if the Boundary is
         _refinement->push_back(p);   // reversed
     else
         _refinement->push_front(p);
 }
 
-void Map::RefinedBoundary::push_back(Point2D p) {
+void Map::RefinedBoundary::push_back(Point p) {
     if (_guide.isReversed())    // Ditto here.
         _refinement->push_front(p);
     else
@@ -236,7 +236,7 @@ void Map::RefinedBoundary::clear() {
     _refinement->clear();
 }
 
-void Map::RefinedBoundary::erase(unsigned int index) {
+void Map::RefinedBoundary::erase(index_t index) {
     PointList::iterator i;
     if (_guide.isReversed())
         i = fromEnd(index);
@@ -245,7 +245,7 @@ void Map::RefinedBoundary::erase(unsigned int index) {
     _refinement->erase(i); 
 }
 
-void Map::RefinedBoundary::insert(unsigned int beforeIndex, Point2D p) {
+void Map::RefinedBoundary::insert(index_t beforeIndex, Point p) {
     PointList::iterator i;
     if (_guide.isReversed()) {
         i = fromEnd(beforeIndex);
@@ -256,7 +256,7 @@ void Map::RefinedBoundary::insert(unsigned int beforeIndex, Point2D p) {
 }
 
 Map::PointList::iterator
-Map::RefinedBoundary::fromStart(unsigned int index) {
+Map::RefinedBoundary::fromStart(index_t index) {
     // Range check
     if (index >= _refinement->size()) {
         cerr << "Map::RefinedBoundary::fromStart(" << index
@@ -266,13 +266,13 @@ Map::RefinedBoundary::fromStart(unsigned int index) {
 
     // Start from the first element
     PointList::iterator it = _refinement->begin();
-    for (unsigned int i = 0; i < index; i++)
+    for (index_t i = 0; i < index; i++)
         it++;
     return it;
 }
 
 Map::PointList::const_iterator
-Map::RefinedBoundary::fromStart(unsigned int index) const {
+Map::RefinedBoundary::fromStart(index_t index) const {
     // Range check
     if (index >= _refinement->size()) {
         cerr << "Map::RefinedBoundary::fromStart(" << index
@@ -282,13 +282,13 @@ Map::RefinedBoundary::fromStart(unsigned int index) const {
 
     // Start from the first element
     PointList::const_iterator it = _refinement->begin();
-    for (unsigned int i = 0; i < index; i++)
+    for (index_t i = 0; i < index; i++)
         it++;
     return it;
 }
 
 Map::PointList::iterator
-Map::RefinedBoundary::fromEnd(unsigned int index) {
+Map::RefinedBoundary::fromEnd(index_t index) {
     // Range check
     if (index >= _refinement->size()) {
         cerr << "Map::RefinedBoundary::fromEnd(" << index
@@ -298,13 +298,13 @@ Map::RefinedBoundary::fromEnd(unsigned int index) {
 
     PointList::iterator it = _refinement->end();
     it--;
-    for (unsigned int i = 0; i < index; i++)
+    for (index_t i = 0; i < index; i++)
         it--;
     return it;
 }
 
 Map::PointList::const_iterator
-Map::RefinedBoundary::fromEnd(unsigned int index) const {
+Map::RefinedBoundary::fromEnd(index_t index) const {
     // Range check
     if (index >= _refinement->size()) {
         cerr << "Map::RefinedBoundary::fromEnd(" << index
@@ -315,7 +315,7 @@ Map::RefinedBoundary::fromEnd(unsigned int index) const {
     // Start from the last real element
     PointList::const_iterator it = _refinement->end();
     it--;
-    for (unsigned int i = 0; i < index; i++)
+    for (index_t i = 0; i < index; i++)
         it--;
     return it;
 }
@@ -351,18 +351,23 @@ Map::BoundaryList Map::boundaries() const {
     return list;
 }
 
+// Look up how many of each type of thing there is in the map
+size_t Map::regionCount()       const { return mesh()->faceCount(); }
+size_t Map::intersectionCount() const { return mesh()->vertexCount(); }
+size_t Map::boundaryCount()     const { return mesh()->edgeCount(); }
+
 // Look up a Region by index
-Map::Region Map::region(unsigned int index) const {
+Map::Region Map::region(index_t index) const {
     return Region(*this, mesh()->face(index));
 }
 
 // Look up an Intersection by index
-Map::Intersection Map::intersection(unsigned int index) const {
+Map::Intersection Map::intersection(index_t index) const {
     return Intersection(*this, mesh()->vertex(index));
 }
 
 // Look up a Boundary by index
-Map::Boundary Map::boundary(unsigned int index) const {
+Map::Boundary Map::boundary(index_t index) const {
     EdgePtr e = mesh()->edge(index);
     return Boundary(*this, e, e->getStartVertex());
 }
@@ -388,12 +393,12 @@ Map::RefinedBoundary Map::refinementOf(const Boundary &b) const {
 void Map::refineMap() {
     // Go do that thing you do on each boundary
     BoundaryList bs = boundaries();
-    for (unsigned int i = 0; i < bs.size(); i++)
+    for (index_t i = 0; i < bs.size(); i++)
         refineBoundary(bs[i]);
 
     // Now that all the b's are done, do the i's
     IntersectionList is = intersections();
-    for (unsigned int i = 0; i < is.size(); i++)
+    for (index_t i = 0; i < is.size(); i++)
         refineIntersection(is[i]);
 }
 
@@ -410,9 +415,9 @@ void Map::refineBoundary(const Boundary &b) {
     rb.clear();
 
     // Get the endpoints ‘n’ stuff
-    Point2D start = b.startIntersection().vertex()->getLocation();
-    Point2D end = b.endIntersection().vertex()->getLocation();
-    Vector2D diff = end - start;
+    Point start = b.startIntersection().vertex()->location();
+    Point end = b.endIntersection().vertex()->location();
+    Vector diff = end - start;
 
     // Stick the start vtx as first point (could have used push_back too)
     rb.push_front(start);
@@ -424,15 +429,15 @@ void Map::refineBoundary(const Boundary &b) {
 
 // Smooth out the intersection of all the RefinedBoundaries that meet here
 void Map::refineIntersection(Intersection &in) {
-    unsigned int bCount = in.boundaryCount();
+    size_t bCount = in.boundaryCount();
 
     // Calculate an unweighted average of the nearby points
-    Point2D p(0.0, 0.0);
-    for (unsigned int i = 0; i < bCount; i++)
+    Point p(0.0, 0.0);
+    for (index_t i = 0; i < bCount; i++)
         p += in.boundary(i).refinement()[1];
     p /= bCount;
 
     // Modify the start point of each boundary refinement
-    for (unsigned int i = 0; i < bCount; i++)
+    for (index_t i = 0; i < bCount; i++)
         in.boundary(i).refinement()[0] = p;
 }

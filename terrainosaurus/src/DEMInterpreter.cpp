@@ -11,7 +11,7 @@
 
 // Import class definition
 #include "DEMInterpreter.hpp"
-using namespace Terrainosaurus;
+using namespace terrainosaurus;
 
 
 // How big is our buffer?
@@ -23,7 +23,7 @@ const size_t DEMInterpreter::CHUNK_SIZE = 1024;
 
 // Constructor
 DEMInterpreter::DEMInterpreter(HandlerPtr h)
-    : buffer(new char[BUFFER_SIZE]), handler(h) { }
+    : buffer(new char[BUFFER_SIZE]), handler(this, h), filename(this) { }
 
 // Destructor
 DEMInterpreter::~DEMInterpreter() {
@@ -243,7 +243,7 @@ void DEMInterpreter::parseRecordTypeA() {
     vector<Handler::Point2D> vertices;
     for (index_t i = 0; i < 4; i++)
         vertices.push_back(Handler::Point2D(corners[i][0], corners[i][1]));
-    handler->trimmingPolygon = Handler::Polygon(vertices);
+//    handler->trimmingPolygon = Handler::Polygon(vertices);
 
     // Element 18: Elevation range -- 48 bytes => 2 24-byte reals
     //      "Minimum and maximum elevations for the DEM. The values are in the
@@ -501,8 +501,8 @@ void DEMInterpreter::parseRecordTypeB(index_t r, index_t c) {
     // we need to account for the offset that our row may have.
     double dx = startX - extents[0][0];
     double dy = startY - extents[0][1];
-    double cos_phi = ScalarDouble::cos(deviationAngle);
-    double sin_phi = ScalarDouble::sin(deviationAngle);
+    double cos_phi = cos(deviationAngle);
+    double sin_phi = sin(deviationAngle);
     index_t startCol = index_t((dx * cos_phi + dy * sin_phi) / resolution[0]);
     index_t startRow = index_t((dx * -sin_phi + dy * cos_phi) / resolution[1]);
 //    cout << "Start indices: " << startRow << ", " << startCol << endl;

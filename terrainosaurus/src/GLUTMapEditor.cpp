@@ -21,11 +21,10 @@ const int WINDOW_HEIGHT = 480;
 
 // Import the Widget definition
 #include "MapEditorWidget.hpp"
-using namespace Terrainosaurus;
 
 
 // Application class definition
-namespace Terrainosaurus {
+namespace terrainosaurus {
     class GLUTMapEditor : public GLUTApplication {
     public:
         // Function required by GLUTApplication
@@ -48,7 +47,7 @@ namespace Terrainosaurus {
  * launches it.
  *****************************************************************************/
 int main(int argc, char **argv) {
-    Terrainosaurus::GLUTMapEditor app;
+    terrainosaurus::GLUTMapEditor app;
     app.initialize(argc, argv);
     return app.run();
 }

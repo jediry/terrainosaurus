@@ -18,7 +18,7 @@
 #include "terrainosaurus-common.h"
 
 // This is part of the Terrainosaurus terrain engine
-namespace Terrainosaurus {
+namespace terrainosaurus {
     // Forward declarations
     class ElevationMap;
 
@@ -27,12 +27,14 @@ namespace Terrainosaurus {
 };
 
 
-class Terrainosaurus::ElevationMap : public Object {
+class terrainosaurus::ElevationMap : public Object {
+private:
+    typedef ElevationMap ThisType;
 public:
     // Type definitions
     typedef shared_array<double>        ElevationArray;
-    typedef Polygon<ScalarDouble, 2>    Polygon;
-    typedef Polygon::Point              Point2D;
+//    typedef Polygon<double, 2>          Polygon;
+    typedef Point<double, 2>            Point2D;
 
 
     // Special sentinel values
@@ -86,24 +88,17 @@ protected:
  | Trimming polygon
  *---------------------------------------------------------------------------*/
 public:
-    property_rw(Polygon, trimmingPolygon, Polygon());
+    //property_rw(Polygon, trimmingPolygon, Polygon());
 
 
 /*---------------------------------------------------------------------------*
  | Relationship to the "real world"
  *---------------------------------------------------------------------------*/
 public:
-    property_rw(double, xResolution, 1.0);
-    property_rw(double, yResolution, 1.0);
-    property_rw(double, zResolution, 1.0);
-    property_rw(double, deviationAngle, 0.0);
-
-
-/*---------------------------------------------------------------------------*
- | Rendering functions
- *---------------------------------------------------------------------------*/
-public:
-    void updateTessellation(const Point &viewPoint, const Vector &look);
+    rw_property(double, xResolution, 1.0);
+    rw_property(double, yResolution, 1.0);
+    rw_property(double, zResolution, 1.0);
+    rw_property(double, deviationAngle, 0.0);
 };
 
 

@@ -36,7 +36,7 @@
 #include "terrainosaurus-common.h"
 
 // This is part of the Terrainosaurus terrain generation engine
-namespace Terrainosaurus {
+namespace terrainosaurus {
     // Forward declarations
     class Map;
 
@@ -44,8 +44,9 @@ namespace Terrainosaurus {
     typedef shared_ptr<Map> MapPtr;
 };
 
+#include <inca/math/topology/WingedEdge-PolygonMesh>
 
-class Terrainosaurus::Map {
+class terrainosaurus::Map {
 /*---------------------------------------------------------------------------*
  | Type definitions
  *---------------------------------------------------------------------------*/
@@ -57,9 +58,7 @@ public:
     class Region;
 
     // PolygonMesh object typedefs
-    typedef Inca::World::SolidObject2D          SolidObject2D;
-    typedef Inca::World::SolidObject2DPtr       SolidObject2DPtr;
-    typedef SolidObject2D::ApproximationType    PolygonMesh;
+    typedef inca::poly::WEPolygonMesh<double, 2>    PolygonMesh;
     typedef shared_ptr<PolygonMesh>             PolygonMeshPtr;
     typedef PolygonMesh::Vertex                 Vertex;
     typedef PolygonMesh::Face                   Face;
@@ -69,19 +68,17 @@ public:
     typedef PolygonMesh::EdgePtr                EdgePtr;
 
     // PolyLine object typedefs
-    typedef Inca::World::CurveObject2D          CurveObject2D;
-    typedef Inca::World::CurveObject2DPtr       CurveObject2DPtr;
-    typedef CurveObject2D::ApproximationType    PolyLine;
-    typedef shared_ptr<PolyLine>                PolyLinePtr;
+//    typedef inca::world::CurveObject2D          CurveObject2D;
+//    typedef inca::world::CurveObject2DPtr       CurveObject2DPtr;
+//    typedef CurveObject2D::ApproximationType    PolyLine;
+//    typedef shared_ptr<PolyLine>                PolyLinePtr;
 
 
-    // Math typedefs
-    typedef PolygonMesh::scalar_t           scalar_t;
-    typedef PolygonMesh::scalar_arg_t       scalar_arg_t;
-    typedef PolygonMesh::Point              Point2D;
-    typedef PolygonMesh::Vector             Vector2D;
+    // Import scalar and vector type definitions
+    INCA_MATH_SCALAR_TYPEDEFS(double, IS_NOT_WITHIN_TEMPLATE, /* */, /* */);
+    INCA_MATH_VECTOR_TYPEDEFS(scalar_t, 2, /* */, /* */);
 
-    typedef list<Point2D> PointList;
+    typedef list<Point>     PointList;
 
     // TerrainType wrapper for a Material
     typedef unsigned int TerrainType;
@@ -111,8 +108,8 @@ public:
         // Boundary objects, looked up by index (CCW around the Region)
         // The resulting Boundary will be oriented such that going from
         // 'start' to 'end' is a CCW rotation around the Region
-        unsigned int boundaryCount() const;
-        Boundary boundary(unsigned int index) const;
+        size_t boundaryCount() const;
+        Boundary boundary(index_t index) const;
 
         // Boundary objects, looked up from their neighbors
         // The resulting Boundary will have the same orientation as the
@@ -122,8 +119,8 @@ public:
         Boundary boundaryCW(const Boundary &from) const;
 
         // Intersection objects, looked up by index (CCW around the Region)
-        unsigned int intersectionCount() const;
-        Intersection intersection(unsigned int index) const;
+        size_t intersectionCount() const;
+        Intersection intersection(index_t index) const;
 
         // Intersection objects, looked up from their neighbors
         Intersection intersectionCCW(const Intersection &from) const;
@@ -154,12 +151,12 @@ public:
         VertexPtr vertex() const { return _vertex; }
 
         // Properties of this intersection
-        const Point2D & location() const;
+        const Point & location() const;
 
         // Boundary objects, looked up by index (CCW around the Intersection)
         // The resulting Boundary will have this intersection as its 'start'
-        unsigned int boundaryCount() const;
-        Boundary boundary(unsigned int index) const;
+        size_t boundaryCount() const;
+        Boundary boundary(index_t index) const;
 
         // Boundary objects, looked up from their neighbors
         // The resulting Boundary will have this intersection as its 'start'
@@ -167,8 +164,8 @@ public:
         Boundary boundaryCW(const Boundary & from) const;
 
         // Region objects, looked up by index (CCW around the Intersection)
-        unsigned int regionCount() const;
-        Region region(unsigned int index) const;
+        size_t regionCount() const;
+        Region region(index_t index) const;
 
         // Region objects, looked up from their neighbors
         Region regionCCW(const Region & from) const;
@@ -253,21 +250,21 @@ public:
         Boundary guide() const { return _guide; }
 
         // Points comprising the refinement
-        unsigned int size() const;                  // Number of points
-        Point2D & operator[](unsigned int index);   // Array syntax accessors
-        const Point2D & operator[](unsigned int index) const;
-        void push_front(Point2D p);
-        void push_back(Point2D p);
+        size_t size() const;                   // Number of points
+        Point & operator[](index_t index);   // Array syntax accessors
+        const Point & operator[](index_t index) const;
+        void push_front(Point p);
+        void push_back(Point p);
         void clear();
-        void erase(unsigned int index);
-        void insert(unsigned int beforeIndex, Point2D p);
+        void erase(index_t index);
+        void insert(index_t beforeIndex, Point p);
 
     protected:
         // Low-level functions for dealing with points bidirectionally
-        PointList::iterator fromStart(unsigned int index);
-        PointList::const_iterator fromStart(unsigned int index) const;
-        PointList::iterator fromEnd(unsigned int index);
-        PointList::const_iterator fromEnd(unsigned int index) const;
+        PointList::iterator fromStart(index_t index);
+        PointList::const_iterator fromStart(index_t index) const;
+        PointList::iterator fromEnd(index_t index);
+        PointList::const_iterator fromEnd(index_t index) const;
 
         PointList * _refinement;
         Boundary _guide;
@@ -294,7 +291,7 @@ public:
  | Constructors & Destructor
  *---------------------------------------------------------------------------*/
 public:
-    explicit Map() { }
+    explicit Map() : _mesh(new PolygonMesh()) { }
     explicit Map(PolygonMeshPtr m) : _mesh(m) { }
 
 protected:
@@ -314,15 +311,19 @@ public:
     void setMesh(PolygonMeshPtr m) { _mesh = m; }
 
     // Access to mappy wrappers for mesh objects
-    RegionList       regions() const;
+    RegionList       regions()       const;
     IntersectionList intersections() const;
-    BoundaryList     boundaries() const;
+    BoundaryList     boundaries()    const;
 
-    Region region(unsigned int index) const;
-    Intersection intersection(unsigned int index) const;
-    Boundary boundary(unsigned int index) const;
+    size_t regionCount()       const;
+    size_t intersectionCount() const;
+    size_t boundaryCount()     const;
+
+    Region region(index_t index)             const;
+    Intersection intersection(index_t index) const;
+    Boundary boundary(index_t index)         const;
+
     RefinedBoundary refinementOf(const Boundary &b) const;
-
 
 /*---------------------------------------------------------------------------*
  | Map refinement courtesy of Mike's magical genetic algorithms

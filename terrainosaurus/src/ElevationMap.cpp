@@ -13,7 +13,7 @@
 
 // Import class definition
 #include "ElevationMap.hpp"
-using namespace Terrainosaurus;
+using namespace terrainosaurus;
 
 
 // Sentinel value definitions
@@ -22,14 +22,16 @@ const double ElevationMap::VOID          = -1.6e-300;
 
 
 // Constructor
-ElevationMap::ElevationMap() {
-    MaterialPtr mat(new Material());
-    mat->diffuse = Material::Color(0.0f, 0.6f, 0.1f);
-    mat->specular = Material::Color(0.1f, 0.1f, 0.1f);
-    mat->illuminated = true;
-    addMaterial(mat);
+ElevationMap::ElevationMap() : xResolution(this), yResolution(this),
+        zResolution(this), deviationAngle(this) {
+//    MaterialPtr mat(new Material());
+//    mat->diffuse = Material::Color(0.0f, 0.6f, 0.1f);
+//    mat->specular = Material::Color(0.1f, 0.1f, 0.1f);
+//    mat->illuminated = true;
+//    addMaterial(mat);
 }
 
+#if 0
 // Create a tessellation of this surface
 void ElevationMap::updateTessellation(const Point &viewPoint,
                                       const Vector &look) {
@@ -77,3 +79,4 @@ void ElevationMap::updateTessellation(const Point &viewPoint,
             }
     }
 }
+#endif

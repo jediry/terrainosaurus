@@ -18,27 +18,24 @@
 #define TERRAINOSAURUS_COMMON
 
 // Import Inca library configuration
-#include <inca-common.h>
-#include <inca-config-math.h>
-#include <inca-config-imaging.h>
-//#include <inca-config-dynamics.h>
+#include <inca/inca-common.h>
 
-#include <world/World.h++>
-#include <poly/Poly.h++>
-#include <rendering/Rendering.h++>
-#include <io/IOUtilities.h++>
+// Import Inca sub-libraries
+#include <inca/math.hpp>
+#include <inca/imaging.hpp>
+#include <inca/world.hpp>
+#include <inca/rendering.hpp>
 
-#include <interface/generic/Framework.h++>
-#include <interface/generic/CameraControl.h++>
-#include <interface/generic/SceneView.h++>
-#include <interface/glut/GLUTFramework.h++>
+#include <inca/ui/Framework.hpp>
+#include <inca/ui/CameraControl.hpp>
+#include <inca/integration/glut/GLUTFramework.hpp>
 
 // Import namespaces
-using namespace Inca;
-using namespace Inca::Math;
-using namespace Inca::World;
-using namespace Inca::Poly;
-using namespace Inca::Interface;
-using namespace Inca::Rendering;
+using namespace inca;
+using namespace inca::math;
+using namespace inca::imaging;
+using namespace inca::world;
+using namespace inca::rendering;
+using namespace inca::ui;
 
 #endif

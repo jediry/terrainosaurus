@@ -57,14 +57,16 @@
 
 
 // This is part of the Terrainosaurus terrain generation engine
-namespace Terrainosaurus {
+namespace terrainosaurus {
     // Forward declarations
     class DEMInterpreter;
 };
 
 #include "ElevationMap.hpp"
 
-class Terrainosaurus::DEMInterpreter {
+class terrainosaurus::DEMInterpreter {
+private:
+    typedef DEMInterpreter ThisType;
 public:
     // Template typedefs
     typedef ElevationMap        Handler;
@@ -82,8 +84,8 @@ public:
     // Destructor
     ~DEMInterpreter();
 
-    property_rw_ptr(Handler, handler, NULL);
-    property_rw(string, filename, "");
+    rw_ptr_property(Handler, handler, /* */);
+    rw_property(string, filename, "");
 
     // Parse the file
     void parse();
