@@ -32,6 +32,13 @@ using TerrainChromosome::Gene;
 #define NUM_OF_CHROMOSOME 5
 #define NUM_OF_EVOLUTIONCYCLES 5
 
+
+// XXX Hacked in function
+namespace terrainosaurus {
+    TerrainChromosome::Gene createGene(TerrainSampleConstPtr ts, IndexType lod, const Pixel & p);
+};
+
+
 // This function runs the entire GA
 void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
                                      const Block & region, IndexType lod) {
@@ -90,7 +97,7 @@ void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
     /// To maintain population diversity, only 75% of the individuals from the old pop 
     /// will be selected to form the new population for the next evolution cycle
     /// ------------ End Section Description --------------//
-    
+#if 1
     // create the initial population, we'll do this just once      
     float mutationratio = 0.1f;
     float crossoverratio = 0.2f;
@@ -180,11 +187,17 @@ void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
         offset = i;
       }
     }
-    
+
     // we'll render the strongest individual eventually
-    renderChromosome(hf, *c_A[offset]);    
+    renderChromosome(hf, *c_A[offset]);
     cerr << "Range of result is " << range(hf) << endl;
-    
+#else
+    TerrainChromosome c;
+    initializeChromosome(c, 0, tt->samples[0], raster);
+    evaluateFitness(c);
+    renderChromosome(hf, c);
+#endif
+
     // cleanup
 //    for(int i = 0; i < NUM_OF_CHROMOSOME; i++)
 //    {
@@ -205,17 +218,22 @@ void terrainosaurus::initializeChromosome(TerrainChromosome & c, IndexType lod,
     c._pattern = pattern;
     c._levelOfDetail = lod;
 
-    // Figure out how many genes we want in each direction    
-    Dimension size = Dimension(pattern->sizes(lod)) / TerrainChromosome::geneSpacing(lod);
+    // Figure out how many genes we want in each direction
+    Dimension hfSize(pattern->sizes(lod));
+    SizeType spacing = TerrainChromosome::geneSpacing(lod);
+    Dimension size = hfSize / spacing;
+    if (hfSize[0] % spacing != 0) size[0]++;    // Round up # of genes
+    if (hfSize[1] % spacing != 0) size[1]++;
     c.resize(size);
 
     // Populate the gene grid with random data
     Pixel idx;
-    for (idx[0] = 0; idx[0] < size[0]; ++idx[0])
-        for (idx[1] = 0; idx[1] < size[1]; ++idx[1])
+    for (idx[0] = 0; idx[0] < c.size(0); ++idx[0])
+        for (idx[1] = 0; idx[1] < c.size(1); ++idx[1])
+//            c.gene(idx) = createGene(pattern, lod, idx * spacing);
             c.gene(idx) = createRandomGene(raster.terrainTypeAt(idx, lod), lod);
 
-    cerr << "Initialized chromosome with " << size[0] << "x" << size[1] << " genes\n";
+    cerr << "Initialized chromosome with " << c.size(0) << "x" << c.size(1) << " genes\n";
 }                                          
 void terrainosaurus::Crossover(TerrainChromosome *l,TerrainChromosome *r,float ratio,IndexType lod,const Heightfield & pattern,const MapRasterization & raster)
 {
@@ -368,6 +386,35 @@ float terrainosaurus::evaluateFitness_temporary(const TerrainChromosome & c) {
 //    cerr << "RMS value was " << rtms << endl;
 //    cerr << "Functor measured it as " << rms(orig - hf) << endl;
     return rtms;
+}
+
+// This function creates a Gene at a particular point in the source sample
+TerrainChromosome::Gene
+terrainosaurus::createGene(TerrainSampleConstPtr ts, IndexType lod, const Pixel & p) {
+
+    // The Gene we're initializing
+    TerrainChromosome::Gene g;
+
+    // Radius and alpha mask at this LOD
+    g.levelOfDetail = lod;
+    IndexType radius = IndexType(TerrainChromosome::geneRadius(lod));
+    g.mask = TerrainChromosome::geneMask(lod);
+
+    // Set the X,Y source coordinates in the sample
+    g.terrainType = ts->terrainType();
+    g.sourceSample = ts;
+    g.sourceCoordinates = p;
+
+    // Use a identity transformation
+    g.rotation  = scalar_t(0);
+    g.offset    = scalar_t(0);
+    g.scale     = scalar_t(1);
+
+    // Use no jitter around the target point
+    g.targetJitter[0] = 0;
+    g.targetJitter[1] = 0;
+    
+    return g;
 }
 
 // This function creates a random Gene given a terrain type and LOD

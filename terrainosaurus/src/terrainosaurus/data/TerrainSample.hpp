@@ -27,6 +27,9 @@ namespace terrainosaurus {
     typedef shared_ptr<TerrainSample const> TerrainSampleConstPtr;
 };
 
+// Import TerrainType class
+#include "TerrainType.hpp"
+
 
 class terrainosaurus::TerrainSample {
 private:
@@ -39,8 +42,10 @@ private:
  *---------------------------------------------------------------------------*/
 public:
     // Constructors
-    explicit TerrainSample(const std::string & file);
-    explicit TerrainSample(const Heightfield & hf);
+    explicit TerrainSample(const std::string & file,
+                           TerrainTypePtr tt = TerrainTypePtr());
+    explicit TerrainSample(const Heightfield & hf,
+                           TerrainTypePtr tt = TerrainTypePtr());
 
     // Assignment operator overload
     TerrainSample & operator=(const TerrainSample &ts);
@@ -68,8 +73,9 @@ protected:
  *---------------------------------------------------------------------------*/
 public:
     // Properties
-    ro_property(std::string, filename, "");     // The data file
-    ro_property(IndexType, levelsOfDetail, 1);  // How many LODs?
+    ro_property(std::string, filename, "");             // The data file
+    ro_property(IndexType, levelsOfDetail, 1);          // How many LODs?
+    ro_ptr_property(TerrainType, terrainType, NULL);    // What do I belong to?
 
     // LOD property accessors
     const Heightfield::SizeArray & sizes(IndexType lod) const;

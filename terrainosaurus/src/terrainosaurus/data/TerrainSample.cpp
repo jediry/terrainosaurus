@@ -35,13 +35,13 @@ using namespace terrainosaurus;
 
 
 // Constructor taking a filename
-TerrainSample::TerrainSample(const std::string & file)
-    : filename(this, file), levelsOfDetail(this),
+TerrainSample::TerrainSample(const std::string & file, TerrainTypePtr tt)
+    : filename(this, file), levelsOfDetail(this), terrainType(this, tt),
       _loaded(false), _analyzed(false) { }
 
 // Constructor taking a heightfield
-TerrainSample::TerrainSample(const Heightfield & hf)
-    : filename(this), levelsOfDetail(this),
+TerrainSample::TerrainSample(const Heightfield & hf, TerrainTypePtr tt)
+    : filename(this), levelsOfDetail(this), terrainType(this, tt),
       _loaded(true), _analyzed(false) {
 
     // Stick this in as our first LOD heightfield
@@ -52,7 +52,8 @@ TerrainSample::TerrainSample(const Heightfield & hf)
 // Overloaded assignment operator
 TerrainSample & TerrainSample::operator=(const TerrainSample &ts) {
     // Copy source/status properties
-    _filename = ts._filename;
+    _filename    = ts._filename;
+    _terrainType = ts._terrainType;
     _loaded   = ts._loaded;
     _analyzed = ts._analyzed;
 

@@ -141,7 +141,7 @@ void TerrainLibraryParser::endRecord(RefToken t) {
 // Adds a new terrain sample to the current terrain type. There can be any
 // (non-zero) number of terrain samples for a single terrain type.
 void TerrainLibraryParser::addTerrainSample(const string & path, int line) {
-    currentTT->samples.add_item(TerrainSamplePtr(new TerrainSample(path)));
+    currentTT->samples.add_item(TerrainSamplePtr(new TerrainSample(path, currentTT)));
     cerr << "\tsample = "
          << currentTT->samples[currentTT->samples.size() - 1]->filename()
          << endl;
