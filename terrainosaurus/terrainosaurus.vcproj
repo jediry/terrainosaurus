@@ -514,10 +514,10 @@
 			RelativePath=".\src\terrainosaurus\TerrainosaurusComponent.hpp">
 		</File>
 		<File
-			RelativePath=".\test.map">
+			RelativePath=".\data\test.map">
 		</File>
 		<File
-			RelativePath=".\test.ttl">
+			RelativePath=".\data\test.ttl">
 		</File>
 	</Files>
 	<Globals>

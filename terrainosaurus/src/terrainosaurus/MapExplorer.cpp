@@ -46,6 +46,7 @@
 #include <inca/raster/operators/transformation>
 #include <inca/raster/operators/DFT>
 #include <inca/raster/operators/complex>
+#include <inca/raster/operators/blur>
 
 using namespace terrainosaurus;
 using namespace inca::raster;
@@ -60,8 +61,8 @@ typedef MultiArrayRaster< std::complex<float>, 2> ComplexImage;
 
 class ImageWindow;
 typedef shared_ptr<ImageWindow> ImageWindowPtr;
-ImageWindowPtr globalSourceWindow, globalResultWindow, globalDifferenceWindow;
-GrayscaleImage originalImage;
+ImageWindowPtr globalSourceWindow, globalSourceWindow2, globalResultWindow, globalDifferenceWindow;
+GrayscaleImage originalImage, originalImage2;
 
 #define GL_HPP_IMPORT_GLUT
 #include <inca/integration/opengl/GL.hpp>
@@ -197,6 +198,7 @@ void MapExplorer::setup(int &argc, char **argv) {
 void MapExplorer::constructInterface() {
 #if 1
     originalImage = _terrainLibrary->terrainType(1)->samples[0]->heightfield(0);
+    originalImage2 = _terrainLibrary->terrainType(1)->samples[1]->heightfield(0);
 #else
     originalImage.resize(600,500);
     for (int i = 0; i < originalImage.size(0); ++i)
@@ -210,11 +212,13 @@ void MapExplorer::constructInterface() {
 #endif
 
     globalSourceWindow.reset(new ImageWindow(originalImage, "Original"));
-    globalResultWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Derived"));
-    globalDifferenceWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Difference"));
+    globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
+//    globalResultWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Derived"));
+//    globalDifferenceWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Difference"));
     registerWindow(globalSourceWindow);
-    registerWindow(globalResultWindow);
-    registerWindow(globalDifferenceWindow);
+    registerWindow(globalSourceWindow2);
+//    registerWindow(globalResultWindow);
+//    registerWindow(globalDifferenceWindow);
 
 
     ComplexImage dft1, dft2, dft3;
@@ -222,23 +226,50 @@ void MapExplorer::constructInterface() {
     WindowPtr win;
     bool DCInCenter = true;
 
-#define WINX 0
+#define WINX 1
 #if WINX & 1
     dft1 = DFT(originalImage, DCInCenter);
-    mag1 = log(abs(dft1));
-    ph1  = arg(dft1);
+    mag1 = blur(mag(dft1));
+//    ph1  = arg(dft1);
 
-    win.reset(new ImageWindow(mag1, "Mag Full"));
+    dft2 = DFT(originalImage2, DCInCenter);
+    mag2 = blur(mag(dft2));
+//    ph2  = arg(dft2);
+
+    //XXX
+    mag3 = abs(mag2 - mag1);
+    ph1 = log(mag1);
+    ph2 = log(mag2);
+    ph3 = log(mag3);
+
+    cerr << endl << "Mag 1 full" << endl;
+    win.reset(new ImageWindow(ph1, "Mag 1 Full"));
     win->setPosition(10, 10);
     registerWindow(win);
 
-    win.reset(new ImageWindow(ph1, "Ph full"));
-    win->setPosition(50, 50);
+//    win.reset(new ImageWindow(ph1, "Ph 1 full"));
+//    win->setPosition(50, 50);
+//    registerWindow(win);
+
+    cerr << endl << "Mag 2 full" << endl;
+    win.reset(new ImageWindow(ph2, "Mag 2 full"));
+    win->setPosition(100, 100);
     registerWindow(win);
+
+//    win.reset(new ImageWindow(ph2, "Ph 2 full"));
+//    win->setPosition(150, 150);
+//    registerWindow(win);
+
+    cerr << endl << "Mag Diff full" << endl;
+    win.reset(new ImageWindow(mag3, "Mag diff full"));
+    win->setPosition(200, 200);
+    registerWindow(win);
+    cerr << endl << "RMS diff of mag is " << rms(mag3) << endl;
+
 #endif
 #if WINX & 2
     dft2 = DFT(select(originalImage, Array<int, 2>(0), Array<int, 2>(150, 150)), DCInCenter);
-    mag2 = log(abs(dft2));
+    mag2 = log(mag(dft2));
     ph2  = arg(dft2);
 
     win.reset(new ImageWindow(mag2, "Mag half"));
@@ -251,7 +282,7 @@ void MapExplorer::constructInterface() {
 #endif
 #if WINX & 4
     dft3 = DFT(select(originalImage, Array<int, 2>(0), Array<int, 2>(75, 75)), DCInCenter);
-    mag3 = log(abs(dft3));
+    mag3 = log(mag(dft3));
     ph3  = arg(dft3);
 
     win.reset(new ImageWindow(mag3, "Mag quarter"));

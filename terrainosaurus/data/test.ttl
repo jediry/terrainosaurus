@@ -1,0 +1,24 @@
+# This file is neato
+
+[TerrainType: Desert]
+color = <1.0, 0.7, 0.0, 1.0>    # This is yellow!
+#sample = c:\Temp\terrain\grand_mesa.dem
+#sample = c:\Temp\terrain\middletown_VA.dem
+sample = c:\Temp\terrain\blue_mass_canyon_NV.dem
+sample = c:\Temp\terrain\baking_powder_flat_NV.dem
+
+[TerrainType: Grass]
+color = <0.0, 0.8, 0.0, 1.0>    # This is green
+sample = c:\Temp\terrain\grand_mesa.dem
+
+[TerrainType: Snow]
+color = <0.8, 0.8, 0.8, 1.0>    # This is grey
+sample = c:\Temp\terrain\grand_mesa.dem
+
+[TerrainSeam: Desert & Snow]
+Smoothness = 0.8
+Number of Chromosomes = 10
+Mutation Ratio = 0
+Crossover Ratio = 0.2
+Selection Ratio = 0.8
+Aspect Ratio = 2.0
