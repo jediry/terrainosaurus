@@ -29,14 +29,35 @@ namespace terrainosaurus {
 #include "TerrainType.hpp"
 #include "TerrainSeam.hpp"
 
+// Import container definitions
+#include <vector>
+
 
 class terrainosaurus::TerrainLibrary {
 /*---------------------------------------------------------------------------*
  | Type definitions
  *---------------------------------------------------------------------------*/
 public:
-    typedef vector<TerrainTypePtr>              TerrainTypeList;
-    typedef vector< vector<TerrainSeamPtr> >    TerrainSeamMatrix;
+    typedef std::vector<TerrainTypePtr>                 TerrainTypeList;
+    typedef std::vector< std::vector<TerrainSeamPtr> >  TerrainSeamMatrix;
+
+
+/*---------------------------------------------------------------------------*
+ | Static LOD-dependent query functions
+ *---------------------------------------------------------------------------*/
+public:
+    static void initializeStatic();
+
+    // Highest level of detail allowed
+    static IndexType maximumLevelOfDetail();
+
+    // Heightfield resolution in pixels / meters at a specific LOD
+    static scalar_t resolution(IndexType lod);
+
+private:
+    static bool staticInitialized;
+    static IndexType _maximumLevelOfDetail;
+    static std::vector<scalar_t> resolutions;
 
 
 /*---------------------------------------------------------------------------*
@@ -44,7 +65,7 @@ public:
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor with optional number of TerrainTypes
-    explicit TerrainLibrary(size_t n = 0);
+    explicit TerrainLibrary(SizeType n = 0);
 
 
 /*---------------------------------------------------------------------------*
@@ -52,15 +73,15 @@ public:
  *---------------------------------------------------------------------------*/
 public:
     // How many TerrainTypes are in the library
-    size_t size() const;
+    SizeType size() const;
 
     // Look up a TerrainType by name
-    index_t indexOf(const string &name) const;
+    IndexType indexOf(const string &name) const;
 
     // Access to the TerrainType objects
     const TerrainTypeList & terrainTypes() const;
-    TerrainTypeConstPtr terrainType(index_t tt) const;
-    TerrainTypePtr      terrainType(index_t tt);
+    TerrainTypeConstPtr terrainType(IndexType tt) const;
+    TerrainTypePtr      terrainType(IndexType tt);
     TerrainTypeConstPtr terrainType(const string &tt) const;
     TerrainTypePtr      terrainType(const string &tt);
       
@@ -68,8 +89,8 @@ public:
     // The version accepting TT pointers allows NULL as a synonym for the
     // zeroth TT, which is always the "Void" TT
     const TerrainSeamMatrix & terrainSeams() const;
-    TerrainSeamConstPtr terrainSeam(index_t tt1, index_t tt2) const;
-    TerrainSeamPtr      terrainSeam(index_t tt1, index_t tt2);
+    TerrainSeamConstPtr terrainSeam(IndexType tt1, IndexType tt2) const;
+    TerrainSeamPtr      terrainSeam(IndexType tt1, IndexType tt2);
     TerrainSeamConstPtr terrainSeam(const string &tt1, const string &tt2) const;
     TerrainSeamPtr      terrainSeam(const string &tt1, const string &tt2);
     TerrainSeamConstPtr terrainSeam(TerrainTypeConstPtr tt1,
@@ -80,6 +101,10 @@ public:
     // Add a new TerrainType (creating new TerrainSeam combinations)
     TerrainTypePtr addTerrainType(const string &name = "");
     TerrainTypePtr addTerrainType(TerrainTypePtr tt);
+
+    // Force loading of a terrain type (meaning that we intend to use it)
+    void ensureLoaded(IndexType tt) const;
+    void ensureLoaded(const string &tt) const;
 
 protected:
     TerrainTypeList     types;

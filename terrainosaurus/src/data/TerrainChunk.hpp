@@ -27,9 +27,6 @@ namespace terrainosaurus {
     typedef shared_ptr<TerrainChunk const> TerrainChunkConstPtr;
 };
 
-// Import the bounding volume definition
-#include "QuadPrism"
-
 
 class terrainosaurus::TerrainChunk {
 public:
@@ -44,12 +41,12 @@ public:
     TerrainChunk(const string &file);
 
     // Accessor functions
-    index_t level() const { return _level; }
+    IndexType level() const { return _level; }
     const QuadPrism & boundingVolume() const { return _boundingVolume; }
     double worldSpaceError() const { return _worldSpaceError; }
  
 protected:
-    size_t _level;              // What level in the LOD tree are we?
+    SizeType _level;              // What level in the LOD tree are we?
     float _worldSpaceError;     // The maximum world-space error in the HF
 //    TriangleStrip triangles;    // The triangles visible at this LOD
     QuadPrism _boundingVolume;  // A bounding, axis-aligned, rectangular shape

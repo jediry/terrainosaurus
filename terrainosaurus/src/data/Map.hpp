@@ -61,6 +61,9 @@ namespace terrainosaurus {
 
 // Extra, map-specific data that gets woven into the topological mesh
 class terrainosaurus::MapData {
+/*---------------------------------------------------------------------------*
+ | Type definitions
+ *---------------------------------------------------------------------------*/
 public:
     // Import geometric type definitions from the namespace
     typedef scalar_t        scalar_t;
@@ -137,7 +140,10 @@ public:
 
         // Geometric properties of the Boundary
         Point startPoint() const;   // Utility functions for grabbing the
-        Point endPoint() const;     // current geometric end-points of the edge
+        Point endPoint() const;     // current geometric end-points of the edge.
+        Vector direction() const;   // What direction is this going?
+        scalar_t startAngle() const;// Functions to find smoothed angle to
+        scalar_t endAngle() const;  // optimally meet other edges at vertex
         scalar_t length() const;    // Length of the edge
         scalar_t angle() const;     // Polar angle with the X axis
         Point nearestPointTo(Point p) const;
@@ -193,7 +199,7 @@ public:
     struct Spike {
         // Constructor (defaults to a new, unattached spike)
         explicit Spike(Point wp = Point(0.0), Point sp = Point(0.0),
-                       SpikeType t = NewSpike, id_t id = -1)
+                       SpikeType t = NewSpike, IDType id = -1)
             : worldPosition(wp), snappedPosition(sp),
               type(t), elementID(id) { }
 
@@ -208,7 +214,7 @@ public:
     };
 
     // Container typedefs
-    typedef vector<Spike> SpikeList;
+    typedef std::vector<Spike> SpikeList;
 
 protected:
     // This function object takes two Vertices and searches around the first
@@ -269,20 +275,6 @@ public:
                                 FindEnclosingFaceVertex(*this),
                                 FaceData(tt));
     }
-
-#if 0
-/*---------------------------------------------------------------------------*
- | Map refinement courtesy of Mike's magical genetic algorithms
- *---------------------------------------------------------------------------*/
-public:
-    // Refine each boundary in the map, and then each intersection
-    void refineMap();
-
-    // Refine a single edge in the map
-    void refineEdge(EdgePtr e);
-
-    // Smooth out the intersection of all the edge refinements that meet here
-    void refineVertex(VertexPtr v);
-#endif
 };
+
 #endif

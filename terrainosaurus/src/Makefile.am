@@ -1,5 +1,9 @@
 ## Makefile.am -- Process this file with automake to generate Makefile.in
 
+# Incorporate additional Makefile rules
+#include Makefile.rules
+
+
 ###############################################################################
 ##
 ## Automatic source file tracking stuff
@@ -7,16 +11,16 @@
 ###############################################################################
 
 ## Include the source file catalog
-include $(top_srcdir)/src_catalog
+include $(top_srcdir)/config/src_catalog
 
 # Make the Makefile depend on the src catalog
-Makefile.in : Makefile.am src_catalog
+Makefile.in : Makefile.am config/src_catalog
 
 # Rebuild the src catalog
 catalog :
-	#$(top_srcdir)/ac_tools/make_src_catalog.sh \
-	#    $(top_srcdir)/src > $(top_srcdir)/src_catalog
-	$(top_srcdir)/ac_tools/make_src_catalog.sh . > src_catalog
+#	$(top_srcdir)/ac_tools/make_src_catalog.sh \
+#	    $(top_srcdir)/src > $(top_srcdir)/src_catalog
+	$(top_srcdir)/ac_tools/make_src_catalog.sh . > config/src_catalog
 
 # Force a re-link of executables
 relink :

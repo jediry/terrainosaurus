@@ -31,15 +31,40 @@ using namespace terrainosaurus;
 
 
 /*---------------------------------------------------------------------------*
+ | LOD-dependent query functions
+ *---------------------------------------------------------------------------*/
+bool TerrainLibrary::staticInitialized = false;
+IndexType             TerrainLibrary::_maximumLevelOfDetail;
+std::vector<scalar_t> TerrainLibrary::resolutions;
+
+void TerrainLibrary::initializeStatic() {
+    _maximumLevelOfDetail = 0;
+    resolutions.push_back(scalar_t(1) / 30);
+    staticInitialized = true;
+}
+
+IndexType TerrainLibrary::maximumLevelOfDetail() {
+    return _maximumLevelOfDetail;
+}
+scalar_t TerrainLibrary::resolution(IndexType lod) {
+    return resolutions[lod];
+}
+
+
+/*---------------------------------------------------------------------------*
  | Constructors
  *---------------------------------------------------------------------------*/
 // Default constructor with optional number of TerrainTypes
-TerrainLibrary::TerrainLibrary(size_t n) {
+TerrainLibrary::TerrainLibrary(SizeType n) {
     addTerrainType("Void"); // This represents "empty space"
 
     // Create a bunch of TerrainTypes, held by shared_ptr
-    for (index_t i = 0; i < index_t(n); ++i)
+    for (IndexType i = 0; i < IndexType(n); ++i)
         addTerrainType();       // Create a TT with default attributes
+
+    // Set up the LOD stuff
+    _maximumLevelOfDetail = 0;      // Crippled for right now
+    resolutions.push_back(scalar_t(1) / 30);
 }
 
 
@@ -47,11 +72,11 @@ TerrainLibrary::TerrainLibrary(size_t n) {
  | Accessor functions
  *---------------------------------------------------------------------------*/
 // Number of TerrainTypes in the library
-size_t TerrainLibrary::size() const { return types.size(); }
+SizeType TerrainLibrary::size() const { return types.size(); }
 
 
 // Look up a TerrainType by name
-index_t TerrainLibrary::indexOf(const string &name) const {
+IndexType TerrainLibrary::indexOf(const string &name) const {
     TerrainTypeList::const_iterator i;
     for (i = types.begin(); i != types.end(); ++i)
         if ((*i)->name() == name)
@@ -64,14 +89,14 @@ index_t TerrainLibrary::indexOf(const string &name) const {
 const TerrainLibrary::TerrainTypeList & TerrainLibrary::terrainTypes() const {
     return types;
 }
-TerrainTypeConstPtr TerrainLibrary::terrainType(index_t i) const {
-    if (i < 0 || i >= index_t(types.size()))
+TerrainTypeConstPtr TerrainLibrary::terrainType(IndexType i) const {
+    if (i < 0 || i >= IndexType(types.size()))
         return TerrainTypeConstPtr();
     else
         return types[i];
 }
-TerrainTypePtr TerrainLibrary::terrainType(index_t i) {
-    if (i < 0 || i >= index_t(types.size()))
+TerrainTypePtr TerrainLibrary::terrainType(IndexType i) {
+    if (i < 0 || i >= IndexType(types.size()))
         return TerrainTypePtr();
     else
         return types[i];
@@ -88,23 +113,23 @@ TerrainTypePtr TerrainLibrary::terrainType(const string &tt) {
 const TerrainLibrary::TerrainSeamMatrix & TerrainLibrary::terrainSeams() const {
     return seams;
 }
-TerrainSeamConstPtr TerrainLibrary::terrainSeam(index_t tt1,
-                                                index_t tt2) const {
+TerrainSeamConstPtr TerrainLibrary::terrainSeam(IndexType tt1,
+                                                IndexType tt2) const {
     // We must make sure that the first index is the greater of the two,
     // since this is how the TerrainSeams are stored in the triangular
     // matrix described above.
-    index_t ttMajor = std::max(tt1, tt2),
+    IndexType ttMajor = std::max(tt1, tt2),
             ttMinor = std::min(tt1, tt2);
-    if (ttMinor < 0 || ttMajor >= index_t(types.size()))
+    if (ttMinor < 0 || ttMajor >= IndexType(types.size()))
         return TerrainSeamConstPtr();
     else
         return seams[ttMajor][ttMinor];
 }
-TerrainSeamPtr TerrainLibrary::terrainSeam(index_t tt1, index_t tt2) {
+TerrainSeamPtr TerrainLibrary::terrainSeam(IndexType tt1, IndexType tt2) {
     // See previous comment
-    index_t ttMajor = std::max(tt1, tt2),
+    IndexType ttMajor = std::max(tt1, tt2),
             ttMinor = std::min(tt1, tt2);
-    if (ttMinor < 0 || ttMajor >= index_t(types.size()))
+    if (ttMinor < 0 || ttMajor >= IndexType(types.size()))
         return TerrainSeamPtr();
     else
         return seams[ttMajor][ttMinor];
@@ -119,14 +144,14 @@ TerrainSeamPtr TerrainLibrary::terrainSeam(const string &tt1,
 }
 TerrainSeamConstPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
                                                 TerrainTypeConstPtr tt2) const {
-    id_t id1 = (tt1 == NULL ? 0 : tt1->id());
-    id_t id2 = (tt2 == NULL ? 0 : tt2->id());
+    IDType id1 = (tt1 == NULL ? 0 : tt1->id());
+    IDType id2 = (tt2 == NULL ? 0 : tt2->id());
     return terrainSeam(id1, id2);
 }
 TerrainSeamPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
                                            TerrainTypeConstPtr tt2) {
-    id_t id1 = (tt1 == NULL ? 0 : tt1->id());
-    id_t id2 = (tt2 == NULL ? 0 : tt2->id());
+    IDType id1 = (tt1 == NULL ? 0 : tt1->id());
+    IDType id2 = (tt2 == NULL ? 0 : tt2->id());
     return terrainSeam(id1, id2);
 }
 
@@ -143,7 +168,7 @@ TerrainTypePtr TerrainLibrary::addTerrainType(const string &name) {
 
     // ...then create a TerrainSeam for each new combination.
     seams.resize(seams.size() + 1);     // Expand to include one more vector
-    for (index_t i = 0; i < index_t(types.size()); ++i) {// Fill with TSTs
+    for (IndexType i = 0; i < IndexType(types.size()); ++i) {// Fill with TSTs
         TerrainSeamPtr ts(new TerrainSeam(types.size() - 1, i));
         seams.back().push_back(ts);
     }
@@ -161,3 +186,6 @@ TerrainTypePtr TerrainLibrary::addTerrainType(TerrainTypePtr tt) {
 //    add();                  // Create a new TerrainType and its TerrainTypeSeams
 //    *types.back() = *tt;    // Copy the attributes from 'tt'
 }
+
+void TerrainLibrary::ensureLoaded(IndexType tt) const { types[tt]->ensureLoaded(); }
+void TerrainLibrary::ensureLoaded(const string &tt) const { ensureLoaded(indexOf(tt)); }

@@ -39,14 +39,14 @@ private:
  *---------------------------------------------------------------------------*/
 public:
     // Constructor 
-    TerrainSeam(id_t id1, id_t id2) : tt1(id1), tt2(id2),
+    TerrainSeam(IDType id1, IDType id2) : tt1(id1), tt2(id2),
         numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
         mutationRatio(this), crossoverRatio(this), selectionRatio(this),
         aspectRatio(this) { };
 
     // IDs for constituent TerrainTypes
-    id_t terrainType1() const { return tt1; }
-    id_t terrainType2() const { return tt2; }
+    IDType terrainType1() const { return tt1; }
+    IDType terrainType2() const { return tt2; }
 
     // Genetic algorithm parameters
     rw_property(int,   numberOfCycles,      20);    // How many mutation cycles we do?
@@ -58,7 +58,7 @@ public:
     rw_property(float, aspectRatio,         1.0f);
 
 protected:
-    id_t tt1, tt2;      // TerrainType IDs for the constituent TTs
+    IDType tt1, tt2;      // TerrainType IDs for the constituent TTs
 };
 
 #endif

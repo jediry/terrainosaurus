@@ -31,7 +31,7 @@ void AddFaceWidget::renderView() {
         renderer->beginRenderImmediate(LineStrip);
             // Render the lines making up the already-laid-down part
             renderer->setColor(committedBoundaryColor());
-            for (index_t i = 0; i < index_t(committedSpikes.size()); ++i) {
+            for (IndexType i = 0; i < IndexType(committedSpikes.size()); ++i) {
                 renderer->renderVertex(committedSpikes[i].snappedPosition);
             }
 

@@ -1,5 +1,5 @@
 /*
- * File: CameraNavigationWidget.hpp
+ * File: CameraFlyWidget.hpp
  *
  * Author: Ryan L. Saunders
  *
@@ -7,16 +7,11 @@
  *      distribute this file freely for educational purposes.
  *
  * Description:
- *      FIXME: This ought to be a single class, in the Inca library, with
- *      remapable controls.
- *
- *      This currently handles panning in a way that tracks the mouse. How
- *      could we do it so that we can also transform according to some
- *      world-space parameter (e.g., max speed)?
+ *      FIXME: Total hack -- copy of CameraNavigationWidget
  */
 
-#ifndef TERRAINOSAURUS_CAMERA_NAVIGATION_WIDGET
-#define TERRAINOSAURUS_CAMERA_NAVIGATION_WIDGET
+#ifndef TERRAINOSAURUS_CAMERA_FLY_WIDGET
+#define TERRAINOSAURUS_CAMERA_FLY_WIDGET
 
 // Import library configuration
 #include <terrainosaurus/terrainosaurus-common.h>
@@ -24,11 +19,11 @@
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
-    class CameraNavigationWidget;
+    class CameraFlyWidget;
     
     // Pointer typedefs
-    typedef shared_ptr<CameraNavigationWidget>       CameraNavigationWidgetPtr;
-    typedef shared_ptr<CameraNavigationWidget const> CameraNavigationWidgetConstPtr;
+    typedef shared_ptr<CameraFlyWidget>       CameraFlyWidgetPtr;
+    typedef shared_ptr<CameraFlyWidget const> CameraFlyWidgetConstPtr;
 };
 
 // Import superclass definition
@@ -41,10 +36,10 @@ namespace terrainosaurus {
 #include "../TerrainosaurusRenderer.hpp"
 
 
-class terrainosaurus::CameraNavigationWidget : public inca::ui::PassThruWidget {
+class terrainosaurus::CameraFlyWidget : public inca::ui::PassThruWidget {
 private:
     // Set up this class to own properties
-    PROPERTY_OWNING_OBJECT(CameraNavigationWidget);
+    PROPERTY_OWNING_OBJECT(CameraFlyWidget);
 
     // Math typedefs
     typedef inca::world::Camera                     Camera;
@@ -60,10 +55,10 @@ private:
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor with optional component name
-    explicit CameraNavigationWidget(const string &nm = "");
+    explicit CameraFlyWidget(const string &nm = "");
 
     // Constructor initializing camera
-    explicit CameraNavigationWidget(CameraPtr c, const string &nm = "");
+    explicit CameraFlyWidget(CameraPtr c, const string &nm = "");
 
     // The camera we're controlling
     rw_ptr_property(Camera, camera, NULL);

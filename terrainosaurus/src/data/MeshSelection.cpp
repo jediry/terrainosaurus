@@ -8,8 +8,8 @@ void MeshSelection::setElementType(ElementType t) {
     }
 }
 
-size_t MeshSelection::selectedCount() const { return size(); }
-size_t MeshSelection::unselectedCount() const {
+SizeType MeshSelection::selectedCount() const { return size(); }
+SizeType MeshSelection::unselectedCount() const {
     switch (elementType()) {
         case Vertices:  return map()->vertexCount() - size();
         case Faces:     return map()->faceCount() - size();
@@ -23,11 +23,11 @@ size_t MeshSelection::unselectedCount() const {
 
 
 // Vertex accessor functions
-size_t MeshSelection::selectedVertexCount() const {
+SizeType MeshSelection::selectedVertexCount() const {
     if (elementType() == Vertices)  return size();
     else                            return 0;
 }
-size_t MeshSelection::unselectedVertexCount() const {
+SizeType MeshSelection::unselectedVertexCount() const {
     if (elementType() == Vertices)  return map()->vertexCount() - size();
     else                            return map()->vertexCount();
 }
@@ -47,11 +47,11 @@ bool MeshSelection::isSelected(VertexConstPtr v) const {
 
 
 // Face accessor functions
-size_t MeshSelection::selectedFaceCount() const {
+SizeType MeshSelection::selectedFaceCount() const {
     if (elementType() == Faces)       return size();
     else                                return 0;
 }
-size_t MeshSelection::unselectedFaceCount() const {
+SizeType MeshSelection::unselectedFaceCount() const {
     if (elementType() == Faces)         return map()->faceCount() - size();
     else                                return map()->faceCount();
 }
@@ -70,11 +70,11 @@ bool MeshSelection::isSelected(FaceConstPtr f) const {
 
 
 // Edge accessor functions
-size_t MeshSelection::selectedEdgeCount() const {
+SizeType MeshSelection::selectedEdgeCount() const {
     if (elementType() == Edges)     return size();
     else                            return 0;
 }
-size_t MeshSelection::unselectedEdgeCount() const {
+SizeType MeshSelection::unselectedEdgeCount() const {
     if (elementType() == Edges)     return map()->edgeCount() - size();
     else                            return map()->edgeCount();
 }

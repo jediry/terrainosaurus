@@ -99,26 +99,26 @@ protected:
  *---------------------------------------------------------------------------*/
 public:
     // General set functions
-    size_t selectedCount() const;   // How many elements are selected?
-    size_t unselectedCount() const; // How many elements are not selected?
+    SizeType selectedCount() const;   // How many elements are selected?
+    SizeType unselectedCount() const; // How many elements are not selected?
 
     // Vertex accessor functions
-    size_t selectedVertexCount() const;
-    size_t unselectedVertexCount() const;
+    SizeType selectedVertexCount() const;
+    SizeType unselectedVertexCount() const;
     void select(VertexConstPtr i);
     void deselect(VertexConstPtr i);
     bool isSelected(VertexConstPtr i) const;
 
     // Face accessor functions
-    size_t selectedFaceCount() const;     // How many Faces are selected?
-    size_t unselectedFaceCount() const;   // How many not?
+    SizeType selectedFaceCount() const;     // How many Faces are selected?
+    SizeType unselectedFaceCount() const;   // How many not?
     void select(FaceConstPtr r);      // Make sure this is selected
     void deselect(FaceConstPtr r);    // Make sure this is not selected
     bool isSelected(FaceConstPtr r) const;    // Is this selected?
 
     // Edge accessor functions
-    size_t selectedEdgeCount() const;
-    size_t unselectedEdgeCount() const;
+    SizeType selectedEdgeCount() const;
+    SizeType unselectedEdgeCount() const;
     void select(EdgeConstPtr b);
     void deselect(EdgeConstPtr b);
     bool isSelected(EdgeConstPtr b) const;

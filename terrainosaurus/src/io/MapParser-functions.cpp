@@ -26,7 +26,7 @@ using namespace inca::io;
 
 void MapParser::createVertex(scalar_t x, scalar_t y, RefToken pos) {
     cerr << "Vertex: " << x << ' ' << y << ' ' << pos->getLine() << endl;
-    map->createVertex(Point(x, y));
+    map->createVertex(Point2D(x, y));
 }
 
 void MapParser::setTerrainType(const string &tt, RefToken pos) {
@@ -52,7 +52,7 @@ void MapParser::beginFace(RefToken pos) {
     vertices.clear();           // Start fresh
 }
 
-void MapParser::addVertex(id_t id, RefToken pos) {
+void MapParser::addVertex(IDType id, RefToken pos) {
     cerr << id << ' ';
     // Look up the Vertex with that ID (remember file starts at 1, vector at 0)
     Map::VertexPtr v = map->vertex(id - 1);

@@ -23,26 +23,31 @@
 namespace terrainosaurus {
     // Forward declarations
     class Terrainscape;
-    
+
     // Pointer typedefs
     typedef shared_ptr<Terrainscape>       TerrainscapePtr;
     typedef shared_ptr<Terrainscape const> TerrainscapeConstPtr;
 };
 
-// Import superclass definition
-#include <inca/world.hpp>
-
+// Import superclass and related object definitions
+#include <inca/world/Object.hpp>
+#include "TerrainPatch.hpp"
 
 class terrainosaurus::Terrainscape : public inca::world::Object {
 public:
-    // Recalculate which LODs should be in-memory
-    void update(inca::world::CameraPtr camera, double time);
+    // Constructor
+    Terrainscape(SizeType rows, SizeType cols);
 
-    const TerrainChunk & operator()(int col, int row) const;
+
+    // Lookup the TerrainPatch containing a point in coordinate space
+    TerrainChunkConstPtr patchContaining(const Point2D &p) const;
+    TerrainChunkPtr      patchContaining(const Point2D &p);
+
+    // Recalculate which LODs should be in-memory
+//    void update(inca::world::CameraPtr camera, double time);
 
 protected:
     TerrainPatchGrid patches;   // The rectangular grid of terrain patches
-    
 };
 
 #endif

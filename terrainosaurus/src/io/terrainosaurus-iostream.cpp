@@ -53,7 +53,7 @@ istream & terrainosaurus::operator>>(istream &is, TerrainLibrary &tl) {
 ostream & terrainosaurus::operator<<(ostream &os, const TerrainLibrary &tl) {
     // First, write out each TerrainType record
     const TerrainLibrary::TerrainTypeList & types = tl.terrainTypes();
-    for (index_t i = 0; i < index_t(types.size()); ++i) {
+    for (IndexType i = 0; i < IndexType(types.size()); ++i) {
         const TerrainType & tt = *types[i];
         os << "[TerrainType: " << tt.name() << "]\n"
            << "Color = " <<  tt.color() << '\n'
@@ -62,8 +62,8 @@ ostream & terrainosaurus::operator<<(ostream &os, const TerrainLibrary &tl) {
 
     // Now, write out each unique TerrainSeam record
     const TerrainLibrary::TerrainSeamMatrix &seams = tl.terrainSeams();
-    for (index_t i = 0; i < index_t(seams.size()); ++i)
-        for (index_t j = 0; j < i; ++j) {
+    for (IndexType i = 0; i < IndexType(seams.size()); ++i)
+        for (IndexType j = 0; j < i; ++j) {
             const TerrainSeam & ts = *seams[i][j];    // Pick out the seam
             os << "[TerrainSeam: " << types[ts.terrainType1()]->name()
                    << " & " << types[ts.terrainType2()]->name() << "]\n"

@@ -26,6 +26,10 @@ namespace terrainosaurus {
 };
 
 
+// Import associated data classes
+#include "TerrainSample.hpp"
+
+
 class terrainosaurus::TerrainType {
 private:
     // Set up this object to own properties
@@ -37,24 +41,20 @@ private:
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor, optionally initializing name
-    explicit TerrainType(unsigned int eyeDee, const string &nm = "")
-        : name(this, nm), color(this), _id(eyeDee) { }
+    explicit TerrainType(IDType eyeDee, const string &nm = "")
+        : id(this, eyeDee), name(this, nm), color(this), samples(this) { }
 
-    // Assignment operator overload (don't copy id field)
-    TerrainType & operator=(const TerrainType &tt) {
-        name = tt.name();
-        color = tt.color();
-        return *this;
-    }
+    // Assignment operator overload copy all but ID field
+    TerrainType & operator=(const TerrainType &tt);
 
     // The name of this type of terrain, and a color with which to render it
-    rw_property(string, name, "");
+    ro_property(IDType, id, 0);
+    rw_property(std::string, name, "");
     rw_property(Color, color, Color(1.0f, 0.0f, 1.0f, 0.2f));
+    rw_list_property(TerrainSamplePtr, samples);
 
-    unsigned int id() const { return _id; }
-
-protected:
-    unsigned int _id;
+    // Force loading of a terrain type (meaning that we intend to use it)
+    void ensureLoaded() const;
 };
 
 #endif

@@ -3,23 +3,24 @@
  *
  * Author: Ryan L. Saunders
  *
- * Copyright 2003, Ryan L. Saunders. Permission is granted to use and
+ * Copyright 2004, Ryan L. Saunders. Permission is granted to use and
  *      distribute this file freely for educational purposes.
  *
  * Description:
- *      This file implements the functions defined in Map.h++.
+ *      This file implements the functions defined in Map.hpp.
  */
 
 // Import class definition
 #include "Map.hpp"
+using namespace inca::math;
 using namespace terrainosaurus;
 
 // Import our genetic algorithm code
 #include "../genetics/GA.h"
+#undef PI
 
 // Import STL/Boost algorithms
 using std::for_each;
-using namespace boost::lambda;
 
 
 /*---------------------------------------------------------------------------*
@@ -52,6 +53,53 @@ MapData::Point MapData::EdgeData::endPoint() const {
     return edge->endVertex()->position();
 }
 
+// Find the direction this edge is going in 2D space
+MapData::Vector MapData::EdgeData::direction() const {
+    return endPoint() - startPoint();
+}
+
+// Find a (possibly) smoothed angle to try to match at each vertex
+MapData::scalar_t MapData::EdgeData::startAngle() const {
+    // Up-cast to the edge type, then get the endpoint
+    Map::EdgeConstPtr edge = static_cast<Map::EdgeConstPtr>(this);
+    Map::VertexConstPtr vertex = edge->startVertex();
+    if (vertex->edgeCount() == 2) {     // Only smooth valence-2 vertices
+        Map::EdgeConstPtr otherEdge = edge->edgeCCW(vertex);
+        scalar_t myAngle  = angle(),
+                 hisAngle = otherEdge->angle();
+        if (vertex != otherEdge->startVertex()) {   // Flip direction
+            if (hisAngle < 0)   hisAngle += PI<scalar_t>();
+            else                hisAngle -= PI<scalar_t>();
+        }
+        scalar_t targetAngle = (hisAngle - myAngle - PI<scalar_t>()) / 2;
+        if (targetAngle < -PI<scalar_t>() / 2)
+            targetAngle += PI<scalar_t>();
+        return targetAngle;
+    } else {
+        return scalar_t(0);
+    }
+}
+MapData::scalar_t MapData::EdgeData::endAngle() const {
+    // Up-cast to the edge type, then get the endpoint
+    Map::EdgeConstPtr edge = static_cast<Map::EdgeConstPtr>(this);
+    Map::VertexConstPtr vertex = edge->endVertex();
+    if (vertex->edgeCount() == 2) {     // Only smooth valence-2 vertices
+        Map::EdgeConstPtr otherEdge = edge->edgeCCW(vertex);
+        scalar_t myAngle  = angle(),
+                 hisAngle = otherEdge->angle();
+        if (vertex != otherEdge->endVertex()) {   // Flip direction
+            if (hisAngle < 0)   hisAngle += PI<scalar_t>();
+            else                hisAngle -= PI<scalar_t>();
+        }
+        scalar_t targetAngle = (hisAngle - myAngle - PI<scalar_t>()) / 2;
+        if (targetAngle < -PI<scalar_t>() / 2)
+            targetAngle += PI<scalar_t>();
+        return targetAngle;
+    } else {
+        return scalar_t(0);
+    }
+}
+
 // Geometric, cartesian length of the edge
 MapData::scalar_t MapData::EdgeData::length() const {
     return inca::math::distance(startPoint(), endPoint());
@@ -59,8 +107,7 @@ MapData::scalar_t MapData::EdgeData::length() const {
 
 // Angle (between -pi and pi) with the X axis
 MapData::scalar_t MapData::EdgeData::angle() const {
-    Vector line = endPoint() - startPoint();
-    return signedAngle(normalize(line), Vector(1, 0));
+    return signedAngle(normalize(direction()), Vector(1, 0));
 }
 
 // The nearest point on the edge to a world-space point
@@ -95,35 +142,22 @@ TerrainSeamConstPtr MapData::EdgeData::terrainSeam() const {
 
 // Construct the list of points refining this Edge, using the current envelope
 void MapData::EdgeData::refine() {
-    // Get the endpoints 'n' stuff
     Point start = startPoint();
     Point end   = endPoint();
     Vector guide = end - start;
     scalar_t length = magnitude(guide);
-
-
-    /////////////////////////////////////////////////////////////////////////
-    // Refine this Edge via the genetic algorithm
-    /////////////////////////////////////////////////////////////////////////
-
-    // Set up our GA with the parameters from the TerrainSeam
     TerrainSeamConstPtr ts = terrainSeam();
-    GA::Population population(ts->numberOfChromosomes(),
-                              ts->smoothness(),
-                              ts->mutationRatio(),
-                              ts->crossoverRatio(),
-                              ts->selectionRatio(), 25);
+
 
     // Construct the envelope (which also tells us the number of segments),
     // based on the resolution of the elevation data. We don't need any more
     // segments than half the number of elevation samples covering this length,
     // since we can view the elevation grid as sampling this edge, and it can't
     // resolve any boundary features with frequency higher than half its
-    // resolution.
-    int segments = static_cast<int>(mapData().resolution() * length / 2.0);
+    // resolution (God bless you, Mr. Nyquist!).
+    int segments = static_cast<int>(mapData().resolution() * length / 2);
     buildDiamondEnvelope(segments, ts->aspectRatio());
 
-return;
 
     // Report what we're about to do to our oh-so-intelligent user
     // (HAIL TO THEE, USER!)
@@ -139,33 +173,28 @@ return;
     logger.info();
 
 
-    // Do it XXX ugly hacked thing
-    GA::Point sPt, ePt;
-    sPt.x = 0;
-    sPt.y = 0;
-    ePt.x = envelope().size();
-    ePt.y = 0;
-    
-    float low[30], up[30];
-    for (int i = 0; i < envelope().size(); ++i) {
-        low[i] = envelope()[i].first;
-        up[i] = envelope()[i].second;
-    }
+    // WARNING: now entering Mike's magical world of genetic algorithmic
+    // insanity!!! Who knows what sort of magical creatures you might
+    // encounter within! Enter at your own risk.
+    // Set up our GA with the parameters from the TerrainSeam
+    GA::Population population(ts->numberOfChromosomes(),
+                              ts->smoothness(),
+                              ts->mutationRatio(),
+                              ts->crossoverRatio(),
+                              ts->selectionRatio(), 25);
+//    const AngleList & angles = population.MakeLine(envelope(),
+//                                                   startAngle(), endAngle(),
+//                                                   ts->numberOfCycles());
+    const AngleList angles;
+    float f = 1.0;
 
-    float* angles_old = population.MakeLine(sPt, ePt, up, low, ts->numberOfCycles());
-//    float* angles_old = population.MakeLine(sPt, ePt, &envelope(), ts->numberOfCycles());
-//    float* angles_old = population.MakeLine(sPt, ePt, ts->numberOfCycles());
-    AngleList angles;
-    for (index_t i = 0; i < index_t(envelope().size()); ++i)
-        angles.push_back(angles_old[i]);
-
-
+    // Now returning to the relative safety of graphics-world :-)
     // Decode the angles into points (initially aligned semi-arbitrarily)
     Point p(0.0, 0.0);
     Vector path(0.0, 0.0);  // This keeps track of how far this moves us
     refinement().clear();
     refinement().push_back(p);
-    for (index_t i = 0; i < index_t(angles.size()); ++i) {
+    for (IndexType i = 0; i < IndexType(angles.size()); ++i) {
         Vector dp(1.0, tan(angles[i]));   // Find motion in X / Y
 //        Vector dp(cos(angles[i]), sin(angles[i]));   // Find motion in X / Y
         p += dp;            // Move us by this amound and place a point here
@@ -197,9 +226,9 @@ return;
 
     // Build a to-world-space transformation matrix to "set things right"
     inca::math::Matrix<scalar_t, 3, 3, true> T, R, S, X;
-    loadTranslation<scalar_t,3>(T, start - Point(0.0, 0.0));
-    loadScaling<scalar_t, 3>(S, Vector(scaleFactor, scaleFactor));
-    loadRotation2D(R, rotationAngle);
+    inca::math::loadTranslation<scalar_t,3>(T, start - Point(0.0, 0.0));
+    inca::math::loadScaling<scalar_t, 3>(S, Vector(scaleFactor, scaleFactor));
+    inca::math::loadRotation2D(R, rotationAngle);
     X = T % (R % S);
 //    logger << "S: -------------" << endl << S << endl;
 //    logger << "R: -------------" << endl << R << endl;
@@ -211,8 +240,8 @@ return;
     PointList::iterator pt;
     for (pt = refinement().begin(); pt != refinement().end(); pt++) {
         Point & p = *pt;
-        p = operator%<scalar_t, 3, 3, true>(X, p);
-        //p = X % p; FIXME
+        //p = operator%<scalar_t>(X, p);
+        p = X % p; //FIXME
 //        cerr << *pt << endl;
     }
 }
@@ -236,9 +265,9 @@ void MapData::EdgeData::buildDiamondEnvelope(int segments,
     float dy = float(length() / 2.0 * aspectRatio / (segments / 2.0));
     envelope().resize(segments);    // Make sure we've got the right # of slots
 
-    size_t levels = segments / 2 + segments % 2;    // Make sure we hit middle
+    SizeType levels = segments / 2 + segments % 2;    // Make sure we hit middle
     float y = 0;
-    for (index_t i = 0; i < index_t(levels); ++i) {
+    for (IndexType i = 0; i < IndexType(levels); ++i) {
         envelope()[i].first  = -y;  // Just reflect about the X axis...
         envelope()[i].second = y;
         envelope()[segments - i - 1] = envelope()[i]; // ...and the Y axis
@@ -247,7 +276,7 @@ void MapData::EdgeData::buildDiamondEnvelope(int segments,
 
     cerr << "Generating a diamond of length " << length() << " and ratio "
          << aspectRatio << " and " << segments << " segments:\n";
-    for (index_t i = 0; i < index_t(envelope().size()); ++i)
+    for (IndexType i = 0; i < IndexType(envelope().size()); ++i)
         cerr << '\t' << envelope()[i].second << endl;
 }
 
@@ -455,16 +484,16 @@ void Map::refineEdge(EdgePtr e) {
 
 // Smooth out the intersection of all the edge refinements that meet here
 void Map::refineVertex(VertexPtr v) {
-//    size_t eCount = v->edgeCount();
+//    SizeType eCount = v->edgeCount();
 
     // Calculate an unweighted average of the nearby points
 //    Point p(0.0, 0.0);
-//    for (index_t i = 0; i < index_t(eCount); ++i)
+//    for (IndexType i = 0; i < IndexType(eCount); ++i)
 //        p += .boundary(i).refinement()[1];
 //    p /= bCount;
 
     // Modify the start point of each boundary refinement
-//    for (index_t i = 0; i < index_t(bCount); i++)
+//    for (IndexType i = 0; i < IndexType(bCount); i++)
 //        in.boundary(i).refinement()[0] = p;
 }
 #endif

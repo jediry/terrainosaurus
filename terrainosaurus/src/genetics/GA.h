@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <stdlib.h>
 //#include <Pair>
-#include <Vector>
+#include <vector>
 using namespace std;
 typedef std::pair<float,float> Range;
 typedef std::vector<Range> RangeList;

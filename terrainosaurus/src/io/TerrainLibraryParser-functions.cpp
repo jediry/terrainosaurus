@@ -47,7 +47,11 @@ inline ostream & operator<<(ostream &o, TerrainLibraryParser::PropertyType p) {
 }
 
 
+// Creates a new terrain type and sets it as "current"
 void TerrainLibraryParser::createTerrainType(RefToken tt) {
+    // Close the previous record
+    endRecord(tt);
+
     // Scream like hell if we've already got one
     TerrainTypePtr ttp = library->terrainType(tt->getText());
     if (ttp != NULL) {
@@ -65,7 +69,12 @@ void TerrainLibraryParser::createTerrainType(RefToken tt) {
     cerr << "[TerrainType: " << tt->getText() << "]\n";
 }
 
+
+// Creates a new terrain type and sets it as "current"
 void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
+    // Close the previous record
+    endRecord(tt1);
+
     // Make sure the associated TerrainType records exist
     TerrainTypePtr tt1p = library->terrainType(tt1->getText());
     TerrainTypePtr tt2p = library->terrainType(tt2->getText());
@@ -111,6 +120,34 @@ void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
          << " & " << tt2->getText() << "]\n";
 }
 
+
+// End the in-progress terrain type/seam
+void TerrainLibraryParser::endRecord(RefToken t) {
+    if (currentTT) {
+        // Make sure it had at least one TerrainSample
+        if (currentTT->samples.size() == 0) {
+            FileFormatException e(getFilename(), t->getLine(), 0);
+            e.os() << "TerrainType \"" << currentTT->name()
+                << "\" does not have any data samples";
+            throw e;
+        }
+        currentTT.reset();      // We're no longer inside a TT
+    } else if (currentTS) {
+        currentTS.reset();      // We're no longer inside a TS
+    }
+}
+
+
+// Adds a new terrain sample to the current terrain type. There can be any
+// (non-zero) number of terrain samples for a single terrain type.
+void TerrainLibraryParser::addTerrainSample(const string & path, int line) {
+    currentTT->samples.add_item(TerrainSamplePtr(new TerrainSample(path)));
+    cerr << "\tsample = "
+         << currentTT->samples[currentTT->samples.size() - 1]->filename()
+         << endl;
+}
+
+
 // Set the requested, color-valued property on the current TT or TS.
 // If it has already been set, throw a SemanticException
 void TerrainLibraryParser::setColorProperty(PropertyType p, const Color &c, int line) {
@@ -133,6 +170,7 @@ void TerrainLibraryParser::setColorProperty(PropertyType p, const Color &c, int 
     setProperties |= p;
     cerr << "\t" << p << " = " << c << endl;
 }
+
 
 // Set the requested, scalar-valued property on the current TT or TS.
 // If it has already been set, throw a SemanticException
@@ -168,6 +206,7 @@ void TerrainLibraryParser::setScalarProperty(PropertyType p, scalar_t s, int lin
     setProperties |= p;
     cerr << "\t" << p << " = " << s << endl;
 }
+
 
 // Set the requested, integer-valued property on the current TT or TS.
 // If it has already been set, throw a SemanticException

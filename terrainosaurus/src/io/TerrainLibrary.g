@@ -29,6 +29,9 @@ header "pre_include_hpp" {
 
     // Import TerrainLibrary and related object definitions 
     #include "../data/TerrainLibrary.hpp"
+    
+    // Import container definitions
+    #include <inca/util/hash_container>
 }
 
 // Global options section
@@ -70,10 +73,6 @@ public:
         TSAspectRatio       = 0x0040,
     };
 
-    // Imported type definitions
-    typedef double                  scalar_t;   // "scalars" will be doubles
-    typedef terrainosaurus::Color   Color;      // Explicitly import Color
-
 
 /*---------------------------------------------------------------------------*
  | Helper function definitions (these help keep the parser grammar cleaner)
@@ -86,16 +85,19 @@ protected:
     // set/created, thus effectively preventing duplicate entries
     void createTerrainType(antlr::RefToken tt);
     void createTerrainSeam(antlr::RefToken tt1, antlr::RefToken tt2);
+    void endRecord(antlr::RefToken t);
+    void addTerrainSample(const std::string & path, int line);
     void setColorProperty(PropertyType p, const Color &c, int line);
     void setScalarProperty(PropertyType p, scalar_t s, int line);
     void setIntegerProperty(PropertyType p, int i, int line);
+
 
     // The library we're populating, plus the current TT and TS, and a
     // record of which properties we've set on the current object
     TerrainLibrary * library;
     TerrainTypePtr currentTT;
     TerrainSeamPtr currentTS;
-    hash_map<TerrainSeamPtr, bool> initializedTSs;
+    stl_ext::hash_map<TerrainSeamPtr, bool> initializedTSs;
     unsigned int setProperties;
 }
 
@@ -111,7 +113,9 @@ recordList [TerrainLibrary * lib]:
 
 // A TerrainType declaration, followed by one or more properties
 terrainTypeRecord:
-    terrainTypeDeclaration ( blankLine | terrainColor )* ;
+    terrainTypeDeclaration ( blankLine
+                           | terrainColor
+                           | terrainSample )* ;
 
 // A TerrainSeam declaration, followed by one or more properties
 terrainSeamRecord:
@@ -123,12 +127,10 @@ terrainSeamRecord:
                             | selectionRatio
                             | aspectRatio )* ;
 
-
 // [TerrainType: Snow]
 terrainTypeDeclaration:
     OPEN_SBRACKET TERRAIN_TYPE COLON n:NAME CLOSE_SBRACKET EOL
     { createTerrainType(n); } ;
-
 
 // [TerrainSeam: Snow & Grass]
 terrainSeamDeclaration:
@@ -146,6 +148,11 @@ blankLine: EOL ;
 terrainColor { Color c; }:
     t:COLOR ASSIGN c=color EOL
     { setColorProperty(TTColor, c, t->getLine()); } ;
+
+// sample = filename.dem
+terrainSample: { string s; }
+    t:SAMPLE ASSIGN s=filename EOL
+    { addTerrainSample(s, t->getLine()); } ;
 
 
 /*---------------------------------------------------------------------------*
@@ -191,7 +198,7 @@ aspectRatio { scalar_t n; }:
  | Complex value types
  *---------------------------------------------------------------------------*/
 // A real number, specified in standard notation (e.g. -3.42342)
-scalar returns [TerrainLibraryParser::scalar_t s]:
+scalar returns [scalar_t s]:
     (sg:SIGN)? s=fraction
     {
         // If we have a sign token and it is negative, then negate 's'
@@ -201,19 +208,19 @@ scalar returns [TerrainLibraryParser::scalar_t s]:
 
 
 // A positive fractional value, >= 0.0
-fraction returns [TerrainLibraryParser::scalar_t s]:
+fraction returns [scalar_t s]:
     w:NUMBER ( DOT f:NUMBER )?
     {   string tmp(w->getText());           // Construct a composite string
         if (f != NULL) {                    // If we have a fractional part,
             tmp += '.';                     // then add it in
             tmp += f->getText();
         }
-        s = atof(tmp.c_str());
+        s = scalar_t(atof(tmp.c_str()));
     } ;
 
 
 // A normalized fractional value, within [0.0, 1.0]
-nFraction returns [TerrainLibraryParser::scalar_t s]:
+nFraction returns [scalar_t s]:
     s=fraction
     { s >= 0.0 && s <= 1.0 }? ; // Enforce s in [0.0, 1.0]
 
@@ -232,6 +239,17 @@ color returns [Color c]:
 
 // An unsigned integer in decimal notation
 integer returns [int value]: n:NUMBER { value = atoi(n->getText().c_str()); } ;
+
+
+// A file path
+filename returns [string path]:
+    ( n:NAME                    { path += n->getText(); }
+    | i:NUMBER                  { path += i->getText(); }
+    | c:COLON                   { path += c->getText(); }
+    | d:DOT                     { path += d->getText(); }
+    | ( BACKSLASH | FORESLASH ) { path += "\\"; }
+    | SPACE                     { path += " "; }
+    )+ ;
 
 
 /**
@@ -256,6 +274,7 @@ tokens {
 
     // TerrainType property keywords
     COLOR       = "color" ;
+    SAMPLE      = "sample" ;
 
     // TerrainSeam property keywords
     NUMBER      = "number" ;
@@ -270,15 +289,17 @@ tokens {
 }
 
 // Primitive character classes
-protected DIGIT  options { paraphrase = "digit"; }  : ( '0'..'9' ) ;
-protected LETTER options { paraphrase = "letter"; } : ( 'a'..'z' ) ;
+protected DIGIT     : ( '0'..'9' ) ;
+protected LETTER    : ( 'a'..'z' ) ;
+protected WS_CHAR   : ( ' ' | '\t' ) ;
+protected EOL_CHAR  : ( "\r\n" | '\r' | '\n' ) ;
+protected DOUBLE_QUOTE : '"' ;
 
 // Comments and whitespace
-EOL options { paraphrase = "end of line"; } :
-    ( "\r\n" | '\r' | '\n' )          { newline(); } ;
+EOL options { paraphrase = "end of line"; } : EOL_CHAR  { newline(); } ;
 COMMENT options { paraphrase = "comment"; } :
-    '#' (~('\r' | '\n'))* EOL         { $setType(EOL); } ;
-WS : ( ' ' | '\t' )                   { $setType(antlr::Token::SKIP); } ;
+    '#' ( ~('\r' | '\n') )* EOL_CHAR  { $setType(EOL); } ;
+WS : ( WS_CHAR )+                     { $setType(antlr::Token::SKIP); } ;
 
 // Delimiters
 OPEN_ABRACKET   : "<" ;
@@ -290,6 +311,9 @@ ASSIGN          : "=" ;
 COLON           : ":" ;
 AND             : "&" ;
 DOT             : "." ;
+BACKSLASH       : '\\' ;
+FORESLASH       : '/' ;
+//SPACE           : "\\ " ;
 
 // An unsigned integral number
 NUMBER  options { paraphrase = "number"; } : (DIGIT)+ ;

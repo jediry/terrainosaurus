@@ -10,12 +10,12 @@
 # Autoconf/Automake configuration
 AC_PREREQ(2.53)
 AC_INIT(terrainosaurus, 0.2.0, rls@tamu.edu)
-AC_CONFIG_AUX_DIR(config)
-#AC_CONFIG_MACRO_DIR(./ac_tools)
-AC_CONFIG_FILES(Makefile src/Makefile)
 AC_CONFIG_SRCDIR(src/terrainosaurus/terrainosaurus-common.h)
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR(config)
+AC_CONFIG_FILES(Makefile src/Makefile test_raster/Makefile)
+AC_CONFIG_HEADERS(src/terrainosaurus/config-ac.h)
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
-AM_CONFIG_HEADER(src/config-ac.h)
 AC_CANONICAL_HOST
 
 
@@ -27,11 +27,6 @@ AC_PROG_RANLIB      # Tool for building static libraries
 
 # Compiler configuration
 AC_LANG(C++)
-CFLAGS=
-CPPFLAGS=
-CXXFLAGS="-g3"
-LDFLAGS=
-
 
 # Check for some representative header files, and assume their usual
 # companions are around as well
@@ -47,10 +42,11 @@ ACT_REQUIRE_HEADER(boost/multi_array.hpp,   [Boost multi-dim array header files]
 ACT_REQUIRE_HEADER(inca/inca-common.h,      [Inca library header files],
                    /home/jediry/Documents/Development/Media/libinca/src)
 
-ACT_REQUIRE_CXX_LIB(inca, [[#include <inca/math.hpp>]], [inca::math::arcsin(0.5);],
-                    [Inca runtime library],
-                    [/home/jediry/Documents/Development/Media/libinca/src])
+#ACT_REQUIRE_CXX_LIB(inca, [[#include <inca/math.hpp>]], [inca::math::arcsin(0.5);],
+#                    [Inca runtime library],
+#                    [/home/jediry/Documents/Development/Media/libinca/src])
 
+LDFLAGS="$LDFLAGS -L/home/jediry/Documents/Development/Media/libinca/src"
 
 #------------------------------------------------------------------------------
 # Should we use the X-Window system?

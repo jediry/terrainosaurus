@@ -117,6 +117,20 @@ void MapExplorerWidget::keyPressed(KeyCode key, Pixel p) {
                 return;
             }
             break;
+
+        // Function keys choose different major modes
+        case KeyF1:
+            if (theseModifiersActive(NoModifiers)) {
+                selectWidget(0);
+                return;
+            }
+            break;
+        case KeyF2:
+            if (theseModifiersActive(NoModifiers)) {
+                selectWidget(1);
+                return;
+            }
+            break;
     }
     
     // If we got here, this message isn't for us. Move along. Move along.
