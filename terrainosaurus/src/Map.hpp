@@ -40,25 +40,36 @@ namespace terrainosaurus {
     // Forward declarations
     class Map;
 
-    // Pointer declarations
-    typedef shared_ptr<Map> MapPtr;
+    // Pointer typedefs
+    typedef shared_ptr<Map>       MapPtr;
+    typedef shared_ptr<Map const> MapConstPtr;
 };
 
 // Import the mesh that manages our topology
 #include <inca/math/topology/WingedEdge-PolygonMesh>
 
+// Import the TerrainDescriptor definition
+#include "TerrainDescriptor.hpp"
+
+
 class terrainosaurus::Map {
+private:
+    // Set up this class to own properties
+    PROPERTY_OWNING_OBJECT(Map);
+    
+
 /*---------------------------------------------------------------------------*
  | Type definitions
  *---------------------------------------------------------------------------*/
 public:
-    // Forward declarations
+    // Forward declarations for map parts
+    class TerrainType;
     class Intersection;
     class Boundary;
     class RefinedBoundary;
     class Region;
 
-    // PolygonMesh object typedefs
+    // Import geometric and topological types from PolygonMesh
     typedef inca::poly::WEPolygonMesh<double, 2>    PolygonMesh;
     typedef shared_ptr<PolygonMesh>             PolygonMeshPtr;
     typedef PolygonMesh::Vertex                 Vertex;
@@ -68,21 +79,44 @@ public:
     typedef PolygonMesh::FacePtr                FacePtr;
     typedef PolygonMesh::EdgePtr                EdgePtr;
 
-    // PolyLine object typedefs
-//    typedef inca::world::CurveObject2D          CurveObject2D;
-//    typedef inca::world::CurveObject2DPtr       CurveObject2DPtr;
-//    typedef CurveObject2D::ApproximationType    PolyLine;
-//    typedef shared_ptr<PolyLine>                PolyLinePtr;
-
-
     // Import scalar and vector type definitions
     INCA_MATH_SCALAR_TYPEDEFS(double, IS_NOT_WITHIN_TEMPLATE, /* */, /* */);
     INCA_MATH_VECTOR_TYPEDEFS(scalar_t, 2, /* */, /* */);
 
-    typedef list<Point>     PointList;
+    // Import terrain-related types from TerrainDescriptor
+    typedef TerrainDescriptor::Color            Color;
 
-    // TerrainType wrapper for a Material
-    typedef unsigned int TerrainType;
+    // List of Points, representing a Boundary refinement
+    typedef list<Point> PointList;
+    typedef shared_ptr<PointList>       PointListPtr;
+    typedef shared_ptr<PointList const> PointListConstPtr;
+
+
+/*---------------------------------------------------------------------------*
+ | TerrainType wrapper for a TerrainDescriptor
+ |      Allows direct access to the TerrainDescriptor and its associated
+ |      properties
+ *---------------------------------------------------------------------------*/
+    class TerrainType {
+    public:
+        // Constructor
+        TerrainType(const Map &m, unsigned int i) : _map(m), _id(i) { }
+        TerrainType & operator=(const TerrainType &t) {
+            if (&_map == &(t._map))     // Make sure we belong to the same map!
+                _id = t.id();
+            return *this;
+        }
+
+        // Accessors
+        const Map & map() const { return _map; }
+        TerrainDescriptorPtr descriptor() const;
+        unsigned int id() const { return _id; }
+        const string & name() const { return descriptor()->name(); }
+        const Color & color() const { return descriptor()->color(); }
+    protected:
+        const Map &_map;    // The Map object that we're associated with
+        unsigned int _id;   // The ID of the TerrainDescriptor
+    };
 
 
 /*---------------------------------------------------------------------------*
@@ -95,7 +129,8 @@ public:
         // Constructor
         Region(const Map &m, FacePtr f) : _map(m), _face(f) { }
         Region & operator=(const Region &r) {
-            _face = r.face();
+            if (&_map == &(r._map))     // Make sure we belong to the same map!
+                _face = r.face();
             return *this;
         }
 
@@ -106,6 +141,7 @@ public:
 
         // Properties of the Region
         TerrainType terrainType() const;
+        void setTerrainType(const TerrainType &type);
 
         // Boundary objects, looked up by index (CCW around the Region)
         // The resulting Boundary will be oriented such that going from
@@ -144,7 +180,8 @@ public:
         // Constructor
         Intersection(const Map &m, VertexPtr v) : _map(m), _vertex(v) { }
         Intersection & operator=(const Intersection &i) {
-            _vertex = i.vertex();
+            if (&_map == &(i._map))     // Make sure we belong to the same map!
+                _vertex = i.vertex();
             return *this;
         }
 
@@ -198,10 +235,11 @@ public:
         // Constructor
         Boundary(const Map &m, EdgePtr e, VertexPtr v)
             : _map(m), _edge(e), _vertex(v) { }
-
         Boundary & operator=(const Boundary &b) {
-            _edge = b.edge();
-            _vertex = b.vertex();
+            if (&_map == &(b._map)) {   // Make sure we belong to the same map!
+                _edge = b.edge();
+                _vertex = b.vertex();
+            }
             return *this;
         }
 
@@ -247,18 +285,18 @@ public:
     class RefinedBoundary {
     public:
         // Constructors
-        RefinedBoundary(const Boundary &b, PointList * p)
+        RefinedBoundary(const Boundary &b, PointListPtr p)
             : _guide(b), _refinement(p) { }
 
         // The simple 'guide' edge that this refines
         Boundary guide() const { return _guide; }
 
         // Points comprising the refinement
-        PointList & points();
         const PointList & points() const;
+              PointList & points();
         size_t size() const;                   // Number of points
-        Point & operator[](index_t index);   // Array syntax accessors
         const Point & operator[](index_t index) const;
+              Point & operator[](index_t index);        // Array syntax accessors
         void push_front(Point p);
         void push_back(Point p);
         void clear();
@@ -272,55 +310,50 @@ public:
         PointList::iterator fromEnd(index_t index);
         PointList::const_iterator fromEnd(index_t index) const;
 
-        PointList * _refinement;
+        PointListPtr _refinement;
         Boundary _guide;
     };
 
 
 /*---------------------------------------------------------------------------*
- | Map typedefs
+ | Container typedefs
  *---------------------------------------------------------------------------*/
-    // Pointer typedefs
-    typedef Region *                        RegionPtr;
-    typedef Intersection *                  IntersectionPtr;
-    typedef Boundary *                      BoundaryPtr;
-    typedef RefinedBoundary *               RefinedBoundaryPtr;
-
-    // List typedefs
+    typedef vector<TerrainType>             TerrainTypeList;
     typedef vector<Region>                  RegionList;
     typedef vector<Intersection>            IntersectionList;
     typedef vector<Boundary>                BoundaryList;
-    typedef hash_map<EdgePtr, PointList *>  BoundaryRefinementMap;
+    typedef hash_map<EdgePtr, PointListPtr> BoundaryRefinementMap;
 
-private:
-    typedef Map ThisType;
 
 /*---------------------------------------------------------------------------*
- | Constructors & Destructor
+ | Constructors & properties
  *---------------------------------------------------------------------------*/
 public:
-    explicit Map() : _mesh(new PolygonMesh()),
-           numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
-           mutationRate(this), crossoverRate(this), selectionRatio(this),
-           resolution(this) { }
-    explicit Map(PolygonMeshPtr m) : _mesh(m),
-           numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
-           mutationRate(this), crossoverRate(this), selectionRatio(this),
-           resolution(this) { }
+    // Default constructor with optional map name
+    explicit Map(const string &nm = "");
+    
+    // Constructor taking an already-constructed mesh for the topology
+    explicit Map(PolygonMeshPtr m, const string &nm = "");
+
+    // A string describing the map
+    rw_property(string, name, "");
+
+    // The mesh that maintains the map's connectivity
+    rw_ptr_property(PolygonMesh, mesh, new PolygonMesh());
+
+    // The library of available terrain types
+    rw_list_property(TerrainDescriptorPtr, library);
 
     // Genetic algorithm parameters
-    rw_property(int,   numberOfCycles,          5);     // How many mutation cycles we do?
-    rw_property(int,   numberOfChromosomes,     5);
-    rw_property(float, smoothness,              0.2f);
-    rw_property(float, mutationRate,            0.05f);
-    rw_property(float, crossoverRate,           0.05f);
-    rw_property(float, selectionRatio,          1.0f);
-    rw_property(float, resolution,              20.0f); // Segments per world-unit
+    rw_property(int,   numberOfCycles,      5);     // How many mutation cycles we do?
+    rw_property(int,   numberOfChromosomes, 5);
+    rw_property(float, smoothness,          0.2f);
+    rw_property(float, mutationRate,        0.05f);
+    rw_property(float, crossoverRate,       0.05f);
+    rw_property(float, selectionRatio,      1.0f);
+    rw_property(float, resolution,          20.0f); // Segments per world-unit
 
 protected:
-    // The data structure underlying the whole thing
-    PolygonMeshPtr _mesh;
-
     // How we keep track of the refinements we've made
     mutable BoundaryRefinementMap refinedBoundaries;
 
@@ -329,24 +362,27 @@ protected:
  | Accessor functions
  *---------------------------------------------------------------------------*/
 public:
-    // Access to the underlying PolygonMesh
-    PolygonMeshPtr mesh() const { return _mesh; }
-    void setMesh(PolygonMeshPtr m) { _mesh = m; }
-
     // Access to mappy wrappers for mesh objects
+    TerrainTypeList  terrainTypes()  const;
     RegionList       regions()       const;
     IntersectionList intersections() const;
     BoundaryList     boundaries()    const;
 
+    size_t terrainTypeCount()  const;
     size_t regionCount()       const;
     size_t intersectionCount() const;
     size_t boundaryCount()     const;
 
+    TerrainType terrainType(index_t index)   const;
     Region region(index_t index)             const;
     Intersection intersection(index_t index) const;
     Boundary boundary(index_t index)         const;
 
     RefinedBoundary refinementOf(const Boundary &b) const;
+
+
+    void addRegion(const PointList & points);
+
 
 /*---------------------------------------------------------------------------*
  | Map refinement courtesy of Mike's magical genetic algorithms

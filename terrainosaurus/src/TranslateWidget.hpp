@@ -38,11 +38,37 @@ public:
     // Default constructor with optional component name
     TranslateWidget(const string &nm = "");
 
+    rw_property(Color,    xPartColor,            Color(1.0f, 0.0f, 0.0f, 0.5f));
+    rw_property(Color,    yPartColor,            Color(0.0f, 1.0f, 0.0f, 0.5f));
+    rw_property(Color,    zPartColor,            Color(0.0f, 0.0f, 1.0f, 0.5f));
+    rw_property(Color,    planePartColor,        Color(0.8f, 0.8f, 0.0f, 0.5f));
+    rw_property(Color,    activePartColor,       Color(1.0f, 1.0f, 1.0f, 0.5f));
+    rw_property(Color,    transformingPartColor, Color(1.0f, 1.0f, 1.0f, 0.9f));
+    rw_property(scalar_t, axisThickness,  1.0);   // Line width (pixels)
+    rw_property(scalar_t, boxThickness,   1.0);   // Box line width (pixels)
+    rw_property(scalar_t, axisLength,     10.0);  // Axis length (pixels)
+    rw_property(scalar_t, boxRadius,      5.0);   // 1/2 box side length (pixels)
+
     // Widget event-handler functions
-//    void renderView() { }
-//    void keyPressed(KeyCode key, Point p);
+    void renderView();
+    void keyPressed(inca::ui::KeyCode key, Pixel p);
 //    void mouseDragged();
 //    void mouseTracked();
+
+protected:
+    void renderGadget();    // Render our translation gadget
+
+    // The parts of our graphical gadget the user is allowed to manipulate
+    enum GadgetPart {
+        NoPart,                     // No part of the gadget
+        TranslateAlongXPart,        // Translation in only X
+        TranslateAlongYPart,        // Translation in only Y
+        TranslateAlongZPart,        // Translation in only Z
+        TranslateInViewPlanePart,   // Translation in the plane orthogonal to
+    };                              // the view direction
+
+    bool transforming;      // Are we in the middle of doing a transformation?
+    GadgetPart activePart;  // Which part is under the mouse and/or being used
 };
 
 #endif

@@ -56,7 +56,7 @@ void DEMInterpreter::parse() {
 
     // Elevation profile data in S -> N columns
     index_t r = 1;
-    for (index_t c = 1; c <= handler->columns(); c++) {
+    for (index_t c = 1; c <= index_t(handler->columns()); c++) {
         // This is where we last were
         size_t baseline = CHUNK_SIZE * chunkCount + eolCount;
 
@@ -524,14 +524,14 @@ void DEMInterpreter::parseRecordTypeB(index_t r, index_t c) {
         (*handler)(row, startCol) = Handler::OUT_OF_BOUNDS;
     
     // Fill in the valid area in the middle
-    for (index_t row = startRow; row < startRow + pRows; row++) {
+    for (index_t row = startRow; row < index_t(startRow + pRows); row++) {
         int val;
         file >> val;            // Formatted integer read
         (*handler)(row, startCol) = val * resolution[2] + referenceDatum;
     }
 
     // Fill in out-of bounds areas above
-    for (index_t row = startRow + pRows; row < handler->rows(); row++)
+    for (index_t row = startRow + pRows; row < index_t(handler->rows()); row++)
         (*handler)(row, startCol) = Handler::OUT_OF_BOUNDS;
 }
 

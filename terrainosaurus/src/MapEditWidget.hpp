@@ -19,7 +19,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class MapEditWidget;
-    
+
     // Pointer typedefs
     typedef shared_ptr<MapEditWidget>       MapEditWidgetPtr;
     typedef shared_ptr<MapEditWidget const> MapEditWidgetConstPtr;
@@ -42,6 +42,14 @@ private:
     PROPERTY_OWNING_OBJECT(MapEditWidget);
 
 public:
+    // Import scalar model used for geometry
+    INCA_MATH_SCALAR_TYPEDEFS(double, IS_NOT_WITHIN_TEMPLATE, /* */, /* */);
+    INCA_MATH_VECTOR_TYPEDEFS(scalar_t, 3, /* */, /* */);
+
+    typedef inca::imaging::Color<float, inca::imaging::sRGB, true> Color;
+
+
+public:
     // Default constructor with optional component name
     MapEditWidget(const string &nm = "")
         : PassThruWidget(nm), map(this), selection(this) { }
@@ -52,11 +60,8 @@ public:
     // The selected things we should modify
     rw_ptr_property(MapSelection, selection, NULL);
 
-    // Widget event-handler functions
-//    void renderView() { }
-//    void keyPressed(KeyCode key, Point p);
-//    void mouseDragged();
-//    void mouseTracked();
+protected:
+    inca::rendering::OpenGLRenderer renderer;   // For drawing (duh!)
 };
 
 #endif

@@ -37,7 +37,7 @@
 				AdditionalDependencies="libinca.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="H:\lib"
+				AdditionalLibraryDirectories="$(SolutionDir)\lib"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="1"/>
 			<Tool
@@ -81,6 +81,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(SolutionDir)\lib"
 				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -123,9 +124,43 @@
 				RelativePath=".\src\genetics\Pyramid.h">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\src\GLUTMapEditor.cpp">
-		</File>
+		<Filter
+			Name="gui"
+			Filter="">
+			<File
+				RelativePath=".\src\MapEditWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\MapExplorerWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\MapExplorerWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\MapSelectWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\MapSelectWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\RotateWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\ScaleWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\TopologyWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\TopologyWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\TranslateWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\TranslateWidget.hpp">
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\src\Map.cpp">
 		</File>
@@ -138,15 +173,16 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\src\MapEditorWidget.cpp">
+			RelativePath=".\src\MapExplorer.cpp">
 		</File>
 		<File
-			RelativePath=".\src\MapEditorWidget.hpp">
-			<FileConfiguration
-				Name="Debug|Win32">
-				<Tool
-					Name="VCCustomBuildTool"/>
-			</FileConfiguration>
+			RelativePath=".\src\MapSelection.cpp">
+		</File>
+		<File
+			RelativePath=".\src\MapSelection.hpp">
+		</File>
+		<File
+			RelativePath=".\src\TerrainDescriptor.hpp">
 		</File>
 		<File
 			RelativePath=".\src\terrainosaurus-common.h">

@@ -1,6 +1,7 @@
 #pragma once
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #define PI 3.14152
 
 namespace GA
@@ -13,7 +14,9 @@ namespace GA
 		public:
 			Chromosome(){ genes = NULL; fitness = 0.0; length = 0;};
 			void Initialize(float* fA_genes, int i_length);
-			~Chromosome(){delete[] genes;};
+			~Chromosome(){delete[] genes;};		
+			void MutateGene(int i_offset);
+			double GetRand(double d_max);
 			double GetFitness(float f_UserSmoothnessParam)
 			{
 				if(fitness == 0.0) 
@@ -26,10 +29,10 @@ namespace GA
 			float* GetGenes();
 			int length;
 			double perfectsmoothline;
+			float* genes;
 		private:
 			float AbsFloat(float f_value) { if(f_value < 0.0){f_value *= -1;} return f_value;};
-			double EvaluateFitness(float f_UserSmoothnessParam);
-			float* genes;
+			double EvaluateFitness(float f_UserSmoothnessParam);			
 			double fitness;						
 	};
 	float* Chromosome::GetGenes()
@@ -40,6 +43,25 @@ namespace GA
 			outgenes[i] = genes[i];
 		}
 		return outgenes;
+	}
+	void Chromosome::MutateGene(int i_offset)
+	{
+		float PIdiv2 = (float)(PI/2.0);
+		float original = genes[i_offset];		
+		float current = (float)(GetRand(PIdiv2) * pow(-1,rand()));
+		float result = original + current;
+		while(!((result < PIdiv2) && (result >= -PIdiv2)))
+		{
+			current = (float)(GetRand(PIdiv2) * pow(-1,rand()));
+			result = original + current;
+		}
+		genes[i_offset] = original + current;
+
+	}	
+	double Chromosome::GetRand(double d_max)
+	{
+		double value=(double)rand() / (double)RAND_MAX; 
+		return value * d_max;
 	}
 	void Chromosome::Copy(Chromosome* chrom_from)
 	{

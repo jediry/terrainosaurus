@@ -11,11 +11,11 @@
 
 // Import class definition
 #include "MapExplorerWidget.hpp"
-
-// Import Inca Application definition
-#include <inca/ui/Application.hpp>
-
 using namespace terrainosaurus;
+
+// Import other parts of the Inca UI framework
+#include <inca/ui/Application.hpp>
+#include <inca/ui/CompositeWidget.hpp>
 using namespace inca::rendering;
 using namespace inca::ui;
 
@@ -24,14 +24,14 @@ using namespace inca::ui;
  | Constructor
  *---------------------------------------------------------------------------*/
 MapExplorerWidget::MapExplorerWidget(const string &nm)
-        : PassThruWidget(nm), map(this, new Map()) {
+        : PassThruWidget(nm), map(this),
+          backgroundColor(this) {
 
     ///////////////////////////////////////////////////////////////////////////
     // Step 1: construct shared global objects
-    MapSelectionPtr selection(new MapSelection());
-    OrthographicCameraPtr camera2D(new OrthographicCamera());
-        camera2D->viewWidth = 5.0;
-        camera2D->viewHeight = 5.0;
+    camera2D = OrthographicCameraPtr(new OrthographicCamera());
+        camera2D->viewWidth = 15.0;
+        camera2D->viewHeight = 15.0;
         camera2D->nearClip = -1.0;
         camera2D->transform->position = Transform::Point(0.0, 0.0, 100.0);
     //PerspectiveCameraPtr  camera3D(new PerspectiveCamera());
@@ -52,14 +52,16 @@ MapExplorerWidget::MapExplorerWidget(const string &nm)
     MapEditWidgetPtr rotate2D    (new RotateWidget("2D Rotate"));
     MapEditWidgetPtr scale2D     (new ScaleWidget("2D Scale"));
     MapEditWidgetPtr topology2D  (new TopologyWidget("Map topology"));
-    select2D     = MapSelectWidgetPtr(new MapSelectWidget("2D Selection"));
-    mapView2D    = MapViewPtr(new MapView("2D Map View"));
+    viewSelect2D = MapSelectWidgetPtr(new MapSelectWidget("2D Map View/Select"));
         modeSelect->addWidget(modeEdit2D);
             modeEdit2D->control = navigate2D;
                 navigate2D->control = toolSelect2D;
-                navigate2D->camera = camera2D;
-                navigate2D->enableLook = false; // Disable most rotations
-                navigate2D->panScale = 0.1;
+                navigate2D->camera = camera2D;  // Control the 2D camera
+                navigate2D->enableLook = false;     // Disable capabilities
+                navigate2D->enableDolly = false;    // that don't make sense
+                navigate2D->enableYaw = false;      // in two dimensions
+                navigate2D->enablePitch = false;
+                navigate2D->panScale = 0.1;         // Tweak the controls
                 navigate2D->rollScale = 3.1415962 / 150.0;
                 navigate2D->zoomScale = 1.001;
             modeEdit2D->view = toolSelect2D;
@@ -67,27 +69,142 @@ MapExplorerWidget::MapExplorerWidget(const string &nm)
                 tools2D.push_back(rotate2D);
                 tools2D.push_back(scale2D);
                 tools2D.push_back(topology2D);
-                for (index_t i = 0; i < tools2D.size(); i++) {
-                    toolSelect2D->addWidget(tools2D[i]);    // Add to chooser
-                    tools2D[i]->widget = select2D;          // Link to select
-                    tools2D[i]->selection = selection;      // Give selection
+                for (index_t i = 0; i < index_t(tools2D.size()); i++) {
+                    toolSelect2D->addWidget(tools2D[i]);// Add to chooser
+                    tools2D[i]->widget = viewSelect2D;  // Link to next widget
+                    tools2D[i]->selection = viewSelect2D->selection();
                 }
-                    select2D->view = mapView2D;
-                        mapView2D->camera = camera2D;
-                    select2D->selection = selection;
+                
+    // Create an empty map
+    map = MapPtr(new Map());
+    
+    // Start with the draw tool
+    toolSelect2D->selectWidget("2D Scale");
+    loadMap("blah blah");
+    loadParams("genetic_params.txt");
 }
 
 // Custom setter for the "map" property
 void MapExplorerWidget::ptr_property_set(Map, map) {
     _map = value;   // Set the value on this object
-    
+
     // Set it for each tool widget
-    for (index_t i = 0; i < tools2D.size(); i++)
+    for (index_t i = 0; i < index_t(tools2D.size()); i++)
         tools2D[i]->map = value;
 
-    // Set it for the selection and the rendering widgets
-//    select2D->map = value;
-    mapView2D->map = value;
+    // Set it for the selection/rendering widget
+    viewSelect2D->map = value;
+}
+
+// Custom setter for the "backgroundColor" property
+void MapExplorerWidget::property_set(Color, backgroundColor) {
+    _backgroundColor = value;
+    renderer.setBackgroundColor(_backgroundColor);
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Widget event-handler functions
+ *---------------------------------------------------------------------------*/
+// Ensure the background color gets set the first time
+void MapExplorerWidget::initializeView() {
+    renderer.setBackgroundColor(backgroundColor());
+}
+
+// Handle all of the icky details of resizing
+void MapExplorerWidget::resizeView(Dimension sz) {
+    if (sz != size) {   // Don't do anything if we're already the right size
+        PassThruWidget::resizeView(sz);     // Do superclass impl.
+        renderer.resize(sz[0], sz[1]);      // Reshape the viewport
+        camera2D->reshape(sz[0], sz[1]);    // Reshape the camera
+    }
+}
+
+// Set up for rendering and render child widgets
+void MapExplorerWidget::renderView() {
+    // First, clear the display
+    renderer.clear();
+
+    // Next, set up the camera projection (could have changed!)
+    renderer.resetProjectionMatrix();
+    renderer.applyCameraProjection(camera2D);
+    
+    // Now, set up the camera transformation on behalf of the sub-widgets
+    renderer.resetTransformMatrix();
+    renderer.applyCameraTransform(camera2D);
+
+    // Last, render the sub-widgets
+    PassThruWidget::renderView();
+}
+
+void MapExplorerWidget::keyPressed(KeyCode key, Pixel p) {
+    switch (key) {
+        // Alt-Q == quit
+        case KeyQ:
+            if (theseModifiersActive(AltModifier)) {
+                Application::instance().exit(0, "Exiting normally...");
+                return; // Of course, we never actually get here...
+            }
+            break;
+
+        // F11 == toggle full-screen mode
+        case KeyF11:
+            if (theseModifiersActive(NoModifiers)) {
+                cerr << "Full-screen not implemented yet\n";
+                return;
+            }
+            break;
+
+        // Alt-L == Load parameters file
+        case KeyL:
+            if (theseModifiersActive(AltModifier)) {
+                loadParams("genetic_params.txt");
+                requestRedisplay();
+                return;
+            }
+            break;
+
+        // Alt-O == Open map file
+        case KeyO:
+            if (theseModifiersActive(AltModifier)) {
+                loadMap("testmap.obj");
+                requestRedisplay();
+                return;
+            }
+            break;
+
+        // Number keys switch between tools
+        case Key1: case Key2: case Key3: case Key4: case Key5:
+        case Key6: case Key7: case Key8: case Key9: case Key0:
+            if (theseModifiersActive(NoModifiers)) {
+                map->numberOfCycles = (key - Key1);
+                return;
+            }
+            break;
+
+        // Tab/Shift-Tab switches between tools
+        case KeyTab:
+            if (theseModifiersActive(NoModifiers)) {
+                toolSelect2D->selectNextWidget();
+                return;
+            } else if (theseModifiersActive(ShiftModifier)) {
+                toolSelect2D->selectPreviousWidget();
+                return;
+            }
+            break;
+
+    case KeyR:      // 'R' == Refine map
+        if (theseModifiersActive(AltModifier)) {
+            if (map)
+                map->refineMap();
+            requestRedisplay();
+            return;
+        }
+        break;
+    }
+    
+    // If we got here, this message isn't for us. Move along. Move along.
+    PassThruWidget::keyPressed(key, p);
 }
 
 
@@ -156,13 +273,21 @@ void MapExplorerWidget::loadMap(const string &filename) {
     list.push_back(mesh->createFaceVertex(mesh->vertex(1)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(2)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(3)));
-    mesh->createFace(list);
+    Map::PolygonMesh::FacePtr f = mesh->createFace(list);
+    f->setMaterial(0);
     list.clear();
     list.push_back(mesh->createFaceVertex(mesh->vertex(0)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(4)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(5)));
     list.push_back(mesh->createFaceVertex(mesh->vertex(6)));
-    mesh->createFace(list);
+    f = mesh->createFace(list);
+    f->setMaterial(1);
+
+    // Create the necessary terrain types
+    newMap->library.add(TerrainDescriptorPtr(new TerrainDescriptor()));
+    newMap->library[0]->color = Color(0.0f, 0.5f, 0.2f, 1.0f);
+    newMap->library.add(TerrainDescriptorPtr(new TerrainDescriptor()));
+    newMap->library[1]->color = Color(0.5f, 0.5f, 0.0f, 1.0f);
 
     // Set this as our current map object (the custom setter will propagate
     // it to the sub-widgets)
@@ -197,82 +322,3 @@ void MapExplorerWidget::loadMap(const string &filename) {
 void MapExplorerWidget::storeMap(const string &filename) const {
 
 }
-
-
-/*---------------------------------------------------------------------------*
- | Widget event-handler functions
- *---------------------------------------------------------------------------*/
-void MapExplorerWidget::renderView() {
-    PassThruWidget::renderView();
-}
-
-void MapExplorerWidget::keyPressed(KeyCode key, Point p) {
-    switch (key) {
-        // Alt-Q == quit
-        case KeyQ:
-            if (theseModifiersActive(AltModifier)) {
-                Application::instance().exit(0, "Exiting normally...");
-                return; // Of course, we never actually get here...
-            }
-            break;
-
-        // F11 == toggle full-screen mode
-        case KeyF11:
-            if (theseModifiersActive(NoModifiers)) {
-                cerr << "Full-screen not implemented yet\n";
-                return;
-            }
-            break;
-
-        // Alt-L == Load parameters file
-        case KeyL:
-            if (theseModifiersActive(AltModifier)) {
-                loadParams("genetic_params.txt");
-                requestRedisplay();
-                return;
-            }
-            break;
-
-        // Alt-O == Open map file
-        case KeyO:
-            if (theseModifiersActive(AltModifier)) {
-                loadMap("testmap.obj");
-                requestRedisplay();
-                return;
-            }
-            break;
-
-        // Number keys switch between tools
-//        case Key1: case Key2: case Key3: case Key4: case Key5:
-//        case Key6: case Key7: case Key8: case Key9: case Key0:
-//            if (theseModifiersActive(NoModifiers)) {
-//                toolSet->setActiveWidget(key - Key1);
-//                return;
-//            }
-//            break;
-
-        // Tab/Shift-Tab switches between tools
-        case KeyTab:
-            if (theseModifiersActive(NoModifiers)) {
-                toolSelect2D->selectNextWidget();
-                return;
-            } else if (theseModifiersActive(ShiftModifier)) {
-                toolSelect2D->selectPreviousWidget();
-                return;
-            }
-            break;
-
-//    case KeyR:      // 'R' == Refine map
-//        if (allModifiersActive(NoModifiers)) {
-//            if (map)
-//                map->refineMap();
-//            requestRedisplay();
-//            return;
-//        }
-//        break;
-    }
-    
-    // If we got here, this message isn't for us. Move along. Move along.
-    PassThruWidget::keyPressed(key, p);
-}
-

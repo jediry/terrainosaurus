@@ -14,16 +14,30 @@
 #include "Map.hpp"
 using namespace terrainosaurus;
 
+using namespace inca::imaging;
+using namespace inca::math;
 
 // Import our genetic algorithm code
 #include "genetics/GA.h"
 
 
 /*---------------------------------------------------------------------------*
+ | TerrainType functions
+ *---------------------------------------------------------------------------*/
+TerrainDescriptorPtr Map::TerrainType::descriptor() const {
+    return map().library[_id];
+}
+
+
+/*---------------------------------------------------------------------------*
  | Region functions
  *---------------------------------------------------------------------------*/
 Map::TerrainType Map::Region::terrainType() const {
-    return _face->material();
+    return TerrainType(map(), _face->material());
+}
+
+void Map::Region::setTerrainType(const TerrainType &tt) {
+    _face->setMaterial(tt.id());    // Set the material ID for this face
 }
 
 // Boundary objects, looked up by index (CCW around the Region)
@@ -333,13 +347,38 @@ Map::RefinedBoundary::fromEnd(index_t index) const {
 
 
 /*---------------------------------------------------------------------------*
+ | Map constructors
+ *---------------------------------------------------------------------------*/
+// Default constructor with optional map name
+Map::Map(const string &nm)
+      : name(this, nm), mesh(this), library(this),
+        numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
+        mutationRate(this), crossoverRate(this), selectionRatio(this),
+        resolution(this) { }
+
+Map::Map(PolygonMeshPtr m, const string &nm)
+      : name(this, nm), mesh(this, m), library(this),
+        numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
+        mutationRate(this), crossoverRate(this), selectionRatio(this),
+        resolution(this) { }
+
+
+/*---------------------------------------------------------------------------*
  | Accessor functions
  *---------------------------------------------------------------------------*/
+// Get a list of all the terrain types in the library
+Map::TerrainTypeList Map::terrainTypes() const {
+    TerrainTypeList list;
+    for (index_t t = 0; t < index_t(library.size()); ++t)
+        list.push_back(TerrainType(*this, t));
+    return list;
+}
+
 // Get a list of all the regions in the map
 Map::RegionList Map::regions() const {
     RegionList list;
     PolygonMesh::FacePtrList::const_iterator f;
-    for (f = mesh()->faces().begin(); f != mesh()->faces().end(); f++)
+    for (f = mesh()->faces().begin(); f != mesh()->faces().end(); ++f)
         list.push_back(Region(*this, *f));
     return list;
 }
@@ -348,7 +387,7 @@ Map::RegionList Map::regions() const {
 Map::IntersectionList Map::intersections() const {
     IntersectionList list;
     PolygonMesh::VertexPtrList::const_iterator v;
-    for (v = mesh()->vertices().begin(); v != mesh()->vertices().end(); v++)
+    for (v = mesh()->vertices().begin(); v != mesh()->vertices().end(); ++v)
         list.push_back(Intersection(*this, *v));
     return list;
 }
@@ -357,15 +396,21 @@ Map::IntersectionList Map::intersections() const {
 Map::BoundaryList Map::boundaries() const {
     BoundaryList list;
     PolygonMesh::EdgePtrList::const_iterator e;
-    for (e = mesh()->edges().begin(); e != mesh()->edges().end(); e++)
+    for (e = mesh()->edges().begin(); e != mesh()->edges().end(); ++e)
         list.push_back(Boundary(*this, *e, (*e)->getStartVertex()));
     return list;
 }
 
 // Look up how many of each type of thing there is in the map
+size_t Map::terrainTypeCount()  const { return library.size(); }
 size_t Map::regionCount()       const { return mesh()->faceCount(); }
 size_t Map::intersectionCount() const { return mesh()->vertexCount(); }
 size_t Map::boundaryCount()     const { return mesh()->edgeCount(); }
+
+// Look up a TerrainType by index
+Map::TerrainType Map::terrainType(index_t index) const {
+    return TerrainType(*this, index);
+}
 
 // Look up a Region by index
 Map::Region Map::region(index_t index) const {
@@ -385,15 +430,22 @@ Map::Boundary Map::boundary(index_t index) const {
 
 // Get a RefinedBoundary for a Boundary
 Map::RefinedBoundary Map::refinementOf(const Boundary &b) const {
-    PointList *points;
+    PointListPtr points;
     BoundaryRefinementMap::const_iterator i = refinedBoundaries.find(b.edge());
     if (i == refinedBoundaries.end()) { // Gotta create one
-        points = new PointList();
+        points = PointListPtr(new PointList());
         refinedBoundaries[b.edge()] = points;
     } else
         points = i->second;
 
     return RefinedBoundary(b, points);
+}
+
+void Map::addRegion(const PointList &points) {
+    PolygonMesh::FaceVertexPtrList fvs;
+    for (PointList::const_iterator i = points.begin(); i != points.end(); ++i)
+        fvs.push_back(mesh->createFaceVertex(mesh->createVertex(*i)));
+    mesh->createFace(fvs);
 }
 
 
@@ -406,18 +458,12 @@ void Map::refineMap() {
     BoundaryList bs = boundaries();
     for (index_t i = 0; i < index_t(bs.size()); i++)
         refineBoundary(bs[i]);
-//        refineBoundary(bs[3]);
 
     // Now that all the b's are done, do the i's
     IntersectionList is = intersections();
     for (index_t i = 0; i < index_t(is.size()); i++)
         refineIntersection(is[i]);
 }
-
-
-//#############################################################################
-//####               Now entering Mike's domain. Beware.                   ####
-//#############################################################################
 
 // Create a refinement of a Boundary.
 void Map::refineBoundary(const Boundary &b) {
@@ -512,8 +558,9 @@ void Map::refineBoundary(const Boundary &b) {
     Map::PointList::iterator pt;
     Map::PointList & points = rb.points();
     for (pt = points.begin(); pt != points.end(); pt++) {
-        inca::math::Point<scalar_t, inca::math::Matrix<scalar_t, 3, 3>::cols - 1> & p = *pt;
+        Point & p = *pt;
         p = operator%<scalar_t, 3, 3, true>(X, p);
+        //p = X % p;
         cerr << *pt << endl;
     }
 }

@@ -43,7 +43,6 @@ namespace terrainosaurus {
 #include "ScaleWidget.hpp"
 #include "TopologyWidget.hpp"
 #include "MapSelectWidget.hpp"
-#include "MapView.hpp"
 
 
 class terrainosaurus::MapExplorerWidget : public inca::ui::PassThruWidget {
@@ -55,31 +54,44 @@ public:
     // Container typedefs
     typedef vector<MapEditWidgetPtr> MapEditToolList;
 
+    // Color typedef
+    typedef Map::Color Color;
+
+
 public:
     // Default constructor with optional component name
     MapExplorerWidget(const string &nm = "");
-    ~MapExplorerWidget() { }
 
     // The map
     rw_ptr_property_custom_set(Map, map, NULL);
-    void ptr_property_set(Map, map);
+        void ptr_property_set(Map, map);
+
+    // UI parameters
+    rw_property_custom_set(Color, backgroundColor, Color(0.1f, 0.1f, 0.1f, 1.0f));
+        void property_set(Color, backgroundColor);
+
+
+    // Widget event-handler functions
+    void initializeView();
+    void resizeView(Dimension d);
+    void renderView();
+    void keyPressed(inca::ui::KeyCode key, Pixel p);
 
     // I/O functions
     void loadParams(const string &filename);
     void loadMap(const string &filename);
     void storeMap(const string &filename) const;
 
-    // Widget event-handler functions
-    void renderView();
-    void keyPressed(inca::ui::KeyCode key, Point p);
-
 protected:
+    // Rendering objects
+    inca::world::OrthographicCameraPtr camera2D;
+    inca::rendering::OpenGLRenderer renderer;
+
     // Subwidgets we have to hold onto
     inca::ui::MultiplexorWidgetPtr modeSelect, toolSelect2D;
     inca::ui::CameraControlPtr navigate2D;
     MapEditToolList tools2D;
-    MapSelectWidgetPtr select2D;
-    MapViewPtr mapView2D;
+    MapSelectWidgetPtr viewSelect2D;
 };
 
 #endif

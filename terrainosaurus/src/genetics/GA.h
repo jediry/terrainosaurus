@@ -19,13 +19,16 @@ namespace GA
 			float* Evolve(int cycles);
 			~Population(){delete[] chroms; delete pyramid;};
 		private:
+			double GetAngle(Point* v_two, Point* v_three);
 			double* ComputePopulationFitness(double& total);
 			double* ComputePopulationCFitness();
+			void AveragingOperator(int offset1, int offset2,int index);
 			double GetFitness(int i_offset) { return chroms[i_offset].GetFitness(smoothParam);};
 			double GetRand(double d_max);
 			int FindOffset(double d_value,double* dA_cfitness);
 			float* GetAngles(Point* fA_randomwalk, int i_length);
 			double GetAngle(Point* P_one, Point* P_two, Point* P_three);
+			void SinglePointCrossover(int offset1, int offset2,int index);
 			Chromosome* GenerateNewChromosome();
 			int numOfChromosomes;
 			// selectionRatio determines the number of individuals being selected from the current population to form the new population
@@ -34,14 +37,16 @@ namespace GA
 			int numOfIndividuals;
 			Chromosome* chroms;	
 			Pyramid* pyramid;
+			Point fromPt, toPt;
 	};
-	float* Population::MakeLine(Point fromPt, Point toPt, int i_cycles)
+	float* Population::MakeLine(Point in_fromPt, Point in_toPt, int i_cycles)
 	{
 		int length;
 		Point *randomwalk, **data;					
 		float* angles;
 		// setups the pyramidal structure
 		pyramid = new GA::Pyramid();
+		fromPt=in_fromPt; toPt = in_toPt;
 		data = pyramid->ConnectPoints(&fromPt,&toPt);		
 		length = pyramid->length;
 		// generate the initial population
@@ -73,20 +78,32 @@ namespace GA
 		// dotproduct
 		// cos(theta) = Dotproduct(v1,v2) / (length(v1)*length(v2))
 		// all in doubles		
-		Point xaxis, origin;
+		Point xaxis, origin, temp;		
 		xaxis.x = 1; xaxis.y = 0;
 		origin.x = 0; origin.y = 0;
-		angles[0] = (float)GetAngle(&xaxis,&origin,&fA_randomwalk[0]);
-                int i;
-		for(i = 1; i < arraylen-1; i++)
+	  temp.x = fA_randomwalk[1].x - fA_randomwalk[0].x;
+		temp.y = fA_randomwalk[1].y - fA_randomwalk[0].y;
+		angles[0] = (float)GetAngle(&xaxis,&temp);		
+		//printf("point1 : %d %d point2: %d %d angle: %f\n",fA_randomwalk[0].x,fA_randomwalk[0].y,fA_randomwalk[1].x,fA_randomwalk[1].y,angles[0]);
+
+		for(int i = 1; i < arraylen-1; i++)
 		{
-			angles[i] = (float)GetAngle(&fA_randomwalk[i-1],&fA_randomwalk[i],&fA_randomwalk[i+1]);
+			temp.x = fA_randomwalk[i+1].x - fA_randomwalk[i].x;
+			temp.y = fA_randomwalk[i+1].y - fA_randomwalk[i].y;
+			angles[i] = (float)GetAngle(&xaxis,&temp);
+			//printf("point1 : %d %d point2: %d %d angle: %f\n",fA_randomwalk[i].x,fA_randomwalk[i].y,fA_randomwalk[i+1].x,fA_randomwalk[i+1].y,angles[i]);
 		}
-		// the angle of the last line segment with an imaginary x axis
-		xaxis.x = fA_randomwalk[i_length-1].x + 1;
-		xaxis.y = fA_randomwalk[i_length-1].y;
-		angles[i] = (float)GetAngle(&xaxis,&fA_randomwalk[i],&fA_randomwalk[i-1]);
+		// the angle of the last line segment with an imaginary x axis, > PI/2
+		//angles[i] = (float)GetAngle(&xaxis,&temp);
 		return angles;
+	}
+	double Population::GetAngle(Point* vec1, Point* vec2)
+	{
+		double angle;
+		angle = ::acos((vec1->x*vec2->x+vec1->y*vec2->y) / (::sqrt(vec1->x*vec1->x+vec1->y*vec1->y * 1.0) * ::sqrt(vec2->x*vec2->x+vec2->y*vec2->y * 1.0)));
+		if(vec1->y > vec2->y)
+			angle *= -1.0;
+		return angle;
 	}
 	double Population::GetAngle(Point* P_one, Point* P_two, Point* P_three)
 	{
@@ -98,7 +115,7 @@ namespace GA
 		vec2.x = P_three->x - P_two->x;
 		vec2.y = P_three->y - P_two->y;
 		// angle is always 180-theta in degrees
-		result = acos((vec1.x*vec2.x+vec1.y*vec2.y) / (sqrt((double)vec1.x*vec1.x+vec1.y*vec1.y) * sqrt((double)vec2.x*vec2.x+vec2.y*vec2.y)));
+		result = ::acos((vec1.x*vec2.x+vec1.y*vec2.y) / (::sqrt(vec1.x*vec1.x+vec1.y*vec1.y * 1.0) * ::sqrt(vec2.x*vec2.x+vec2.y*vec2.y * 1.0)));
 		// direction is being calculated here
 		// P_one is ontop of point 3, so it's in positive direction
 		if(P_one->y < P_three->y)
@@ -121,9 +138,10 @@ namespace GA
 	}
 	float* Population::Evolve(int i_cycles)
 	{		
-		int i = 0,j;
+		int i = 0,j, chromlength, ii,jj;
 		double *cfitness;			
 		int offset, curOffset = 0;
+		int crossoveroffset1, crossoveroffset2,crossoverindex;
 		// roulette wheel
 		Chromosome* newpop = NULL;
 		while(i< i_cycles)
@@ -144,14 +162,48 @@ namespace GA
 			// generate new individuals for the new pop
 			for(j = numOfIndividuals; j < numOfChromosomes; j++)
 			{
-				newpop[curOffset++].Copy(GenerateNewChromosome());
+				Chromosome* tempchrom = GenerateNewChromosome();
+				newpop[curOffset++].Copy(tempchrom);
+				delete tempchrom;
 			}
-			// apply operators on the individuals
+			
 			delete[] cfitness;
-			delete[] chroms;
+			delete[] chroms;			
 			chroms = newpop;
-			newpop = NULL;
-			i++;
+			newpop = NULL;			
+			////******* apply GA operators on the individuals
+			// chooses two individuals and perform single point crossover
+			chromlength = chroms[0].length;
+			if(GetRand(1.0) < crossoverRate)
+			{
+				crossoveroffset1 = rand() % numOfChromosomes;
+				crossoveroffset2 = rand() % numOfChromosomes;
+				crossoverindex = rand() % chromlength;
+				if(crossoveroffset1 != crossoveroffset2)
+					SinglePointCrossover(crossoveroffset1, crossoveroffset2,crossoverindex);			
+			}
+			// averaging operator
+			if(GetRand(1.0) < crossoverRate)
+			{
+				crossoveroffset1 = rand() % numOfChromosomes;
+				crossoveroffset2 = rand() % numOfChromosomes;
+				crossoverindex = rand() % chromlength;
+				if(crossoveroffset1 != crossoveroffset2)
+					AveragingOperator(crossoveroffset1, crossoveroffset2,crossoverindex);
+			}
+			// mutation section
+			for(ii = 0; ii < numOfChromosomes; ii++)
+			{
+				for(jj = 0; jj < chromlength; jj++)
+				{
+					if(GetRand(1.0) < mutationRate)
+					{
+						chroms[ii].MutateGene(jj);
+					}
+				}
+			}
+			////^^^^^^^ End GA operators section			
+			i++;			
 		}
 		double maxfitness = 0.0;
 		double currfitness;
@@ -169,7 +221,40 @@ namespace GA
 	}
 	Chromosome* Population::GenerateNewChromosome()
 	{
-		return NULL;
+		Chromosome* chrom = new Chromosome();
+	  Point *randomwalk, **data;	
+		data = pyramid->ConnectPoints(&fromPt,&toPt);				
+		int length = pyramid->length;;
+		randomwalk = pyramid->RandomWalk(&data[0][0]);
+		randomwalk[length-1].x = toPt.x;
+		randomwalk[length-1].y = toPt.y;
+		float* angles = GetAngles(randomwalk,length);			
+		chrom->Initialize(angles,length-2);
+		delete[] angles;
+		delete[] randomwalk;
+		return chrom;
+	}
+	void Population::SinglePointCrossover(int offset1, int offset2,int index)
+	{
+		int length = chroms[offset1].length;
+		float tempf;
+		for(int i = index; i < length; i++)
+		{
+			tempf = chroms[offset1].genes[i];
+			chroms[offset1].genes[i] = chroms[offset2].genes[i];
+			chroms[offset2].genes[i] = tempf;
+		}
+	}
+	// this function influences the chromosome in offset1
+	void Population::AveragingOperator(int offset1, int offset2,int index)
+	{
+		int length = chroms[offset1].length;
+		float tempf;
+		for(int i = index; i < length; i++)
+		{
+			tempf = chroms[offset1].genes[i] + chroms[offset2].genes[i] / 2;					
+			chroms[offset1].genes[i] = tempf;
+		}
 	}
 	// Find the offset of an individual to form the new pop
 	int Population::FindOffset(double d_value,double* dA_cfitness)
