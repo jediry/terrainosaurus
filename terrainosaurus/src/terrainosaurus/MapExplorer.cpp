@@ -180,8 +180,18 @@ public:
     }
 
     void dumpImage() {
-        Magick::Image mi(image.size(0), image.size(1), "K", Magick::FloatPixel, image.elements());
-        mi.write(this->title() + ".tga");
+        Magick::Image mi;
+        mi.read(image.size(0), image.size(1), "R", Magick::FloatPixel, image.elements());
+        mi.channel(Magick::RedChannel);
+        mi.flip();
+        mi.type(Magick::GrayscaleType);
+        std::string filename = this->getTitle() + ".png";
+        cerr << "Writing " << filename << endl;
+        try {
+            mi.write(filename);
+        } catch (Magick::Exception &e) {
+            cerr << "Exception: " << e.what() << endl;
+        }
     }
 
     void reshape(int width, int height) {
@@ -218,6 +228,17 @@ public:
 
     void runGA() {
         Heightfield hf, diff;
+/*
+        TerrainChromosome c;
+        initializeChromosome(c, 0, terrainLibrary()->terrainType(1)->samples[0], MapRasterization(map()));
+        TerrainChromosome::Gene & g = c.gene(0,0);
+        g.scale = 1.0f;
+        g.offset = 0.0f;
+        g.rotation = 0.0f;
+        hf = renderSoloGene(g);
+        globalResultWindow->loadImage(hf);
+        return;
+*/
         cerr << endl << "Running terrain GA" << endl;
         scalar_t resolution = terrainLibrary()->resolution(0);
         Point2D end(originalImage.size());
@@ -255,7 +276,7 @@ MapExplorer & MapExplorer::instance() {
 void MapExplorer::setup(int &argc, char **argv) {
 
     // Initialize Image Magick
-    Magick::InitializeMagick(argv[0]);
+//    Magick::InitializeMagick(argv[0]);
 
     // Create the selection objects
     _persistentSelection.reset(new MeshSelection());
