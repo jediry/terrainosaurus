@@ -35,7 +35,7 @@ void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
     scalar_t resolution = MapExplorer::instance().terrainLibrary()->resolution(lod);
 //    Dimension d(SizeType(region.size(0) * resolution),
 //                SizeType(region.size(1) * resolution));
-    Dimension d(m->terrainLibrary->terrainType(1)->samples[0]->heightfield(0).sizes());
+    Dimension d(m->terrainLibrary->terrainType(1)->samples[0]->elevation(0).sizes());
     cerr << "Generating terrain of size " << d[0] << "x" << d[1] << endl;
 
 #if 0
@@ -59,28 +59,38 @@ void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
 
     // Have the rendering system determine region membership at each LOD
     MapRasterization raster(m);//, region);
-    m->terrainLibrary->terrainType(1)->samples[0]->ensureLoaded();
-    TerrainChromosome::initializeStatic();
     TerrainChromosome c;
-    initializeChromosome(c, 0, m->terrainLibrary->terrainType(1)->samples[0]->heightfield(0), raster);
+    TerrainTypeConstPtr tt = m->terrainLibrary->terrainType(1);
+    tt->samples[0]->ensureAnalyzed();
+    initializeChromosome(c, 0, tt->samples[0], raster);
     TerrainChromosome dd = c;
-//    evaluateFitness(c);
+    for (int it = 0; it < 20; ++it) {
+        std::cerr << "Beginning naive GA iteration " << it << std::endl;
+        for (int i = 0; i < c.size(0); ++i) {
+            std::cerr << "Row " << i << std::endl;
+            for (int j = 0; j < c.size(1); ++j) {
+                TerrainChromosome::Gene g = createRandomGene(tt, 0);
+                if (evaluateCompatibility(c, i, j, g) > evaluateCompatibility(c, i, j, c.gene(i, j)))
+                    c.gene(i, j) = g;
+            }
+        }
+        evaluateFitness(dd);
+    }
     renderChromosome(hf, dd);
-    std::cerr << "Range of result is " << range(hf) << endl;
-//    raster.rasterize(d);
-//    hf.resize(d);
 }
 
 
 // This function makes a chromosome from a heightfield
 void terrainosaurus::initializeChromosome(TerrainChromosome & c, IndexType lod,
-                                          const Heightfield & pattern,
+                                          TerrainSampleConstPtr pattern,
                                           const MapRasterization & raster) {
-    // Figure out how many genes we want in each direction    
-    Dimension size = Dimension(pattern.sizes()) / TerrainChromosome::geneSpacing(lod);
-    c.resize(size);
+    // Point the Chromosome to its pattern/LOD
+    c._pattern = pattern;
     c._levelOfDetail = lod;
-    c._heightfieldSize = Dimension(pattern.sizes());
+
+    // Figure out how many genes we want in each direction    
+    Dimension size = Dimension(pattern->sizes(lod)) / TerrainChromosome::geneSpacing(lod);
+    c.resize(size);
 
     // Populate the gene grid with random data
     Pixel idx;
@@ -93,7 +103,8 @@ void terrainosaurus::initializeChromosome(TerrainChromosome & c, IndexType lod,
 
 
 // This function creates a random Gene given a terrain type and LOD
-Gene terrainosaurus::createRandomGene(TerrainTypeConstPtr tt, IndexType lod) {
+TerrainChromosome::Gene
+terrainosaurus::createRandomGene(TerrainTypeConstPtr tt, IndexType lod) {
 
     // The random number generators we'll use
     RandomUniform<IndexType> randomIndex;
@@ -108,11 +119,12 @@ Gene terrainosaurus::createRandomGene(TerrainTypeConstPtr tt, IndexType lod) {
     g.sourceSample = tt->samples[randomIndex()];
 
     // Radius and alpha mask at this LOD
+    g.levelOfDetail = lod;
     IndexType radius = IndexType(TerrainChromosome::geneRadius(lod));
     g.mask = TerrainChromosome::geneMask(lod);
 
     // Pick a random X,Y coordinate pair within the safe region of that sample
-    Dimension size  = Dimension(g.sourceSample->size(lod));
+    Dimension size  = Dimension(g.sourceSample->sizes(lod));
     randomIndex.min = radius;
     randomIndex.max = size[0] - radius; g.sourceCoordinates[0] = randomIndex();
     randomIndex.max = size[1] - radius; g.sourceCoordinates[1] = randomIndex();
@@ -156,7 +168,7 @@ void terrainosaurus::renderChromosome(Heightfield & hf,
 
     // Make the output heightfield the correct size
 //    hf.resize(c.map->rasterization(c.levelOfDetail).dimensions());
-    hf.resize(c._heightfieldSize);
+    hf.resize(c.heightfieldSizes());
     sum.resize(hf.sizes());
 
     // Start from empty
@@ -164,12 +176,12 @@ void terrainosaurus::renderChromosome(Heightfield & hf,
     sum = 0.0f;
 
     // Splat each gene into the augmented heightfield
-//    for (int i = 0; i < c.size(0); ++i)
-//        for (int j = 0; j < c.size(1); ++j)
-//            renderGene(hf, sum, c.gene(i, j));
-    renderGene(hf, sum, c.gene(10, 10));
-    std::cerr << "Mean gradient is " << gradient(c.gene(10, 10)) << std::endl;
-    std::cerr << "Range around target is " << range(c.gene(10, 10)) << std::endl;
+    for (int i = 0; i < c.size(0); ++i)
+        for (int j = 0; j < c.size(1); ++j)
+            renderGene(hf, sum, c.gene(i, j));
+//    renderGene(hf, sum, c.gene(10, 10));
+//    std::cerr << "Mean gradient is " << gradient(c.gene(10, 10)) << std::endl;
+//    std::cerr << "ElevationRange around target is " << range(c.gene(10, 10)) << std::endl;
 
     // XXX HACK
     scalar_t m_hf = mean(hf),
@@ -198,48 +210,31 @@ void terrainosaurus::renderGene(Heightfield & hf,
     // Add the transformed, masked pixels to the HF and the mask itself to sum
     select(hf, stT, edT)  += *(g.mask) * select(
                                             linearMap(
-                                                rotate(g.sourceSample->heightfield(g.levelOfDetail()), g.rotation),
+                                                rotate(g.sourceSample->elevation(g.levelOfDetail), g.rotation),
                                                 g.scale, g.offset
                                             ),
                                             stS, edS);
     select(sum, stT, edT) += *(g.mask);
 #if 0
-    cerr << "Range of mask: " << range(*g.mask) << endl;
+    cerr << "ElevationRange of mask: " << range(*g.mask) << endl;
     cerr << "RMS of mask: " << rms(*g.mask) << endl;
-    cerr << "Range of gene: " << range(*(g.mask) * select(g.sourceSample->heightfield(g.levelOfDetail()), stS, edS)) << endl;
-    cerr << "Range of output: " << range(select(hf, stT, edT)) << endl;
-    cerr << "Range of sum: " << range(select(sum, stT, edT)) << endl;
+    cerr << "ElevationRange of gene: " << range(*(g.mask) * select(g.sourceSample->heightfield(g.levelOfDetail), stS, edS)) << endl;
+    cerr << "ElevationRange of output: " << range(select(hf, stT, edT)) << endl;
+    cerr << "ElevationRange of sum: " << range(select(sum, stT, edT)) << endl;
     cerr << "Rendering gene from " << g.sourceCoordinates << " to " << g.targetCoordinates << endl;
 #endif
 }
 
 
 // This function determines how "good" a chromosome is
-float terrainosaurus::evaluateFitness(const TerrainChromosome & c) {
+scalar_t terrainosaurus::evaluateFitness(const TerrainChromosome & c) {
     // First, turn the TerrainChromosome back into a heightfield
     Heightfield hf;
     renderChromosome(hf, c);
 
-    cerr << "Size of generated heightfield is " << Dimension(hf.sizes()) << endl;
-    Heightfield & orig = const_cast<Heightfield &>(c.gene(0,0).sourceSample->heightfield(c.levelOfDetail()));
-//    Heightfield diff = hf - orig;
-    Dimension size(math::min(orig.size(0), hf.size(0)), math::min(orig.size(1), hf.size(1)));
-    scalar_t rtms = 0.0f;
-    for (int i = 0; i < size[0]; ++i)
-        for (int j = 0; j < size[1]; ++j)
-            rtms += (hf(i,j) - orig(i,j)) * (hf(i,j) - orig(i,j));
-    rtms = sqrt(rtms / size(0) * size(1));
-    cerr << "RMS value was " << rtms << endl;
-    cerr << "Functor measured it as " << rms(orig - hf) << endl;
+//    Heightfield & orig = const_cast<Heightfield &>(c.gene(0,0).sourceSample->elevation(c.levelOfDetail()));
+    const Heightfield & orig = c.gene(0,0).sourceSample->elevation(c.levelOfDetail());
 
-#if 0
-    Heightfield::Iterator i = diff.begin();
-    scalar_t rms = 0.0f;
-    for (i = diff.begin(); i != diff.end(); ++i)
-        rms += *i * *i;
-    rms = sqrt(rms / diff.size());
-    cerr << "RMS value was " << rms << endl;
-#endif
     // Calculate the fitness of each individual terrain region
     // TODO: per-region fitness
 
@@ -252,33 +247,84 @@ float terrainosaurus::evaluateFitness(const TerrainChromosome & c) {
     // Determine the aggregate fitness estimate
     // TODO: aggregate fitness
 
-    
-    return 1.0f;
+    float fitness = 1.0f - std::log10(1.0f + rms(orig - hf)) / 5.0f;
+    std::cerr << "evaluateFitness(" << hf.sizes() << "): " << fitness << endl;
+    if (fitness < 0.0f) {
+        fitness = 0.0f;
+        std::cerr << "    returning 0.0f\n";
+    }
+    return fitness;
 }
 
 
 // This function determines how good a match two genes are
-float terrainosaurus::evaluateCompatibility(const TerrainChromosome::Gene & g1,
-                                            const TerrainChromosome::Gene & g2) {
-    return 1.0f;
+scalar_t terrainosaurus::evaluateCompatibility(const TerrainChromosome & c,
+                                               IndexType i, IndexType j,
+                                               const TerrainChromosome::Gene & g) {
+    IndexType lod = c.levelOfDetail();
+    Vector2D gGrad = gradientMean(g),
+             cGrad = gradientMean(c, i, j);
+    scalar_t diffMag   = abs(magnitude(gGrad) - magnitude(cGrad)),
+             diffAngle = angle(gGrad, cGrad),
+             diffMean  = abs(elevationMean(g) - elevationMean(c, i, j));
+    Vector2D diffRange = abs(elevationRange(g) - elevationRange(c, i, j));
+    scalar_t maxMag = magnitude(c.pattern()->globalGradientMean(lod)) * 20,
+             maxAngle = PI<scalar_t>(),
+             maxElevation = c.pattern()->globalElevationRange(lod)[1];
+    scalar_t compatibility =  scalar_t(1) - (diffMag / maxMag
+                                           + diffAngle / maxAngle
+                                           + diffMean / maxElevation
+                                           + diffRange[0] / maxElevation
+                                           + diffRange[1] / maxElevation) / 5;
+#if 0
+    std::cerr << "Differences:\n"
+              << "\tgradient magnitude: " << diffMag << "\n"
+              << "\tgradient angle:     " << diffAngle << "\n"
+              << "\tmean elevation:     " << diffMean << "\n"
+              << "\televation range:    " << diffRange << "\n";
+    std::cerr << "Reference maxima:\n"
+              << "\tgradient magnitude: " << maxMag << "\n"
+              << "\tgradient angle:     " << maxAngle << "\n"
+              << "\televation:          " << maxElevation << "\n";
+    std::cerr << "Aggregate compatibility: " << compatibility << endl;
+#endif
+    return compatibility;
 }
 
 
-// This function calculates the average gradient across the gene
-Vector2D terrainosaurus::gradient(const TerrainChromosome::Gene & g) {
-    Vector2D result = g.sourceSample->averageGradient(g.levelOfDetail())(g.sourceCoordinates);
-    if (! effectivelyZero(g.rotation))
-        result = inca::math::rotate(result, g.rotation);
-    if (! effectivelyEqual(scalar_t(1), g.scale))
-        result *= g.scale;
-    return result;
+// This mean elevation across a slot (i, j) in a Chromosome
+scalar_t terrainosaurus::elevationMean(const TerrainChromosome & c,
+                                       IndexType i, IndexType j) {
+    return c.pattern()->localElevationMean(c.levelOfDetail())(c.gene(i, j).targetCoordinates);
 }
 
-// This function calculates the absolute height range across the gene
-Vector2D terrainosaurus::range(const TerrainChromosome::Gene & g) {
-    Vector2D result = g.sourceSample->localRange(g.levelOfDetail())(g.sourceCoordinates);
-    if (! effectivelyEqual(scalar_t(1), g.scale))
-        result *= g.scale;
-    return result;
+// This mean gradient across a slot (i, j) in a Chromosome
+const Vector2D & terrainosaurus::gradientMean(const TerrainChromosome & c,
+                                              IndexType i, IndexType j) {
+    return c.pattern()->localGradientMean(c.levelOfDetail())(c.gene(i, j).targetCoordinates);
 }
 
+// This elevation range (min, max) across a slot (i, j) in a Chromosome
+const Vector2D & terrainosaurus::elevationRange(const TerrainChromosome & c,
+                                                IndexType i, IndexType j) {
+    return c.pattern()->localElevationRange(c.levelOfDetail())(c.gene(i, j).targetCoordinates);
+}
+
+
+// The mean elevation across the gene (including transformations)
+scalar_t terrainosaurus::elevationMean(const TerrainChromosome::Gene & g) {
+    scalar_t result = g.sourceSample->localElevationMean(g.levelOfDetail)(g.sourceCoordinates);
+    return result * g.scale + g.offset;
+}
+
+// The mean gradient across the gene (including transformations)
+Vector2D terrainosaurus::gradientMean(const TerrainChromosome::Gene & g) {
+    Vector2D result = g.sourceSample->localGradientMean(g.levelOfDetail)(g.sourceCoordinates);
+    return math::rotate(result, g.rotation) * g.scale; 
+}
+
+// The elevation range [min, max] across the gene (including transformations)
+Vector2D terrainosaurus::elevationRange(const TerrainChromosome::Gene & g) {
+    Vector2D result = g.sourceSample->localElevationRange(g.levelOfDetail)(g.sourceCoordinates);
+    return result * g.scale + Vector2D(g.offset);
+}

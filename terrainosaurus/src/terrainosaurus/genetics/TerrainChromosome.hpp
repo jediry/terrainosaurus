@@ -33,18 +33,26 @@
 namespace terrainosaurus {
     // Forward declarations
     class TerrainChromosome;
-    
-    // LOD-dependent query functions
-    scalar_t geneRadius(IndexType lod);
-}
+};
 
 
 // Import container definitions
+#include <vector>
 #include <inca/util/MultiArray>
 
-// Import the Terrainosaurus map we're generating from
-#include <terrainosaurus/data/Map.hpp>
+// Import terrain data structures
+#include <terrainosaurus/data/TerrainType.hpp>
+#include <terrainosaurus/data/TerrainSample.hpp>
+#include <terrainosaurus/rendering/MapRasterization.hpp>
 
+
+// Prototype for function that must be 'friend'
+// XXX there ought to be a more graceful way...
+namespace terrainosaurus {
+    void initializeChromosome(TerrainChromosome & c, IndexType lod,
+                              TerrainSampleConstPtr pattern,
+                              const MapRasterization & raster);
+};
 
 // The chromosome for the terrain-construction algorithm
 class terrainosaurus::TerrainChromosome {
@@ -83,7 +91,6 @@ public:
     // Constructor
     TerrainChromosome();
     TerrainChromosome(const TerrainChromosome &tc);
-//    TerrainChromosome(const Dimension &pixels, IndexType lod);
 
     // Resize the grid of genes, specifying whether or not to preserve the
     // current contents. If preservation is requested, then any indices which
@@ -97,6 +104,10 @@ public:
             resize(d, preserveContents);
         }
 
+    // We're friends with the "random initialization" function
+    friend void initializeChromosome(TerrainChromosome & c, IndexType lod,
+                                     TerrainSampleConstPtr pattern,
+                                     const MapRasterization & raster);
 
 /*---------------------------------------------------------------------------*
  | Accessor functions
@@ -113,14 +124,18 @@ public:
     template <class IndexList>       Gene & gene(const IndexList &idx)       { return _genes(idx); }
     template <class IndexList> const Gene & gene(const IndexList &idx) const { return _genes(idx); }
 
-    // Level of detail accessors
+    // Heightfield property accessors
+    TerrainSampleConstPtr pattern() const { return _pattern; }
     IndexType levelOfDetail() const { return _levelOfDetail; }
+    const Heightfield::SizeArray & heightfieldSizes() const {
+        return pattern()->sizes(levelOfDetail());
+    }
 
-//protected:
+protected:
     // The contents of this Chromosome
-    IndexType _levelOfDetail;   // What LOD is this chromosome?
-    GeneGrid  _genes;           // The genes making up this chromosome
-    Dimension _heightfieldSize; // How big should the heightfield be?
+    GeneGrid  _genes;               // The genes making up this chromosome
+    IndexType _levelOfDetail;       // What LOD are we working on?
+    TerrainSampleConstPtr _pattern; // What we're trying to match
 };
 
 
@@ -142,12 +157,13 @@ public:
     TerrainChromosome & parent() const { return *_parent; }
     const Pixel & indices() const { return _indices; }
 
-    IndexType levelOfDetail() const { return parent().levelOfDetail(); }
+//    IndexType levelOfDetail() const { return parent().levelOfDetail(); }
 
 protected:
     // Link to the parent Chromosome, and position within parent
     TerrainChromosome *     _parent;        // Daddy!
     Pixel                   _indices;       // My genetic coordinates
+    float                   _compatibility; // How compatible am I with my slot?
 
 
 /*---------------------------------------------------------------------------*
@@ -163,6 +179,7 @@ public:
     TerrainTypeConstPtr   terrainType;      // What sort of terrain is this?
     TerrainSampleConstPtr sourceSample;     // Where do we get our data from?
     Pixel               sourceCoordinates;  // Source X,Y center coordinates
+    IndexType           levelOfDetail;      // What LOD is this?
 
     // Transformation to apply to source data
     scalar_t            rotation;           // Horizontal rotation in radians

@@ -64,7 +64,7 @@ namespace terrainosaurus {
     // Fill a Chromosome by finding a set of Genes that are compatible with
     // the data in pattern.
     void initializeChromosome(TerrainChromosome & c, IndexType lod,
-                              const Heightfield & pattern,
+                              TerrainSampleConstPtr pattern,
                               const MapRasterization & raster);
 
     // Create a random Gene by chosing a random location within a terrain
@@ -86,14 +86,25 @@ namespace terrainosaurus {
     // Calculate a value in [0, 1] representing the fitness of a Chromosome
     scalar_t evaluateFitness(const TerrainChromosome & c);
 
-    // Calculate a value in [0, 1] representing the compatibility of two Genes
-    scalar_t evaluateCompatibility(const TerrainChromosome::Gene & g1,
+    // Calculate a value in [0, 1] representing the compatibility of a Gene
+    // with a slot in a Chromosome
+    scalar_t evaluateCompatibility(const TerrainChromosome & c,
+                                   IndexType i, IndexType j,
                                    const TerrainChromosome::Gene & g2);
 
-    // Image-processing operations on the data carried by a Gene. These
-    // operations take into account any transformation included with the Gene
-    Vector2D gradient(const TerrainChromosome::Gene & g);
-    Vector2D range(const TerrainChromosome::Gene & g);
+    // Heightfield measurement operations for a particular slot in a Chromosome.
+    // These operations return average values across the region of the pattern
+    // heightfield covered by the gene at (i, j).
+    scalar_t elevationMean(const TerrainChromosome & c, IndexType i, IndexType j);
+    const Vector2D & gradientMean(const TerrainChromosome & c, IndexType i, IndexType j);
+    const Vector2D & elevationRange(const TerrainChromosome & c, IndexType i, IndexType j);
+
+    // Heightfield measurement operations for a Gene.
+    // These operations return average values of the data represented by the
+    // Gene, and take into account any transformation.
+    scalar_t elevationMean(const TerrainChromosome::Gene & g);
+    Vector2D gradientMean(const TerrainChromosome::Gene & g);
+    Vector2D elevationRange(const TerrainChromosome::Gene & g);
 };
 
 #endif

@@ -84,87 +84,9 @@ GrayscaleImage originalImage, originalImage2;
     class ThreeDeeWindow;
     typedef shared_ptr<ThreeDeeWindow> ThreeDeeWindowPtr;
     ThreeDeeWindowPtr roamWindow;
-#endif
 
-#include "rendering/MapRasterization.hpp"
-#include "genetics/TerrainChromosome.hpp"
-#include "genetics/terrain-operations.hpp"
-using namespace terrainosaurus;
 
-// Simple window displaying an image
-class ImageWindow : public inca::ui::GLUTWindow, public TerrainosaurusComponent {
-public:
-    // Constructor taking an image
-    ImageWindow(const GrayscaleImage &img,
-                const std::string &title = "Image Window")
-            : GLUTWindow(title), image(inca::FortranStorageOrder()) {
-
-        // Setup the image
-        loadImage(img);
-
-        // Set the size of the window
-        Window::setSize(image.size(0), image.size(1));
-    }
-
-    void loadImage(const GrayscaleImage & img) {
-        image = linearMap(img, Array<float, 2>(0.0f, 1.0f));
-                inca::Array<float, 2> minMax = range(image);
-                cerr << "Range of output is " << minMax[0] << " -> " << minMax[1] << endl;
-        Window::setSize(image.size(0), image.size(1));
-    }
-
-    void reshape(int width, int height) {
-        GLUTWindow::reshape(width, height);
-        GL::glMatrixMode(GL_PROJECTION);
-        GL::glLoadIdentity();
-        GL::glMultMatrix(inca::math::screenspaceLLMatrix<double, false, false>(getSize()).elements());
-        GL::glMatrixMode(GL_MODELVIEW);
-    }
-
-    void key(unsigned char k, int x, int y) {
-        Heightfield hf, diff;
-        switch (k) {
-            case ' ':
-                cerr << endl << "Running terrain GA" << endl;
-                scalar_t resolution = terrainLibrary()->resolution(0);
-                Point2D end(originalImage.size());
-                end /= resolution;
-                Block bounds(Point2D(0, 0), end);
-                generateTerrain(hf, static_pointer_cast<Map const>(map()),
-                                bounds, resolution);
-                diff = originalImage - hf;
-                globalDifferenceWindow->loadImage(diff);
-                globalResultWindow->loadImage(hf);
-                cerr << "RMS difference is " << rms(diff) << endl;
-                break;
-        }
-    }
-
-    void display() {
-        GL::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        GL::glRasterPos2d(0.0, 0.0);
-        GL::glDrawPixels(image.size(0), image.size(1),
-                     GL_LUMINANCE, GL_FLOAT, image.elements());
-//        cerr << image.size(W) << 'x' << image.size(H) << endl;
-//        GL::glDrawPixels(image.size(W), image.size(H),
-//                         GL_RGB, GL_FLOAT, image.elements());
-
-        GL::glutSwapBuffers();
-    }
-
-    void runGA() {
-        MapRasterizationPtr rasterizer(new MapRasterization(map()));
-        
-        
-    }
-
-protected:
-    GrayscaleImage image;
-};
-
-#if ROAM_ME
-// Simple window displaying an image
+// Simple window calling a simplistic ROAM implementation
 class ThreeDeeWindow : public inca::ui::GLUTWindow, public TerrainosaurusComponent {
 public:
     // Constructor taking an image
@@ -225,6 +147,84 @@ protected:
     int size;
 };
 #endif
+
+#include "rendering/MapRasterization.hpp"
+#include "genetics/TerrainChromosome.hpp"
+#include "genetics/terrain-operations.hpp"
+using namespace terrainosaurus;
+
+// Simple window displaying an image
+class ImageWindow : public inca::ui::GLUTWindow, public TerrainosaurusComponent {
+public:
+    // Constructor taking an image
+    ImageWindow(const GrayscaleImage &img,
+                const std::string &title = "Image Window")
+            : GLUTWindow(title), image(inca::FortranStorageOrder()) {
+
+        // Setup the image
+        loadImage(img);
+
+        // Set the size of the window
+        Window::setSize(image.size(0), image.size(1));
+    }
+
+    void loadImage(const GrayscaleImage & img) {
+        cerr << "\nloadImage(): " << img.sizes() << endl;
+        image = linearMap(img, Array<float, 2>(0.0f, 1.0f));
+        inca::Array<float, 2> minMax = range(image);
+        cerr << "Range of output is " << minMax[0] << " -> " << minMax[1] << endl;
+        Window::setSize(image.size(0), image.size(1));
+    }
+
+    void reshape(int width, int height) {
+        GLUTWindow::reshape(width, height);
+        GL::glMatrixMode(GL_PROJECTION);
+        GL::glLoadIdentity();
+        GL::glMultMatrix(inca::math::screenspaceLLMatrix<double, false, false>(getSize()).elements());
+        GL::glMatrixMode(GL_MODELVIEW);
+    }
+
+    void key(unsigned char k, int x, int y) {
+        switch (k) {
+            case ' ':
+                runGA();
+                break;
+        }
+    }
+
+    void display() {
+        GL::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        GL::glRasterPos2d(0.0, 0.0);
+        GL::glDrawPixels(image.size(0), image.size(1),
+                     GL_LUMINANCE, GL_FLOAT, image.elements());
+//        cerr << image.size(W) << 'x' << image.size(H) << endl;
+//        GL::glDrawPixels(image.size(W), image.size(H),
+//                         GL_RGB, GL_FLOAT, image.elements());
+
+        GL::glutSwapBuffers();
+    }
+
+    void runGA() {
+        Heightfield hf, diff;
+        cerr << endl << "Running terrain GA" << endl;
+        scalar_t resolution = terrainLibrary()->resolution(0);
+        Point2D end(originalImage.size());
+        end /= resolution;
+        Block bounds(Point2D(0, 0), end);
+        generateTerrain(hf, static_pointer_cast<Map const>(map()),
+                        bounds, resolution);
+        diff = originalImage - hf;
+        globalDifferenceWindow->loadImage(diff);
+        globalResultWindow->loadImage(hf);
+        cerr << "RMS difference is " << rms(diff) << endl;
+    }
+
+protected:
+    GrayscaleImage image;
+};
+
+
 // End of nasty stuff (for a while).
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -380,7 +380,8 @@ void MapExplorer::constructInterface() {
 
 #elif 1
     typedef Array<int, 2> IndexArray;
-    originalImage = _terrainLibrary->terrainType(1)->samples[0]->heightfield(0);
+//    originalImage = select(_terrainLibrary->terrainType(1)->samples[0]->heightfield(0), Array<int,2>(256,256));
+    originalImage = _terrainLibrary->terrainType(1)->samples[0]->elevation(0);
 #else
     originalImage.resize(600,500);
     for (int i = 0; i < originalImage.size(0); ++i)
@@ -412,9 +413,9 @@ void MapExplorer::constructInterface() {
     registerWindow(globalDifferenceWindow);
 
 #else
-    originalImage2 = _terrainLibrary->terrainType(2)->samples[0]->heightfield(0);
-    globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
-    registerWindow(globalSourceWindow2);
+//    originalImage2 = _terrainLibrary->terrainType(2)->samples[0]->heightfield(0);
+//    globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
+//    registerWindow(globalSourceWindow2);
 
     ComplexImage dft1, dft2, dft3;
     GrayscaleImage mag1, ph1, mag2, ph2, mag3, ph3;
@@ -422,11 +423,11 @@ void MapExplorer::constructInterface() {
     bool DCInCenter = true;
 
 #if WINX & 1
-    dft1 = DFT(originalImage, DCInCenter);
+    dft1 = DFT(originalImage);
     mag1 = blur(mag(dft1));
 //    ph1  = arg(dft1);
 
-    dft2 = DFT(originalImage2, DCInCenter);
+    dft2 = DFT(originalImage2);
     mag2 = blur(mag(dft2));
 //    ph2  = arg(dft2);
 
@@ -566,6 +567,42 @@ void MapExplorer::constructInterface() {
 
     win.reset(new ImageWindow(vmag(sample->averageGradient(0)), "Average Gradient Magnitude"));
     win->setPosition(400, 400);
+    registerWindow(win);
+
+#endif
+#if WINX & 32
+    ComplexImage myDft = DFT(originalImage);
+    GrayscaleImage myMag = log(clamp(mag(myDft), Array<float, 2>(1.0f, 10000.0f)));
+    win.reset(new ImageWindow(myMag, "DFT"));
+    win->setPosition(300, 300);
+    registerWindow(win);
+
+//    win.reset(new ImageWindow(clamp(iDFT(myDft), Array<float, 2>(0.0f, 100000.0f)), "Reconstituted Image"));
+    win.reset(new ImageWindow(clamp(iDFT(DFT(originalImage)), Array<float,2>(2000.0f, 1.0e6)), "Reconstituted Image"));
+    win->setPosition(400, 400);
+    registerWindow(win);
+
+#endif
+#if WINX & 64
+    GrayscaleImage g;
+    g = select(gaussian(Array<float,2>(25.0f), Array<float,2>(2.0f)), Array<int,2>(50));
+    win.reset(new ImageWindow(g, "G2"));
+    win->setPosition(50, 50);
+    registerWindow(win);
+
+    g = select(gaussian(Array<float,2>(25.0f), Array<float,2>(4.0f)), Array<int,2>(50));
+    win.reset(new ImageWindow(g, "G4"));
+    win->setPosition(100, 100);
+    registerWindow(win);
+
+    g = select(gaussian(Array<float,2>(25.0f), Array<float,2>(8.0f)), Array<int,2>(50));
+    win.reset(new ImageWindow(g, "G8"));
+    win->setPosition(150, 150);
+    registerWindow(win);
+
+    g = select(gaussian(Array<float,2>(25.0f), Array<float,2>(16.0f)), Array<int,2>(50));
+    win.reset(new ImageWindow(g, "G16"));
+    win->setPosition(200, 200);
     registerWindow(win);
 
 #endif

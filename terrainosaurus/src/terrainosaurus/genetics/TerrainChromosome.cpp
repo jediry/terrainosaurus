@@ -1,11 +1,12 @@
 // Import class definitions
 #include "TerrainChromosome.hpp"
 using namespace terrainosaurus;
-using TerrainChromosome::Gene;
 
 // Import raster operators
 #include <inca/raster/operators/transformation>
 #include <inca/raster/operators/statistic>
+#include <inca/raster/operators/selection>
+#include <inca/raster/operators/gaussian>
 using namespace inca::raster;
 
 
@@ -24,6 +25,7 @@ void TerrainChromosome::initializeStatic() {
     int maskSize = 2 * int(geneRadius(lod));
     geneMasks.push_back(GrayscaleImage(maskSize, maskSize));
     GrayscaleImage & mask = geneMasks[0];
+#if 0
     for (int i = 0; i < mask.size(0); ++i)
         for (int j = 0; j < mask.size(1); ++j) {
             scalar_t dx, dy;
@@ -54,6 +56,11 @@ void TerrainChromosome::initializeStatic() {
             mask(i, j) = 1.0f;
 #endif
         }
+#else
+    mask = select(gaussian(Array<scalar_t, 2>(maskSize / 2.0f),
+                           Array<scalar_t, 2>(maskSize / 8.0f)),
+                  Array<int, 2>(maskSize));
+#endif
 //    mask = linearMap(mask, Array<scalar_t, 2>(0.0f, 1.0f));
     cerr << "Range of mask is " << range(mask) << endl;
 
@@ -85,8 +92,7 @@ TerrainChromosome::TerrainChromosome() {
 
 // Copy constructor
 TerrainChromosome::TerrainChromosome(const TerrainChromosome &tc)
-        : _levelOfDetail(tc._levelOfDetail),
-          _heightfieldSize(tc._heightfieldSize) {
+        : _levelOfDetail(tc._levelOfDetail), _pattern(tc._pattern) {
     if (! staticInitialized)
         initializeStatic();
 
@@ -96,16 +102,6 @@ TerrainChromosome::TerrainChromosome(const TerrainChromosome &tc)
     // Now copy tc's gene data
     genes() = tc.genes();
 }
-
-//TerrainChromosome::TerrainChromosome(const Dimension &pixels, IndexType lod) {
-    // Make sure static initialization has been performed
-//    if (! staticInitialized)
-//        initializeStatic();
-
-//    _levelOfDetail = lod;
-
-//    resize(x, y);
-//}
 
 void TerrainChromosome::resize(const Dimension &sz,
                                bool preserveContents) {
@@ -127,17 +123,19 @@ void TerrainChromosome::resize(SizeType sx, SizeType sy,
  | Gene functions
  *---------------------------------------------------------------------------*/
 // Function called by chromosome to claim ownership of the gene
-void Gene::claim(TerrainChromosome * p, const Pixel & idx) {
+void TerrainChromosome::Gene::claim(TerrainChromosome * p, const Pixel & idx) {
     _parent = p;
     _indices = idx;
 }
 
 // Assignment operator
-Gene & Gene::operator=(const Gene &g) {
+TerrainChromosome::Gene &
+TerrainChromosome::Gene::operator=(const TerrainChromosome::Gene &g) {
     // Source data
     terrainType         = g.terrainType;
     sourceSample        = g.sourceSample;
     sourceCoordinates   = g.sourceCoordinates;
+    levelOfDetail       = g.levelOfDetail;
 
     // Transformation data
     rotation    = g.rotation;
@@ -149,7 +147,7 @@ Gene & Gene::operator=(const Gene &g) {
 
     // Target data
     targetJitter = g.targetJitter;
-    targetCoordinates = indices() * geneSpacing(levelOfDetail()) + targetJitter;
+    targetCoordinates = indices() * geneSpacing(levelOfDetail) + targetJitter;
 
     return *this;
 }

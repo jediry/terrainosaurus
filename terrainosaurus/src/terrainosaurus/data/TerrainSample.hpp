@@ -35,39 +35,73 @@ private:
 
 
 /*---------------------------------------------------------------------------*
- | Constructors, properties & accessors
+ | Constructors & assignment operator
  *---------------------------------------------------------------------------*/
 public:
-    // Constructor
+    // Constructors
     explicit TerrainSample(const std::string & file);
+    explicit TerrainSample(const Heightfield & hf);
 
     // Assignment operator overload
     TerrainSample & operator=(const TerrainSample &ts);
 
-    // Properties
-    ro_property(std::string, filename, "");     // The data file
-    ro_property(IndexType, levelsOfDetail, 0);  // How many LODs?
 
-    // Raster data accessors
-    const Heightfield::SizeArray & size(IndexType lod) const;
-    const Heightfield & heightfield(IndexType lod) const;
-    const VectorMap & gradient(IndexType lod) const;
-    const VectorMap & averageGradient(IndexType lod) const;
-    const VectorMap & localRange(IndexType lod) const;
+/*---------------------------------------------------------------------------*
+ | Loading/analysis (lazily performed)
+ *---------------------------------------------------------------------------*/
+public:
+    // Lazy evaluation status
+    bool loaded() const;        // Do we have heightfield data?
+    bool analyzed() const;      // Have we analyzed it?
+
+    // Functions to force evalutation
+    void ensureLoaded() const;      // If we've not loaded, do it now
+    void ensureAnalyzed() const;    // If we've not analyzed, do it now
 
 protected:
-    mutable bool loaded;           // Have we loaded this?
-    mutable std::vector<Heightfield>    _heightfields;
-    mutable std::vector<VectorMap>      _gradients;
-    mutable std::vector<VectorMap>      _averageGradients;
-    mutable std::vector<VectorMap>      _localRanges;
+    mutable bool _loaded;           // Have we loaded this?
+    mutable bool _analyzed;         // Have we analyzed it yet?
 
 
 /*---------------------------------------------------------------------------*
- | Loading/processing (lazily performed)
+ | Property accessor functions
  *---------------------------------------------------------------------------*/
 public:
-    void ensureLoaded() const;
+    // Properties
+    ro_property(std::string, filename, "");     // The data file
+    ro_property(IndexType, levelsOfDetail, 1);  // How many LODs?
+
+    // LOD property accessors
+    const Heightfield::SizeArray & sizes(IndexType lod) const;
+
+    // Per-cell heightfield property accessors
+    const Heightfield & elevation(IndexType lod) const;
+    const VectorMap &   gradient(IndexType lod) const;
+
+    // Local (windowed) heightfield property accessors
+    const Heightfield & localElevationMean(IndexType lod) const;
+    const VectorMap &   localGradientMean(IndexType lod) const;
+    const VectorMap &   localElevationRange(IndexType lod) const;
+
+    // Global heightfield property accessors
+    const Heightfield::ElementType & globalElevationMean(IndexType lod) const;
+    const VectorMap::ElementType &   globalGradientMean(IndexType lod) const;
+    const VectorMap::ElementType &   globalElevationRange(IndexType lod) const;
+
+protected:
+    // Per-cell heightfield properties
+    mutable std::vector<Heightfield>    _elevations;
+    mutable std::vector<VectorMap>      _gradients;
+
+    // Local (windowed) heightfield properties
+    mutable std::vector<Heightfield>    _localElevationMeans;
+    mutable std::vector<VectorMap>      _localGradientMeans;
+    mutable std::vector<VectorMap>      _localElevationRanges;
+
+    // Global heightfield properties
+    mutable std::vector<Heightfield::ElementType>   _globalElevationMeans;
+    mutable std::vector<VectorMap::ElementType>     _globalGradientMeans;
+    mutable std::vector<VectorMap::ElementType>     _globalElevationRanges;
 };
 
 #endif
