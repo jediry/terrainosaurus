@@ -19,23 +19,16 @@
 
 // Import Inca library configuration
 #include <inca/inca-common.h>
+using namespace inca;
 
 // Import Inca sub-libraries
 #include <inca/math.hpp>
-#include <inca/imaging.hpp>
-#include <inca/world.hpp>
-#include <inca/rendering.hpp>
-
-#include <inca/ui/Framework.hpp>
-#include <inca/ui/CameraControl.hpp>
-#include <inca/integration/glut/GLUTFramework.hpp>
-
-// Import namespaces
-using namespace inca;
 using namespace inca::math;
+
+#include <inca/imaging.hpp>
 using namespace inca::imaging;
+
+#include <inca/world.hpp>
 using namespace inca::world;
-using namespace inca::rendering;
-using namespace inca::ui;
 
 #endif

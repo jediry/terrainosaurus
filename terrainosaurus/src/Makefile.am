@@ -15,6 +15,11 @@ Makefile.in : Makefile.am $(top_srcdir)/src_catalog
 catalog :
 	( cd $(top_srcdir) ; make catalog )
 
+# Force a re-link of executables
+relink :
+	rm -f $(bin_PROGRAMS)
+	make $(bin_PROGRAMS)
+
 
 ###############################################################################
 ##
@@ -23,12 +28,11 @@ catalog :
 ###############################################################################
 
 
-bin_PROGRAMS = map_editor
+bin_PROGRAMS = map_explorer
 
-map_editor_SOURCES = GLUTMapEditor.cpp Map.cpp MapEditorWidget.cpp
-map_editor_LDADD = -L/home/jediry/Documents/Development/Media/libinca/src \
-		   -linca -lGL -lGLU -lglut
-
+map_explorer_SOURCES = MapExplorer.cpp MapExplorerWidget.cpp Map.cpp	\
+		       TranslateWidget.cpp MapView.cpp
+map_explorer_LDADD   = -linca -lglut
 
 
 ###############################################################################

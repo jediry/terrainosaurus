@@ -470,7 +470,7 @@ void Map::refineBoundary(const Boundary &b) {
     scalar_t accumulatedAngle = 0.0;
     rb.push_back(p);
     for(int i = 0; i < ePt.x; i++) {
-        accumulatedAngle += angles[i];
+        accumulatedAngle = angles[i];
         Vector dp(cos(accumulatedAngle), sin(accumulatedAngle));   // Find motion in X / Y
         p += dp;            // Move us by this amound and place a point here
         rb.push_back(p);    // Stick it in

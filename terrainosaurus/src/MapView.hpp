@@ -1,13 +1,13 @@
 /*
- * File: MapEditorWidget.h++
+ * File: MapView.hpp
  *
  * Author: Ryan L. Saunders
  *
- * Copyright 2003, Ryan L. Saunders. Permission is granted to use and
+ * Copyright 2004, Ryan L. Saunders. Permission is granted to use and
  *      distribute this file freely for educational purposes.
  *
  * Description:
- *      The MapEditorWidget class implements a toolkit-independent Widget for
+ *      The MapView class implements a toolkit-independent Widget for
  *      viewing and editing 2D maps made up of adjacent polygons (i.e., a 2D
  *      PolygonMesh). Polygons may be added and edited with the mouse, and
  *      each polygon may be dynamically assigned a terrain type.
@@ -22,63 +22,62 @@
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
-    class MapEditorWidget;
+    class MapView;
     
     // Pointer typedefs
-    typedef shared_ptr<MapEditorWidget> MapEditorWidgetPtr;
+    typedef shared_ptr<MapView>       MapViewPtr;
+    typedef shared_ptr<MapView const> MapViewConstPtr;
 };
 
+// Import superclass definition
+#include <inca/ui/View.hpp>
+
+// Import Inca rendering subsystem
+#include <inca/rendering.hpp>
 
 // Import map definition
 #include "Map.hpp"
 
 
-class terrainosaurus::MapEditorWidget
-         : public CameraControl,
-           virtual public Widget {
+class terrainosaurus::MapView : public inca::ui::View {
 private:
-    typedef MapEditorWidget ThisType;
+    // Set up this class to own properties
+    PROPERTY_OWNING_OBJECT(MapView);
 
 public:
     // Import types from Map
-    typedef Map::Point  Point;
-    typedef Map::Vector Vector;
+    typedef Map::Point              Point;
+    typedef Map::Vector             Vector;
+    typedef Map::Intersection       Intersection;
+    typedef Map::Region             Region;
+    typedef Map::Boundary           Boundary;
+    typedef Map::RefinedBoundary    RefinedBoundary;
 
-    // User interaction states
-    enum EditState {
-        NoEdit,     // Nothing is happening...waiting...zzzz
-        AddRegion,  // The user is currently adding a region to the map
-    };
-
-    // Tools the user can use to build his map
-    enum EditTool {
-        SelectionTool,
-        AddIntersectionTool,
-        DeleteIntersectionTool,
-        SplitBoundaryTool,
-        SplitRegionTool,
-    };
+    typedef inca::imaging::Color<float, inca::imaging::sRGB, true> Color;
 
 
 /*---------------------------------------------------------------------------*
  | Constructor and properties
  *---------------------------------------------------------------------------*/
 public:
-    // Default constructor
-    MapEditorWidget();
-
-    typedef inca::imaging::Color<float, inca::imaging::sRGB, true> Color;
+    // Default constructor with optional component name
+    MapView(const string &nm = "");
 
     // The map
-    rw_ptr_property(Map, map, /* */);
+    rw_ptr_property(Map, map, NULL);
+
+    // The camera we're looking through
+    rw_ptr_property(Camera, camera, NULL);
 
     // Rendering properties
-    rw_list_property(Color, terrainColors);
+    rw_list_property(Color, terrainColor);
     rw_property(Color, backgroundColor,         Color(0.1f, 0.1f, 0.1f, 1.0f));
     rw_property(Color, intersectionColor,       Color(1.0f, 1.0f, 1.0f, 1.0f));
     rw_property(Color, boundaryColor,           Color(0.0f, 0.5f, 0.5f, 1.0f));
     rw_property(Color, refinedBoundaryColor,    Color(0.3f, 0.3f, 1.0f, 1.0f));
     rw_property(Color, gridColor,               Color(0.8f, 0.8f, 0.8f, 0.5f));
+    rw_property(Color, selectionColor,          Color(1.0f, 1.0f, 1.0f, 0.2f));
+
     rw_property(float, boundaryWidth,           4.0f);
     rw_property(float, refinedBoundaryWidth,    2.0f);
     rw_property(float, intersectionSize,        5.0f);
@@ -96,32 +95,18 @@ public:
  *---------------------------------------------------------------------------*/
 public:
     void initializeView();
-    void resizeView(size_t w, size_t h);
+    void resizeView(Dimension d);
     void renderView();
-    void resetCameraProjection();
 
 protected:
-    inca::rendering::OpenGLRenderer renderer;     // We use this for some OpenGL tasks
+    void renderMap(inca::rendering::RenderPass pass);
+    void resetCameraProjection();
 
+    bool isSelected(const Intersection &i) const;
+    bool isSelected(const Region &r) const;
+    bool isSelected(const Boundary &b) const;
 
-/*---------------------------------------------------------------------------*
- | Event-handlers
- *---------------------------------------------------------------------------*/
-public:
-    void mouseDragged(index_t x, index_t y);
-    void mouseTracked(index_t x, index_t y);
-    void buttonPressed(inca::ui::MouseButton button,
-                       index_t x, index_t y);
-    void keyPressed(inca::ui::KeyCode k,
-                    index_t x, index_t y);
-
-/*---------------------------------------------------------------------------*
- | Map I/O functions
- *---------------------------------------------------------------------------*/
-public:
-    void loadParams(const string &filename);
-    void loadMap(const string &filename);
-    void storeMap(const string &filename) const;
+    inca::rendering::OpenGLRenderer renderer; // Draw, my pretty!
 };
 
 #endif
