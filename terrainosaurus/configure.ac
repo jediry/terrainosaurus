@@ -39,17 +39,39 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(math.h sys/time.h sys/types.h sys/stat.h unistd.h)
 ACT_REQUIRE_HEADER(vector,                  [C++ Standard Template Library])
-ACT_REQUIRE_HEADER(hash_map ext/hash_map,   [C++ STL hash container extensions])
+#ACT_REQUIRE_HEADER(hash_map ext/hash_map,   [C++ STL hash container extensions])
+ACT_REQUIRE_HEADER(ext/hash_map,   [C++ STL hash container extensions])
 ACT_REQUIRE_HEADER(sstream,                 [C++ IOstream library])
 ACT_REQUIRE_HEADER(boost/shared_ptr.hpp,    [Boost smart pointer header files])
 ACT_REQUIRE_HEADER(boost/multi_array.hpp,   [Boost multi-dim array header files])
-ACT_REQUIRE_HEADER(inca-common.h,           [Inca library header files],
+ACT_REQUIRE_HEADER(inca/inca-common.h,      [Inca library header files],
                    /home/jediry/Documents/Development/Media/libinca/src)
 
-
-ACT_REQUIRE_CXX_LIB(inca, [[#include <math/Math.hpp>]], [Inca::Math::DoubleScalar::sqrt(1.2)],
+ACT_REQUIRE_CXX_LIB(inca, [[#include <inca/math.hpp>]], [inca::math::arcsin(0.5);],
                     [Inca runtime library],
-                    [/home/jediry/Documents/Development/Media/libinca/debug/src])
+                    [/home/jediry/Documents/Development/Media/libinca/src])
+
+
+#------------------------------------------------------------------------------
+# Should we use the X-Window system?
+#------------------------------------------------------------------------------
+AC_PATH_XTRA
+if test -z "$X_DISPLAY_MISSING"; then
+    CXXFLAGS="$CXXFLAGS $X_CFLAGS"
+    LDFLAGS="$LDFLAGS $X_LIBS"
+fi
+
+
+#------------------------------------------------------------------------------
+# Which rendering interfaces should we use?
+#------------------------------------------------------------------------------
+ACT_WITH_PACKAGE(opengl, yes, OpenGL for 2D & 3D rendering, [
+    ACT_REQUIRE_HEADER(GL/gl.h, OpenGL header file)
+    ACT_REQUIRE_HEADER(GL/glu.h, OpenGL Utilities header file)
+    ACT_REQUIRE_LIB(GL, glEnd, OpenGL library)
+    ACT_REQUIRE_LIB(GLU, gluLookAt, OpenGL Utilities library)
+])
+
 
 
 # Output resulting files
