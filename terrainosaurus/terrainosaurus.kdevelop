@@ -14,8 +14,8 @@
   </general>
   <kdevautoproject>
     <general>
-      <activetarget>src/map_explorer</activetarget>
-      <useconfiguration>optimized</useconfiguration>
+      <activetarget>src/tsaurus</activetarget>
+      <useconfiguration>debug</useconfiguration>
     </general>
     <run>
       <mainprogram/>

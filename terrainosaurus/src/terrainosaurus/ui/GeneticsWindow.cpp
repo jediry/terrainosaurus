@@ -1,5 +1,3 @@
-#define BOOST_NO_MEMBER_TEMPLATE_FRIENDS 1
-
 // Import class definition
 #include "GeneticsWindow.hpp"
 
@@ -12,16 +10,20 @@ using namespace terrainosaurus;
 using namespace inca::ui;
 using namespace inca::world;
 
-// XXX Should this go somewhere else?
-struct null_deleter {
-    void operator()(void const *) { }
-};
+#define FULL_SCREEN false
+#define WINDOW_WIDTH    400
+#define WINDOW_HEIGHT   300
 
 
 // Constructor taking an image
-GeneticsWindow::GeneticsWindow(TerrainChromosome & c,
+GeneticsWindow::GeneticsWindow(MapRasterizationPtr mr,
                                const std::string & title)
             : WINDOW(GUI_TOOLKIT)(title) {
+    // Set up the window
+    setSize(Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
+    setFullScreen(FULL_SCREEN);
+    GL::glutSetCursor(GLUT_CURSOR_NONE);
+
     // Set up the camera
     CameraPtr camera(new PerspectiveCamera());
     camera->transform()->position = Point3D(1000.0f, 1000.0f, 500.0f);
@@ -39,31 +41,74 @@ GeneticsWindow::GeneticsWindow(TerrainChromosome & c,
         nav->lookScale               = inca::math::PI<scalar_t>() / 64.0 / 4;
 
     CompositeWidgetPtr composite(new CompositeWidget());
-    this->renderView = RenderingViewPtr(new RenderingView(new ChromosomeRendering()));
+    this->_renderView = RenderingViewPtr(new RenderingView(new ChromosomeRendering()));
     this->widget = nav;
         nav->widget = composite;
-            composite->view = this->renderView;
+            composite->view = this->_renderView;
 
-    // Finally, load the chromosome
-    setChromosome(c);
+    // Store the map we'll be trying to approximate
+    setMapRasterization(mr);
+
+    // Set up the selected object parameters
+    _selectedLOD = TerrainLOD::minimum();
+    _selectedChromosomeIndex = 0;
 }
 
-// TerrainChromosome accessor functions
-TerrainChromosome & GeneticsWindow::chromosome() {
-    return *_chromosome;
+
+// MapRasterization accessor functions
+MapRasterizationPtr GeneticsWindow::mapRasterization() {
+    return _heightfieldGA.mapRasterization();
 }
-void GeneticsWindow::setChromosome(TerrainChromosome & c) {
-    // Stop listening to the old chromosome
-    if (_chromosome)
-        _chromosome->removeGAListener(this->renderView->object());
+void GeneticsWindow::setMapRasterization(MapRasterizationPtr mr) {
+    _heightfieldGA.setMapRasterization(mr);
+}
 
-    _chromosome = &c;
-    this->renderView->object()->setChromosome(chromosome());
 
-    // Start listening to the new one
-    if (_chromosome)
-        _chromosome->addGAListener(this->renderView->object());
+// Control over which chromosome we're looking at
+SizeType GeneticsWindow::chromosomeCount() const {
+    return _heightfieldGA.populationSize();
+}
+IndexType GeneticsWindow::selectedChromosomeIndex() const {
+    return _selectedChromosomeIndex;
+}
+void GeneticsWindow::setSelectedChromosomeIndex(IndexType idx) {
+    _selectedChromosomeIndex = idx;
+    _renderView->object()->setChromosome(_heightfieldGA.chromosome(idx));
     requestRedisplay();
+}
+void GeneticsWindow::selectPreviousChromosome() {
+    setSelectedChromosomeIndex((selectedChromosomeIndex() + chromosomeCount() - 1)
+                               % chromosomeCount());
+}
+void GeneticsWindow::selectNextChromosome() {
+    setSelectedChromosomeIndex((selectedChromosomeIndex() + 1) % chromosomeCount());
+}
+
+
+// Control over visible LOD, also triggering GA
+TerrainLOD GeneticsWindow::selectedLOD() const {
+    return _selectedLOD;
+}
+void GeneticsWindow::setSelectedLOD(TerrainLOD targetLOD) {
+    // Make sure it's a legal value
+    if (targetLOD == TerrainLOD_Underflow || targetLOD == TerrainLOD_Overflow)
+        return;
+
+    TerrainLOD startLOD = _heightfieldGA.currentLOD();
+    if (targetLOD < startLOD)
+        INCA_WARNING("Going 'back' not supported yet")
+    else if (targetLOD > startLOD && ! _heightfieldGA.running()) {
+        INCA_DEBUG("Going from " << (startLOD + 1) << " to " << targetLOD)
+        _heightfieldGA.run(startLOD + 1, targetLOD);
+        _selectedLOD = targetLOD;
+        setSelectedChromosomeIndex(selectedChromosomeIndex());
+    }
+}
+void GeneticsWindow::selectPreviousLOD() {
+    setSelectedLOD(selectedLOD() - 1);
+}
+void GeneticsWindow::selectNextLOD() {
+    setSelectedLOD(selectedLOD() + 1);
 }
 
 // HACK!
@@ -87,8 +132,6 @@ void GeneticsWindow::display() {
         light1.setDiffuseColor(Color(0.2f, 0.2f, 0.2f, 1.0f));
         light1.setEnabled(true);
 
-        setFullScreen(true);
-        GL::glutSetCursor(GLUT_CURSOR_NONE);
     }
     WINDOW(GUI_TOOLKIT)::display();
 }
@@ -107,20 +150,32 @@ void GeneticsWindow::key(unsigned char k, int x, int y) {
 void GeneticsWindow::special(int k, int x, int y) {
     switch (k) {
     case GLUT_KEY_F1:
-        this->renderView->object()->toggle("Points");
+        this->_renderView->object()->toggle("Points");
         requestRedisplay();
         break;
     case GLUT_KEY_F2:
-        this->renderView->object()->toggle("Wireframe");
+        this->_renderView->object()->toggle("Wireframe");
         requestRedisplay();
         break;
     case GLUT_KEY_F3:
-        this->renderView->object()->toggle("Polygons");
+        this->_renderView->object()->toggle("Polygons");
         requestRedisplay();
         break;
     case GLUT_KEY_F4:
-        this->renderView->object()->toggle("Lighting");
+        this->_renderView->object()->toggle("Lighting");
         requestRedisplay();
+        break;
+    case GLUT_KEY_UP:
+        selectNextLOD();
+        break;
+    case GLUT_KEY_DOWN:
+        selectPreviousLOD();
+        break;
+    case GLUT_KEY_LEFT:
+        selectPreviousChromosome();
+        break;
+    case GLUT_KEY_RIGHT:
+        selectNextChromosome();
         break;
     default:
         WINDOW(GUI_TOOLKIT)::special(k, x, y);

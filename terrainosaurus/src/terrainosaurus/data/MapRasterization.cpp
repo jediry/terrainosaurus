@@ -442,8 +442,17 @@ MapConstPtr MapRasterization::LOD::map() const {
 /*---------------------------------------------------------------------------*
  | Constructors
  *---------------------------------------------------------------------------*/
-MapRasterization::MapRasterization(TerrainLibraryPtr tl)
-        : _terrainLibrary(tl) { }
+MapRasterization::MapRasterization(const LOD::IDMap & ids, TerrainLOD forLOD,
+                                   TerrainLibraryPtr tl) {
+    setTerrainLibrary(tl);
+
+    // Create our first LOD
+    this->_lods[forLOD].createFromRaster(ids);
+}
+
+MapRasterization::MapRasterization(TerrainLibraryPtr tl) {
+    setTerrainLibrary(tl);
+}
 
 
 /*---------------------------------------------------------------------------*

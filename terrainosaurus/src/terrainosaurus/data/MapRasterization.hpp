@@ -163,7 +163,16 @@ class terrainosaurus::MapRasterization
  | Constructors
  *---------------------------------------------------------------------------*/
 public:
+    // Create a MapRasterization
     explicit MapRasterization(TerrainLibraryPtr tl);
+
+    // Create a MapRasterization from a Map
+//    explicit MapRasterization(MapPtr m);
+
+    // Create a MapRasterization from a raster of IDs representing a
+    // particular LOD
+    explicit MapRasterization(const LOD::IDMap & ids, TerrainLOD forLOD,
+                              TerrainLibraryPtr tl);
 
 
 /*---------------------------------------------------------------------------*

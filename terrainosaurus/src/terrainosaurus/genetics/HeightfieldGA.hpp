@@ -23,17 +23,65 @@ namespace terrainosaurus {
     class HeightfieldGA;
 }
 
+// Import container and utility definitions
+#include <vector>
+#include <inca/util/Timer>
+
+// Import genetic algorithm framework
+#include <inca/util/GeneticAlgorithm>
+
+// Import Chromosome definition
+#include "TerrainChromosome.hpp"
+
 
 class terrainosaurus::HeightfieldGA
         : public inca::GeneticAlgorithm<TerrainChromosome, float> {
 public:
+    typedef inca::Timer<float, false>   Timer;
+    typedef std::vector<Timer>          TimerArray;
+    typedef inca::GeneticAlgorithm<TerrainChromosome, float>    Superclass;
+
+
     // Constructor
-    explicit HeightfieldGA();
+    explicit HeightfieldGA(MapRasterizationPtr mr = MapRasterizationPtr(),
+                           TerrainSamplePtr ts = TerrainSamplePtr());
 
     // Destructor
     ~HeightfieldGA();
 
 
+    // The MapRasterization that we're trying to follow
+    MapRasterizationPtr      mapRasterization();
+    MapRasterizationConstPtr mapRasterization() const;
+    void setMapRasterization(MapRasterizationPtr mr);
+
+    // The TerrainSample that we're building
+    TerrainSamplePtr      terrainSample();
+    TerrainSampleConstPtr terrainSample() const;
+    void setTerrainSample(TerrainSamplePtr ts);
+
+    // Current LOD accessor. Since the algorithm runs from coarse to fine,
+    // only LODs coarser than this are valid in the TerrainSample
+    TerrainLOD currentLOD() const;
+
+    // Whether the GA is running
+    bool running() const;
+
+    // Run the GA, and return the generated TS
+    TerrainSamplePtr run(MapRasterizationPtr mr,
+                         TerrainLOD startLOD, TerrainLOD targetLOD);
+    TerrainSamplePtr run(TerrainLOD startLOD, TerrainLOD targetLOD);
+
+protected:
+    MapRasterizationPtr _mapRasterization;
+    TerrainSamplePtr    _terrainSample;
+    bool        _running;           // Whether we're currently doing anything
+    TerrainLOD  _currentLOD;        // The LOD we're currently working on
+    Timer       _totalTime,         // Time spent on the whole generation process
+                _loadingTime;       // Time spent pre-loading the terrain library
+    TimerArray  _lodTimes,          // Time spent on each LOD
+                _setupTimes,        // Time spent setting up for the GA, per LOD
+                _processingTimes;   // Time spent running the GA, per LOD
 };
 
 #endif

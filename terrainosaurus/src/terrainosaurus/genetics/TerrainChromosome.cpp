@@ -236,6 +236,14 @@ const GrayscaleImage & TerrainChromosome::Gene::mask() const {
     return gaussianMask(levelOfDetail());
 }
 
+// Function to reset the transformation parameters
+void TerrainChromosome::Gene::reset() {
+    setRotation(0);
+    setScale(0);
+    setOffset(0);
+    setJitter(Offset(0));
+}
+
 // The pixel indices (within the source sample) of the center of our data
 const Pixel & TerrainChromosome::Gene::sourceCenter() const {
     return _sourceCenter;

@@ -9,6 +9,10 @@
 namespace terrainosaurus {
     // Forward declarations
     class MapEditorWindow;
+
+    // Pointer typedefs
+    typedef shared_ptr<MapEditorWindow>       MapEditorWindowPtr;
+    typedef shared_ptr<MapEditorWindow const> MapEditorWindowConstPtr;
 }
 
 // Import superclass definition
@@ -22,7 +26,8 @@ namespace terrainosaurus {
 // Simple window displaying an image
 class terrainosaurus::MapEditorWindow : public WINDOW(GUI_TOOLKIT) {
 public:
-    // Constructor taking an image
+    // Constructor taking a map object to edit
+    MapEditorWindow(MapPtr m, const std::string & title = "Map Editor");
     MapEditorWindow(MapPtr m, MeshSelectionPtr ps, MeshSelectionPtr ts,
                     const std::string & title = "Map Editor");
 

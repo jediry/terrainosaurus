@@ -199,6 +199,7 @@ public:
     // Two dimensional grid of Genes
     typedef inca::MultiArray<Gene, 2>   GeneGrid;
     typedef GeneGrid::SizeArray         SizeArray;
+    typedef GeneGrid::IndexArray        IndexArray;
 
 
 /*---------------------------------------------------------------------------*
@@ -383,6 +384,9 @@ public:
 
     // The pixel blending mask we're using to splat this gene.
     const GrayscaleImage & mask() const;
+
+    // Function to reset the transformation parameters
+    void reset();
 
     // The pixel indices (within the source sample) of the center of our data
     const Pixel & sourceCenter() const;

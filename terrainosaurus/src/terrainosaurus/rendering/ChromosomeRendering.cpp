@@ -245,6 +245,7 @@ void ChromosomeRendering::_rebuildColormap() const {
         for (idx[0] = 0; idx[0] < c.size(0); ++idx[0]) {
             const TerrainChromosome::Gene & g = c(idx);
             GAEvent e = _events(idx);
+            break; // XXX HACK
 
             // Ignore non-affected genes
             if (e.type == GAEvent::None) {

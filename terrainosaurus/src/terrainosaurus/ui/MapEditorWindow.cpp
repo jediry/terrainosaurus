@@ -34,6 +34,34 @@ using namespace terrainosaurus;
 
 
 // Constructor
+MapEditorWindow::MapEditorWindow(MapPtr m, const std::string & title)
+            : WINDOW(GUI_TOOLKIT)(title) {
+
+    MeshSelectionPtr ps(new MeshSelection());
+    MeshSelectionPtr ts(new MeshSelection());
+    load(m, ps, ts);
+
+    // Black background, auto-cleared
+    renderer.rasterizer().setBackgroundColor(Color(0.0f, 0.0f, 0.0f, 0.0f));
+    renderer.addAutoClearBuffer(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderer.rasterizer().setDepthBufferingEnabled(false);
+//     renderer.rasterizer().setLineSmoothingEnabled(true);
+//     renderer.rasterizer().setPointSmoothingEnabled(true);
+//     renderer.rasterizer().setAlphaBlendingEnabled(true);
+
+    // Set up the camera
+    camera.transform()->position = Point3D(0.0f, 0.0f, 100.0f);
+    camera.viewWidth    = 15.0;
+    camera.viewHeight   = 15.0;
+    camera.nearClip     = 50.0f;
+    camera.farClip      = 1000.0f;
+    camera.transform()->lookAt(Point3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 1.0f, 0.0f));
+
+    this->setSize(Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
+    if (FULL_SCREEN)    this->setFullScreen(true);
+    else                this->centerOnScreen();
+}
+
 MapEditorWindow::MapEditorWindow(MapPtr m, MeshSelectionPtr ps, MeshSelectionPtr ts,
                                  const std::string & title)
             : WINDOW(GUI_TOOLKIT)(title) {
@@ -55,81 +83,6 @@ MapEditorWindow::MapEditorWindow(MapPtr m, MeshSelectionPtr ps, MeshSelectionPtr
     camera.farClip      = 1000.0f;
     camera.transform()->lookAt(Point3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 1.0f, 0.0f));
 
-#if 0
-    ///////////////////////////////////////////////////////////////////////////
-    // Build the widget stack
-
-    // The MapExplorerWidget handles application events, draws the UI and
-    // chooses between major application modes (editing, walk-thru, etc.)
-    MapExplorerWidgetPtr explorer(new MapExplorerWidget("Map Explorer"));
-
-    // The 2D map editing mode widget stack
-    OrthographicCameraPtr camera2D(new OrthographicCamera());
-        camera2D->viewWidth = 15.0;
-        camera2D->viewHeight = 15.0;
-        camera2D->nearClip = -1.0;
-        camera2D->transform->position = Transform::Point(0.0, 0.0, 100.0);
-    CameraNavigationWidgetPtr navigate2D(new CameraNavigationWidget("2D Navigation"));
-    MultiplexorWidgetPtr toolSelect2D(new MultiplexorWidget("2D Tool Select"));
-    MapEditWidgetPtr modifyProperty2D(new ModifyPropertyWidget("Modify Property"));
-    MapEditWidgetPtr addFace2D   (new AddFaceWidget("Add Face"));
-    MapEditWidgetPtr addVertex2D (new AddVertexWidget("Add Vertex"));
-    MapEditWidgetPtr translate2D (new TranslateWidget("Translate"));
-    MapEditWidgetPtr rotate2D    (new RotateWidget("Rotate"));
-    MapEditWidgetPtr scale2D     (new ScaleWidget("Scale"));
-        explorer->addWidget(navigate2D);
-        explorer->toolSelect2D = toolSelect2D;
-            navigate2D->widget = toolSelect2D;
-            navigate2D->camera = camera2D;  // Control the 2D camera
-            navigate2D->enableLook = false;     // Disable capabilities
-            navigate2D->enableDolly = false;    // that don't make sense
-            navigate2D->enableYaw = false;      // in two dimensions
-            navigate2D->enablePitch = false;
-            navigate2D->rollScale = 3.1415962 / 150.0;  // Tweak the controls
-            navigate2D->zoomScale = 1.001;
-                toolSelect2D->addWidget(modifyProperty2D);
-                toolSelect2D->addWidget(addFace2D);
-                toolSelect2D->addWidget(addVertex2D);
- //               toolSelect2D->addWidget(translate2D);
- //               toolSelect2D->addWidget(rotate2D);
- //               toolSelect2D->addWidget(scale2D);
-
-
-    // The 3D fly-through mode widget stack
-    PerspectiveCameraPtr cameraFly3D(new PerspectiveCamera());
-        cameraFly3D->horizViewAngle = PI<Camera::scalar_t>() / 3.0;
-        cameraFly3D->vertViewAngle = PI<Camera::scalar_t>() / 3.0;
-        cameraFly3D->nearClip = 1.0;
-        cameraFly3D->transform->position = Transform::Point(2.0, 2.0, 2.0);
-        cameraFly3D->transform->lookAt(Transform::Point(0.0, 0.0, 0.0));
-    CameraFlyWidgetPtr fly3D(new CameraFlyWidget("2D Flythru"));
-    MapEditWidgetPtr edit3D(new MapEditWidget("3D Edit"));
-        explorer->addWidget(fly3D);
-            fly3D->widget = edit3D;
-            fly3D->camera = cameraFly3D;
-
-
-    // XXX Pass the renderer to everyone. This is ugly
-    TerrainosaurusRendererPtr renderer(new TerrainosaurusRenderer());
-    explorer->renderer = renderer;
-    navigate2D->renderer = renderer;
-    modifyProperty2D->renderer = renderer;
-    addFace2D->renderer = renderer;
-    addVertex2D->renderer = renderer;
-    translate2D->renderer = renderer;
-    rotate2D->renderer = renderer;
-    scale2D->renderer = renderer;
-
-    fly3D->renderer = renderer;
-    edit3D->renderer = renderer;
-
-
-    // Now, make a window to hold it all
-    window = createWindow(explorer, WINDOW_TITLE);
-    window->setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    if (FULL_SCREEN)    window->setFullScreen(true);
-    else                window->centerOnScreen();
-#endif
     this->setSize(Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
     if (FULL_SCREEN)    this->setFullScreen(true);
     else                this->centerOnScreen();

@@ -8,7 +8,7 @@
  *
  * Description:
  */
-
+#if 0
 // Import class definition
 #include "GeneShapeRendering.hpp"
 using namespace terrainosaurus;
@@ -43,7 +43,7 @@ GeneShapeRendering::GeneShapeRendering(const GeneShape & g)
 
 // Populate the primitive grid with values from a heightfield
 void GeneShapeRendering::load(const GeneShape & g) {
-    // Figure out the 
+    // Figure out the
 }
 
 
@@ -101,3 +101,4 @@ void GeneShapeRendering::operator()(GeneShapeRendering::Renderer & renderer) con
         static_cast<Superclass const &>(*this)(renderer, inca::rendering::Vertices());
     }
 }
+#endif
