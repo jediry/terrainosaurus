@@ -112,7 +112,7 @@ void MapEditorWidget::renderView() {
             for (it = rs.begin(); it != rs.end(); it++) {
                 Map::Region r = *it;
                 //renderer.setColor(terrainColor[r.terrainType()]);
-                renderer.setColor(Color(0.5f, 0.5f, 0.0f, 1.0f));
+                renderer.setColor(Color(0.8f, 0.8f, 0.0f, 1.0f));
                 renderer.beginRenderImmediate(Polygon);
                     for (index_t i = 0; i < index_t(r.intersectionCount()); i++)
                         renderer.renderVertex(r.intersection(i).location());
@@ -238,6 +238,10 @@ void MapEditorWidget::keyPressed(KeyCode k, index_t x, index_t y) {
 //        mapObject->transform()->rotateZ(Transform::PI / 6);
         requestRedisplay();
         break;
+    case KEY_L:
+        loadParams("genetic_params.txt");
+        requestRedisplay();
+        break;
     case KEY_O:
         loadMap("testmap.obj");
         requestRedisplay();
@@ -257,6 +261,49 @@ void MapEditorWidget::keyPressed(KeyCode k, index_t x, index_t y) {
 /*---------------------------------------------------------------------------*
  | Map I/O functions
  *---------------------------------------------------------------------------*/
+void MapEditorWidget::loadParams(const string &filename) {
+    if (!map())
+        return;
+
+    std::ifstream ifs;
+    ifs.open(filename.c_str());
+    if (!ifs) {
+        cerr << "Failed to open " << filename << endl;
+        return;
+    }
+
+    string name, assigned;
+    float value;;
+    while (! ifs.eof()) {
+        ifs >> name >> assigned >> value;
+        if (! ifs) {
+            cerr << "Error reading from file" << endl;
+            return;
+        }
+        if (name == "numberOfCycles")
+            map->numberOfCycles = (int)value;
+        else if (name == "numberOfChromosomes")
+            map->numberOfChromosomes = (int)value;
+        else if (name == "smoothness")
+            map->smoothness = value;
+        else if (name == "mutationRate")
+            map->mutationRate = value;
+        else if (name == "crossoverRate")
+            map->crossoverRate = value;
+        else if (name == "selectionRatio")
+            map->selectionRatio = value;
+        else if (name == "resolution")
+            map->resolution = value;
+        else {
+            cerr << "Unrecognized parameter " << name << endl;
+            return;
+        }
+        cerr << "Set " << name << " = " << value << endl;
+    }
+    if (!ifs.eof())
+        ifs.clear();
+}
+
 void MapEditorWidget::loadMap(const string &filename) {
     map = new Map();
 

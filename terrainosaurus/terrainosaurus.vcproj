@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\libinca\src;..\libinca\3rd_party"
+				AdditionalIncludeDirectories="..\libinca\src;H:\include"
 				PreprocessorDefinitions="WIN32;_DEBUG"
 				MinimalRebuild="FALSE"
 				BasicRuntimeChecks="0"
@@ -37,7 +37,7 @@
 				AdditionalDependencies="libinca.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(OutDir)"
+				AdditionalLibraryDirectories="H:\lib"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="1"/>
 			<Tool
@@ -120,33 +120,14 @@
 				RelativePath=".\src\genetics\GA.h">
 			</File>
 			<File
-				RelativePath=".\src\genetics\main.cpp">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\src\genetics\Pyramid.h">
 			</File>
 		</Filter>
 		<File
 			RelativePath=".\src\GLUTMapEditor.cpp">
-			<FileConfiguration
-				Name="Debug|Win32">
-				<Tool
-					Name="VCCLCompilerTool"/>
-			</FileConfiguration>
 		</File>
 		<File
 			RelativePath=".\src\Map.cpp">
-			<FileConfiguration
-				Name="Debug|Win32">
-				<Tool
-					Name="VCCLCompilerTool"/>
-			</FileConfiguration>
 		</File>
 		<File
 			RelativePath=".\src\Map.hpp">
@@ -158,11 +139,6 @@
 		</File>
 		<File
 			RelativePath=".\src\MapEditorWidget.cpp">
-			<FileConfiguration
-				Name="Debug|Win32">
-				<Tool
-					Name="VCCLCompilerTool"/>
-			</FileConfiguration>
 		</File>
 		<File
 			RelativePath=".\src\MapEditorWidget.hpp">

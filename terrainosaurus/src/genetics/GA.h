@@ -98,7 +98,7 @@ namespace GA
 		vec2.x = P_three->x - P_two->x;
 		vec2.y = P_three->y - P_two->y;
 		// angle is always 180-theta in degrees
-		result = acos((vec1.x*vec2.x+vec1.y*vec2.y) / (sqrt(vec1.x*vec1.x+vec1.y*vec1.y) * sqrt(vec2.x*vec2.x+vec2.y*vec2.y)));
+		result = acos((vec1.x*vec2.x+vec1.y*vec2.y) / (sqrt((double)vec1.x*vec1.x+vec1.y*vec1.y) * sqrt((double)vec2.x*vec2.x+vec2.y*vec2.y)));
 		// direction is being calculated here
 		// P_one is ontop of point 3, so it's in positive direction
 		if(P_one->y < P_three->y)

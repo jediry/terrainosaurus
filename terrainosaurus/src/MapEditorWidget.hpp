@@ -44,6 +44,21 @@ public:
     typedef Map::Point  Point;
     typedef Map::Vector Vector;
 
+    // User interaction states
+    enum EditState {
+        NoEdit,     // Nothing is happening...waiting...zzzz
+        AddRegion,  // The user is currently adding a region to the map
+    };
+
+    // Tools the user can use to build his map
+    enum EditTool {
+        SelectionTool,
+        AddIntersectionTool,
+        DeleteIntersectionTool,
+        SplitBoundaryTool,
+        SplitRegionTool,
+    };
+
 
 /*---------------------------------------------------------------------------*
  | Constructor and properties
@@ -61,7 +76,7 @@ public:
     rw_list_property(Color, terrainColors);
     rw_property(Color, backgroundColor,         Color(0.1f, 0.1f, 0.1f, 1.0f));
     rw_property(Color, intersectionColor,       Color(1.0f, 1.0f, 1.0f, 1.0f));
-    rw_property(Color, boundaryColor,           Color(0.0f, 0.0f, 0.3f, 1.0f));
+    rw_property(Color, boundaryColor,           Color(0.0f, 0.5f, 0.5f, 1.0f));
     rw_property(Color, refinedBoundaryColor,    Color(0.3f, 0.3f, 1.0f, 1.0f));
     rw_property(Color, gridColor,               Color(0.8f, 0.8f, 0.8f, 0.5f));
     rw_property(float, boundaryWidth,           4.0f);
@@ -104,6 +119,7 @@ public:
  | Map I/O functions
  *---------------------------------------------------------------------------*/
 public:
+    void loadParams(const string &filename);
     void loadMap(const string &filename);
     void storeMap(const string &filename) const;
 };

@@ -404,9 +404,9 @@ Map::RefinedBoundary Map::refinementOf(const Boundary &b) const {
 void Map::refineMap() {
     // Go do that thing you do on each boundary
     BoundaryList bs = boundaries();
-    //for (index_t i = 0; i < index_t(bs.size()); i++)
-    //    refineBoundary(bs[i]);
-        refineBoundary(bs[3]);
+    for (index_t i = 0; i < index_t(bs.size()); i++)
+        refineBoundary(bs[i]);
+//        refineBoundary(bs[3]);
 
     // Now that all the b's are done, do the i's
     IntersectionList is = intersections();
@@ -498,8 +498,8 @@ void Map::refineBoundary(const Boundary &b) {
     logger.info();
 
     inca::math::Matrix<scalar_t, 3, 3, true> T, R, S, X;
-    loadTranslation(T, start - Point(0.0, 0.0));
-    loadScaling(S, Vector(scaleFactor, scaleFactor));
+    loadTranslation<double,3>(T, start - Point(0.0, 0.0));
+    loadScaling<double, 3>(S, Vector(scaleFactor, scaleFactor));
     loadRotation2D(R, rotationAngle);
     X = T % (R % S);
     logger << "S: -------------" << endl << S << endl;
@@ -512,7 +512,8 @@ void Map::refineBoundary(const Boundary &b) {
     Map::PointList::iterator pt;
     Map::PointList & points = rb.points();
     for (pt = points.begin(); pt != points.end(); pt++) {
-        (*pt) = X % (*pt);
+        inca::math::Point<scalar_t, inca::math::Matrix<scalar_t, 3, 3>::cols - 1> & p = *pt;
+        p = operator%<scalar_t, 3, 3, true>(X, p);
         cerr << *pt << endl;
     }
 }
