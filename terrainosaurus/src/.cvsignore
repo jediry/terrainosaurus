@@ -1,0 +1,10 @@
+Makefile
+Makefile.in
+
+config-ac.h*
+stamp*
+
+.deps
+.xvpics
+old
+new

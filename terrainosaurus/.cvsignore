@@ -1,0 +1,11 @@
+Makefile
+Makefile.in
+src_catalog
+configure
+aclocal.m4
+autom4te.cache
+config.log
+config.status
+config
+?ebug
+*.pcs
