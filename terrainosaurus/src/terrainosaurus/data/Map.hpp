@@ -87,11 +87,11 @@ private:
     PROPERTY_OWNING_OBJECT(MapData);
 
 public:
-    MapData(const string &nm = "")
+    MapData(const std::string & nm = "")
         : name(this, nm), terrainLibrary(this) { }
 
     // A string describing the map
-    rw_property(string, name, "");
+    rw_property(std::string, name, "");
 
     // The library of available terrain types
     rw_ptr_property(TerrainLibrary, terrainLibrary, NULL);
@@ -243,7 +243,7 @@ protected:
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor with optional map name
-    explicit Map(const string &nm = "");
+    explicit Map(const std::string & nm = "");
 
 
 /*---------------------------------------------------------------------------*

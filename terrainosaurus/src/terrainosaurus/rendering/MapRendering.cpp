@@ -25,7 +25,6 @@ namespace terrainosaurus {
 #include <inca/integration/opengl/GL.hpp>
 using namespace GL;
 
-
 // Features that we support
 #define VERTICES                0
 #define EDGES                   1
@@ -66,10 +65,14 @@ using namespace terrainosaurus;
 //using namespace inca::rendering;
 
 #include <list>
+
+// HACK
+#ifndef CALLBACK
 #define CALLBACK
+#endif
 
 void CALLBACK printTessError(GLenum errorCode) {
-    cerr << gluErrorString(errorCode) << endl;
+    INCA_ERROR(gluErrorString(errorCode))
 }
 
 void CALLBACK combineTessPoly(GLdouble coords[3], GLdouble *vertexData[4],
@@ -84,14 +87,14 @@ void CALLBACK combineTessPoly(GLdouble coords[3], GLdouble *vertexData[4],
 MapRendering::MapRendering() {
     setDefaults();
 
-    GLUtesselator * tess = gluNewTess();
-    gluTessCallback(tess, GLU_TESS_VERTEX,(GLvoid (CALLBACK*) ( )) &glVertex2dv);
-    gluTessCallback(tess, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineTessPoly);
-    gluTessCallback(tess, GLU_TESS_BEGIN,(GLvoid (CALLBACK*) ( )) &glBegin);
-    gluTessCallback(tess, GLU_TESS_END,(GLvoid (CALLBACK*) ( )) &glEnd);
-    gluTessCallback(tess, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &printTessError);
-    gluTessNormal(tess, 0.0, 0.0, 1.0);
-    tesselator = tess;
+//    GLUtesselator * tess = gluNewTess();
+//    gluTessCallback(tess, GLU_TESS_VERTEX,(GLvoid (CALLBACK*) ( )) &glVertex2dv);
+//    gluTessCallback(tess, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineTessPoly);
+//    gluTessCallback(tess, GLU_TESS_BEGIN,(GLvoid (CALLBACK*) ( )) &glBegin);
+//    gluTessCallback(tess, GLU_TESS_END,(GLvoid (CALLBACK*) ( )) &glEnd);
+//    gluTessCallback(tess, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &printTessError);
+//    gluTessNormal(tess, 0.0, 0.0, 1.0);
+//    tesselator = tess;
 }
 
 MapRendering::MapRendering(MapConstPtr m,
@@ -104,7 +107,7 @@ MapRendering::MapRendering(MapConstPtr m,
 }
 
 MapRendering::~MapRendering() {
-    gluDeleteTess(static_cast<GLUtesselator *>(tesselator));
+//    gluDeleteTess(static_cast<GLUtesselator *>(tesselator));
 }
 
 
@@ -167,8 +170,9 @@ bool MapRendering::toggle(const std::string & feature) {
 
     if (index != -1) {
         _features.at(index) = ! _features.at(index);
-        cerr << feature << ": " << (_features.at(index) ? "on" : "off") << endl;
+        INCA_INFO(feature << ": " << (_features.at(index) ? "on" : "off"))
     }
+    return _features.at(index);
 }
 
 void MapRendering::setScalar(const std::string & name, scalar_arg_t s) {
@@ -300,7 +304,7 @@ void MapRendering::renderFaces(Renderer & renderer) {
 //                 rasterizer.vertexAt(vs->position());
 //         rasterizer.endPrimitive();
 //         continue;
-
+#if 0
         GLUtesselator * tess = static_cast<GLUtesselator *>(tesselator);
         gluTessBeginPolygon(tess, NULL);
             gluTessBeginContour(tess);
@@ -363,6 +367,7 @@ void MapRendering::renderFaces(Renderer & renderer) {
 //            cerr << "\t" << (*pt)[0] << ", " << (*pt)[1] << endl;
             delete [] *pt;
         }
+#endif
     }
 }
 

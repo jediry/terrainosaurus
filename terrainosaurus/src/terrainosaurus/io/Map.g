@@ -61,7 +61,7 @@ options {
  *---------------------------------------------------------------------------*/
 protected:
     void createVertex(scalar_t x, scalar_t y, antlr::RefToken pos);
-    void setTerrainType(const string &tt, antlr::RefToken pos);
+    void setTerrainType(const std::string & tt, antlr::RefToken pos);
     void beginFace(antlr::RefToken pos);
     void addVertex(IDType id, antlr::RefToken pos);
     void endFace();
@@ -124,7 +124,7 @@ scalar returns [scalar_t s]:
 // A positive fractional value, >= 0.0
 fraction returns [scalar_t s]:
     w:NUMBER ( DOT f:NUMBER )?
-    {   string tmp(w->getText());           // Construct a composite string
+    {   std::string tmp(w->getText());      // Construct a composite string
         if (f != NULL) {                    // If we have a fractional part,
             tmp += '.';                     // then add it in
             tmp += f->getText();

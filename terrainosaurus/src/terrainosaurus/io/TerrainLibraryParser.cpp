@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryParser.cpp"$ */
+/* $ANTLR 2.7.5 (20050201): "TerrainLibrary.g" -> "TerrainLibraryParser.cpp"$ */
 #include "TerrainLibraryParser.hpp"
 #include <antlr/NoViableAltException.hpp>
 #include <antlr/SemanticException.hpp>
@@ -489,7 +489,7 @@ void TerrainLibraryParser::terrainSample() {
 	antlr::RefToken  t = antlr::nullToken;
 	
 #line 279 "TerrainLibrary.g"
-	string s;
+	std::string s;
 #line 493 "TerrainLibraryParser.cpp"
 	t = LT(1);
 	match(SAMPLE);
@@ -598,7 +598,7 @@ scalar_t  TerrainLibraryParser::fraction() {
 	}
 	}
 #line 314 "TerrainLibrary.g"
-	string tmp(w->getText());           // Construct a composite string
+	std::string tmp(w->getText());      // Construct a composite string
 	if (f != NULL) {                    // If we have a fractional part,
 	tmp += '.';                     // then add it in
 	tmp += f->getText();
@@ -669,9 +669,9 @@ Color  TerrainLibraryParser::color() {
 	return c;
 }
 
-string  TerrainLibraryParser::filename() {
+std::string  TerrainLibraryParser::filename() {
 #line 346 "TerrainLibrary.g"
-	string path;
+	std::string path;
 #line 675 "TerrainLibraryParser.cpp"
 	antlr::RefToken  q = antlr::nullToken;
 	antlr::RefToken  n = antlr::nullToken;

@@ -72,13 +72,13 @@ template <typename S>
 class terrainosaurus::Curve {
 public:
     typedef S Scalar;
-    typedef math::Point<Scalar, 4> Point;
+    typedef inca::math::Point<Scalar, 4> Point;
 
     Curve(int nSc) : atScale(nSc) { }
 
     std::vector<Point> points;
     std::vector<int> atScale;
-    math::Statistics<Scalar> lengthStats, strengthStats, scaleStats;
+    inca::math::Statistics<Scalar> lengthStats, strengthStats, scaleStats;
 };
 
 
@@ -98,7 +98,7 @@ public:
     std::vector<int> atScale;
     std::vector<Curve> curves;
     GrayscaleImage * image;
-    math::Statistics<scalar_t> lengthStats, strengthStats, scaleStats;
+    inca::math::Statistics<scalar_t> lengthStats, strengthStats, scaleStats;
 
     template <class P>
     void operator()(const P & p, scalar_t s) {
@@ -132,8 +132,8 @@ public:
     typedef Heightfield::Region                 Region;
     typedef Heightfield::ElementType            Scalar;
     typedef VectorMap::ElementType              Vector;
-    typedef math::Statistics<Scalar>            ScalarStatistics;
-    typedef math::Statistics<Vector>            VectorStatistics;
+    typedef inca::math::Statistics<Scalar>      ScalarStatistics;
+    typedef inca::math::Statistics<Vector>      VectorStatistics;
     typedef inca::Array<Scalar, frequencyBands> FrequencySpectrum;
 
 

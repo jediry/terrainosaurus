@@ -141,7 +141,7 @@ public:
 
 // ostream writer for MeshSelection::ElementType
 namespace terrainosaurus {
-    inline std::ostream & operator<<(std::ostream &os,
+    inline std::ostream & operator<<(std::ostream & os,
                                      MeshSelection::ElementType t) {
         switch (t) {
             case MeshSelection::Vertices:

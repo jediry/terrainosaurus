@@ -17,6 +17,7 @@ using namespace terrainosaurus;
 #include <inca/raster/generators/gaussian>
 #include <inca/raster/operators/select>
 #include <inca/raster/operators/arithmetic>
+using namespace inca::math;
 using namespace inca::raster;
 
 
@@ -39,15 +40,14 @@ scalar_t terrainosaurus::samplesPerMeterForLOD(TerrainLOD lod) {
     return scalar_t(1) / metersPerSampleForLOD(lod);
 }
 TerrainLOD terrainosaurus::LODForMetersPerSample(scalar_t mps) {
-         if (math::effectivelyEqual(scalar_t(10), mps))     return LOD_10m;
-    else if (math::effectivelyEqual(scalar_t(30), mps))     return LOD_30m;
-    else if (math::effectivelyEqual(scalar_t(90), mps))     return LOD_90m;
-    else if (math::effectivelyEqual(scalar_t(270), mps))    return LOD_270m;
-    else if (math::effectivelyEqual(scalar_t(810), mps))    return LOD_810m;
-//    else if (math::effectivelyEqual(scalar_t(2430), mps))   return LOD_2430m;
+         if (effectivelyEqual(scalar_t(10), mps))     return LOD_10m;
+    else if (effectivelyEqual(scalar_t(30), mps))     return LOD_30m;
+    else if (effectivelyEqual(scalar_t(90), mps))     return LOD_90m;
+    else if (effectivelyEqual(scalar_t(270), mps))    return LOD_270m;
+    else if (effectivelyEqual(scalar_t(810), mps))    return LOD_810m;
+//    else if (effectivelyEqual(scalar_t(2430), mps))   return LOD_2430m;
     else {
-        std::cerr << "LODForMetersPerSample(): No LOD has a resolution of "
-                  << mps << std::endl;
+        INCA_ERROR("LODForMetersPerSample(): No LOD has a resolution of " << mps)
         return TerrainLOD_Overflow;
     }
 }
@@ -126,8 +126,10 @@ const GrayscaleImage & terrainosaurus::sphericalMask(TerrainLOD lod) {
     return masks[lod];
 }
 const GrayscaleImage & terrainosaurus::coneMask(TerrainLOD lod) {
-
+    static GrayscaleImage img;
+    return img;
 }
 const GrayscaleImage & terrainosaurus::exponentialMask(TerrainLOD lod) {
-
+    static GrayscaleImage img;
+    return img;
 }

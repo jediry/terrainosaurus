@@ -24,6 +24,7 @@
 #include <inca/raster/operators/linear_map>
 #include <inca/raster/operators/rotate>
 
+using namespace inca;
 using namespace inca::math;
 using namespace inca::raster;
 using namespace terrainosaurus;
@@ -41,7 +42,7 @@ TerrainSamplePtr terrainosaurus::generateTerrain(MapRasterizationConstPtr map,
     // Preload all of the TerrainTypes we'll be using, for every LOD we'll be
     // using.
     loading.start();
-    std::cerr << "Preloading terrain sample data" << std::endl;
+    INCA_DEBUG("Preloading terrain sample data")
     TerrainLibraryConstPtr tl = map->terrainLibrary();
     const MapRasterization::LOD & maxMap = (*map)[targetLOD];
     for (IndexType i = 0; i < maxMap.regionCount(); ++i)
@@ -105,7 +106,7 @@ TerrainSamplePtr terrainosaurus::generateTerrain(MapRasterizationConstPtr map,
               "\tTotal elapsed time: " << total() << " seconds\n";
 
     // Return the finished product
-    std::cerr << report.str();
+    INCA_DEBUG(report.str())
     return result;
 }
 

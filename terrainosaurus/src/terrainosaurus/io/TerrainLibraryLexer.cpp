@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryLexer.cpp"$ */
+/* $ANTLR 2.7.5 (20050201): "TerrainLibrary.g" -> "TerrainLibraryLexer.cpp"$ */
 #include "TerrainLibraryLexer.hpp"
 #include <antlr/CharBuffer.hpp>
 #include <antlr/TokenStreamException.hpp>
@@ -31,31 +31,31 @@ TerrainLibraryLexer::TerrainLibraryLexer(const antlr::LexerSharedInputState& sta
 
 void TerrainLibraryLexer::initLiterals()
 {
+	literals["color"] = 32;
 	literals["size"] = 14;
+	literals["terrainseam"] = 11;
 	literals["pixels"] = 27;
 	literals["smoothness"] = 34;
-	literals["terrainseam"] = 11;
-	literals["color"] = 32;
+	literals["ratio"] = 19;
+	literals["factor"] = 29;
 	literals["cycles"] = 17;
-	literals["amount"] = 31;
-	literals["global"] = 5;
-	literals["terraintype"] = 8;
-	literals["evolution"] = 16;
+	literals["aspect"] = 35;
+	literals["elite"] = 20;
+	literals["scale"] = 28;
+	literals["crossover"] = 21;
 	literals["population"] = 13;
-	literals["mutation"] = 23;
+	literals["width"] = 25;
 	literals["probability"] = 22;
 	literals["offset"] = 30;
-	literals["width"] = 25;
+	literals["mutation"] = 23;
 	literals["jitter"] = 26;
 	literals["max"] = 24;
-	literals["crossover"] = 21;
-	literals["scale"] = 28;
 	literals["selection"] = 18;
-	literals["elite"] = 20;
-	literals["aspect"] = 35;
+	literals["evolution"] = 16;
+	literals["terraintype"] = 8;
+	literals["global"] = 5;
 	literals["sample"] = 33;
-	literals["factor"] = 29;
-	literals["ratio"] = 19;
+	literals["amount"] = 31;
 }
 
 antlr::RefToken TerrainLibraryLexer::nextToken()
@@ -201,7 +201,7 @@ antlr::RefToken TerrainLibraryLexer::nextToken()
 				theRetToken=_returnToken;
 				break;
 			}
-			case 0x22 /* '"' */ :
+			case 0x22 /* '\"' */ :
 			case 0x27 /* '\'' */ :
 			{
 				mQUOTED_STRING(true);
@@ -247,9 +247,9 @@ tryAgain:;
 }
 
 void TerrainLibraryLexer::mDIGIT(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = DIGIT;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	matchRange('0','9');
@@ -263,9 +263,9 @@ void TerrainLibraryLexer::mDIGIT(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mLETTER(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = LETTER;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	matchRange('a','z');
@@ -279,20 +279,20 @@ void TerrainLibraryLexer::mLETTER(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mWS_CHAR(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = WS_CHAR;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	switch ( LA(1)) {
 	case 0x20 /* ' ' */ :
 	{
-		match(' ');
+		match(' ' /* charlit */ );
 		break;
 	}
 	case 0x9 /* '\t' */ :
 	{
-		match('\t');
+		match('\t' /* charlit */ );
 		break;
 	}
 	default:
@@ -310,19 +310,19 @@ void TerrainLibraryLexer::mWS_CHAR(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mEOL_CHAR(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = EOL_CHAR;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	if ((LA(1) == 0xd /* '\r' */ ) && (LA(2) == 0xa /* '\n' */ )) {
 		match("\r\n");
 	}
 	else if ((LA(1) == 0xd /* '\r' */ ) && (true)) {
-		match('\r');
+		match('\r' /* charlit */ );
 	}
 	else if ((LA(1) == 0xa /* '\n' */ )) {
-		match('\n');
+		match('\n' /* charlit */ );
 	}
 	else {
 		throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
@@ -338,11 +338,11 @@ void TerrainLibraryLexer::mEOL_CHAR(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mDQUOTE(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = DQUOTE;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match('"');
+	match('\"' /* charlit */ );
 #line 414 "TerrainLibrary.g"
 	{ text.erase(_begin); text += ""; };
 #line 348 "TerrainLibraryLexer.cpp"
@@ -355,11 +355,11 @@ void TerrainLibraryLexer::mDQUOTE(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mSQUOTE(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = SQUOTE;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match('\'');
+	match('\'' /* charlit */ );
 #line 415 "TerrainLibrary.g"
 	{ text.erase(_begin); text += ""; };
 #line 365 "TerrainLibraryLexer.cpp"
@@ -372,11 +372,11 @@ void TerrainLibraryLexer::mSQUOTE(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mSPACE(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = SPACE;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match(' ');
+	match(' ' /* charlit */ );
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -386,9 +386,9 @@ void TerrainLibraryLexer::mSPACE(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mEOL(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = EOL;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	mEOL_CHAR(false);
 #line 419 "TerrainLibrary.g"
@@ -403,11 +403,11 @@ void TerrainLibraryLexer::mEOL(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mCOMMENT(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = COMMENT;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match('#');
+	match('#' /* charlit */ );
 	{ // ( ... )*
 	for (;;) {
 		if ((_tokenSet_0.member(LA(1)))) {
@@ -435,9 +435,9 @@ void TerrainLibraryLexer::mCOMMENT(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mWS(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = WS;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{ // ( ... )+
 	int _cnt64=0;
@@ -465,9 +465,9 @@ void TerrainLibraryLexer::mWS(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mOPEN_ABRACKET(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = OPEN_ABRACKET;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match("<");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -479,9 +479,9 @@ void TerrainLibraryLexer::mOPEN_ABRACKET(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mCLOSE_ABRACKET(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = CLOSE_ABRACKET;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match(">");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -493,9 +493,9 @@ void TerrainLibraryLexer::mCLOSE_ABRACKET(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mOPEN_SBRACKET(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = OPEN_SBRACKET;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match("[");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -507,9 +507,9 @@ void TerrainLibraryLexer::mOPEN_SBRACKET(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mCLOSE_SBRACKET(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = CLOSE_SBRACKET;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match("]");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -521,9 +521,9 @@ void TerrainLibraryLexer::mCLOSE_SBRACKET(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mCOMMA(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = COMMA;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match(",");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -535,9 +535,9 @@ void TerrainLibraryLexer::mCOMMA(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mASSIGN(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = ASSIGN;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match("=");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -549,9 +549,9 @@ void TerrainLibraryLexer::mASSIGN(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mCOLON(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = COLON;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match(":");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -563,9 +563,9 @@ void TerrainLibraryLexer::mCOLON(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mAND(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = AND;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match("&");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -577,9 +577,9 @@ void TerrainLibraryLexer::mAND(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mDOT(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = DOT;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match(".");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -591,11 +591,11 @@ void TerrainLibraryLexer::mDOT(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mBACKSLASH(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = BACKSLASH;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match('\\');
+	match('\\' /* charlit */ );
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -605,11 +605,11 @@ void TerrainLibraryLexer::mBACKSLASH(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mFORESLASH(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = FORESLASH;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match('/');
+	match('/' /* charlit */ );
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -619,11 +619,11 @@ void TerrainLibraryLexer::mFORESLASH(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mNBSP(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = NBSP;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match("\ ");
+	match("\\ ");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -633,9 +633,9 @@ void TerrainLibraryLexer::mNBSP(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mNUMBER(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = NUMBER;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{ // ( ... )+
 	int _cnt79=0;
@@ -660,20 +660,20 @@ void TerrainLibraryLexer::mNUMBER(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mSIGN(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = SIGN;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	switch ( LA(1)) {
 	case 0x2b /* '+' */ :
 	{
-		match('+');
+		match('+' /* charlit */ );
 		break;
 	}
 	case 0x2d /* '-' */ :
 	{
-		match('-');
+		match('-' /* charlit */ );
 		break;
 	}
 	default:
@@ -691,9 +691,9 @@ void TerrainLibraryLexer::mSIGN(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mNAME(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = NAME;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	switch ( LA(1)) {
@@ -729,7 +729,7 @@ void TerrainLibraryLexer::mNAME(bool _createToken) {
 	}
 	case 0x5f /* '_' */ :
 	{
-		match('_');
+		match('_' /* charlit */ );
 		break;
 	}
 	default:
@@ -787,7 +787,7 @@ void TerrainLibraryLexer::mNAME(bool _createToken) {
 		}
 		case 0x5f /* '_' */ :
 		{
-			match('_');
+			match('_' /* charlit */ );
 			break;
 		}
 		default:
@@ -808,19 +808,19 @@ void TerrainLibraryLexer::mNAME(bool _createToken) {
 }
 
 void TerrainLibraryLexer::mQUOTED_STRING(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = QUOTED_STRING;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	switch ( LA(1)) {
-	case 0x22 /* '"' */ :
+	case 0x22 /* '\"' */ :
 	{
 		{
 		mDQUOTE(false);
 		{ // ( ... )*
 		for (;;) {
 			if ((_tokenSet_1.member(LA(1)))) {
-				matchNot('"');
+				matchNot('\"' /* charlit */ );
 			}
 			else {
 				goto _loop89;
@@ -840,7 +840,7 @@ void TerrainLibraryLexer::mQUOTED_STRING(bool _createToken) {
 		{ // ( ... )*
 		for (;;) {
 			if ((_tokenSet_2.member(LA(1)))) {
-				matchNot('\'');
+				matchNot('\'' /* charlit */ );
 			}
 			else {
 				goto _loop92;
@@ -869,8 +869,8 @@ void TerrainLibraryLexer::mQUOTED_STRING(bool _createToken) {
 
 const unsigned long TerrainLibraryLexer::_tokenSet_0_data_[] = { 4294958072UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xb 0xc 0xe 0xf 0x10 0x11 0x12 0x13 0x14 
-// 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! " # $ % & 
-// \' ( ) * + , - . / 0 1 2 3 4 5 6 
+// 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! \" # $ % 
+// & \' ( ) * + , - . / 0 1 2 3 4 5 6 
 const antlr::BitSet TerrainLibraryLexer::_tokenSet_0(_tokenSet_0_data_,16);
 const unsigned long TerrainLibraryLexer::_tokenSet_1_data_[] = { 4294967288UL, 4294967291UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10 0x11 0x12 0x13 
@@ -879,7 +879,7 @@ const unsigned long TerrainLibraryLexer::_tokenSet_1_data_[] = { 4294967288UL, 4
 const antlr::BitSet TerrainLibraryLexer::_tokenSet_1(_tokenSet_1_data_,16);
 const unsigned long TerrainLibraryLexer::_tokenSet_2_data_[] = { 4294967288UL, 4294967167UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10 0x11 0x12 0x13 
-// 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! " # 
+// 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! \" # 
 // $ % & ( ) * + , - . / 0 1 2 3 4 5 6 
 const antlr::BitSet TerrainLibraryLexer::_tokenSet_2(_tokenSet_2_data_,16);
 

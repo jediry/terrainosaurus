@@ -47,7 +47,7 @@ public:
  *---------------------------------------------------------------------------*/
 public:
     // Get command-line arguments and set up the terrainscape
-    void setup(int &argc, char **argv);
+    void setup(int & argc, char ** argv);
 
     // Put together our user interface
     void constructInterface();
@@ -64,13 +64,13 @@ public:
     // Load-from-file functions
     //      throws inca::io::FileAccessException if the file cannot be read
     //      throws inca::io::FileFormatException if a parsing error occurs
-    void loadMap(const string &filename);
-    void storeMap(const string &filename) const;
+    void loadMap(const std::string & filename);
+    void storeMap(const std::string & filename) const;
 
     // Store-to-file functions
     //      throws inca::io::FileAccessException if the file cannot be written
-    void loadTerrainLibrary(const string &filename);
-    void storeTerrainLibrary(const string &filename) const;
+    void loadTerrainLibrary(const std::string & filename);
+    void storeTerrainLibrary(const std::string & filename) const;
 
 
 /*---------------------------------------------------------------------------*

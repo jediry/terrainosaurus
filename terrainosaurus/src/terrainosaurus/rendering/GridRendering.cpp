@@ -128,8 +128,8 @@ void GridRendering::operator()(terrainosaurus::Renderer & renderer) const {
     // Render a regular grid over the window
     Point2D ps, pe;
     Vector2D extents = _grid->extents();
-    scalar_t halfX = extents[0] / 2.0,
-             halfY = extents[1] / 2.0;
+    scalar_t halfX = extents[0] / 2.0f,
+             halfY = extents[1] / 2.0f;
     scalar_t dx, dy,
              minorTickSpacing = _grid->minorTickSpacing(),
              majorTickSpacing = _grid->majorTickSpacing();

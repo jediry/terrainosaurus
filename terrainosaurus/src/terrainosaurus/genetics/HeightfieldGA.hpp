@@ -21,6 +21,22 @@
 namespace terrainosaurus {
     // Forward declarations
     class HeightfieldGA;
+    
+    // GA global parameters, which may be set from the TTL file
+    extern int      POPULATION_SIZE;
+    extern int      EVOLUTION_CYCLES;
+    extern scalar_t SELECTION_RATIO;
+    extern scalar_t ELITE_RATIO;
+    extern scalar_t MUTATION_PROBABILITY;
+    extern scalar_t MUTATION_RATIO;
+    extern scalar_t CROSSOVER_PROBABILITY;
+    extern scalar_t CROSSOVER_RATIO;
+
+    // Crossover/mutation operator limits
+    extern int      MAX_CROSSOVER_WIDTH;
+    extern int      MAX_JITTER_PIXELS;
+    extern scalar_t MAX_SCALE_FACTOR;
+    extern scalar_t MAX_OFFSET_AMOUNT;
 }
 
 // Import container and utility definitions

@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.4: "Map.g" -> "MapParser.cpp"$ */
+/* $ANTLR 2.7.5 (20050201): "Map.g" -> "MapParser.cpp"$ */
 #include "MapParser.hpp"
 #include <antlr/NoViableAltException.hpp>
 #include <antlr/SemanticException.hpp>
@@ -225,7 +225,7 @@ scalar_t  MapParser::fraction() {
 	}
 	}
 #line 127 "Map.g"
-	string tmp(w->getText());           // Construct a composite string
+	std::string tmp(w->getText());      // Construct a composite string
 	if (f != NULL) {                    // If we have a fractional part,
 	tmp += '.';                     // then add it in
 	tmp += f->getText();

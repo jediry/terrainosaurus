@@ -231,8 +231,8 @@ TerrainSeamConstPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
 /*---------------------------------------------------------------------------*
  | Library modification functions
  *---------------------------------------------------------------------------*/
-TerrainTypePtr TerrainLibrary::addTerrainType(const string &name) {
-    cerr << "Adding terrain type " << name << endl;
+TerrainTypePtr TerrainLibrary::addTerrainType(const std::string & name) {
+    INCA_INFO("Adding terrain type " << name)
 
     TerrainLibraryPtr self = shared_from_this();
 
@@ -255,7 +255,7 @@ TerrainTypePtr TerrainLibrary::addTerrainType(const string &name) {
 }
 
 TerrainTypePtr TerrainLibrary::addTerrainType(TerrainTypePtr tt) {
-    cerr << "addTerrainType(TTP) not implemented...not sure why..." << endl;
+    INCA_ERROR("addTerrainType(TTP) not implemented...not sure why...")
     return TerrainTypePtr();
     // FIXME: this is broken! -- copy c_tor for props, and appropriate add/name/index
 //    add();                  // Create a new TerrainType and its TerrainTypeSeams

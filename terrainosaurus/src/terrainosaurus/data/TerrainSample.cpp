@@ -20,38 +20,35 @@ namespace std {
     }
 }
 
-// Import application class
-//#include <terrainosaurus/MapExplorer.hpp>
-
 // Import raster operations
 #include <inca/raster/algorithms/scale_space_project>
 #include <inca/raster/algorithms/find_edges>
 #include <inca/raster/algorithms/find_ridges>
 #include <inca/raster/operators/select>
-#include <inca/raster/operators/linear_map>
-#include <inca/raster/generators/linear_fade>
-#include <inca/raster/operators/magnitude>
+#include <inca/raster/operators/arithmetic>
 #include <inca/raster/operators/gradient>
 #include <inca/raster/operators/resample>
+#include <inca/raster/operators/fourier>
+#include <inca/raster/operators/magnitude>
 #include <inca/raster/operators/statistic>
+
 
 // Import file I/O and exception classes
 #include <terrainosaurus/io/DEMInterpreter.hpp>
 #include <inca/util/StreamException.hpp>
 
 
-using namespace std;
+using namespace inca;
 using namespace inca::raster;
 using namespace terrainosaurus;
 
-typedef TerrainSample::LOD::SizeArray           SizeArray;
 typedef TerrainSample::LOD::FrequencySpectrum   FrequencySpectrum;
 typedef TerrainSample::LOD::ScalarStatistics    ScalarStatistics;
 typedef TerrainSample::LOD::VectorStatistics    VectorStatistics;
 
 
 #define TRIM 30     // How many pixels to trim from each side
-#define CACHE_DIR   "/mnt/data/scratch/gis/cache"
+#define CACHE_DIR   "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/cache"
 
 // Timer!
 #include <inca/util/Timer>
@@ -108,7 +105,7 @@ void CurveTracker::end() {
     lengthStats(c.lengthStats.sum());
     scaleStats(c.scaleStats.mean());
     strengthStats(c.strengthStats.mean());
-    for (int i = 0; i < scales.size(); ++i)
+    for (IndexType i = 0; i < IndexType(scales.size()); ++i)
         atScale[i] += c.atScale[i];
 }
 
@@ -117,7 +114,7 @@ void CurveTracker::done() {
     lengthStats.done();
     scaleStats.done();
     strengthStats.done();
-    for (int i = 0; i < curves.size(); ++i) {
+    for (IndexType i = 0; i < IndexType(curves.size()); ++i) {
         lengthStats(curves[i].lengthStats.sum());
         scaleStats(curves[i].scaleStats.mean());
         strengthStats(curves[i].strengthStats.mean());
@@ -134,7 +131,7 @@ void CurveTracker::done() {
 
 void CurveTracker::print(std::ostream & os) {
     os << curves.size() << " curves" << endl;
-    for (int i = 0; i < atScale.size(); ++i)
+    for (IndexType i = 0; i < IndexType(atScale.size()); ++i)
         os << "\tScale " << i << ": " << atScale[i] << endl;
 
     os << "Length:" << endl
@@ -357,7 +354,7 @@ void TerrainSample::LOD::loadFromFile(const std::string & filename) {
         std::cerr << "Am I studied?? " << this->studied() << std::endl;
 
     } catch (std::exception & e) {
-        std::cerr << "Error reading \"" << filename << '"' << std::endl;
+        INCA_ERROR("Error reading \"" << filename << "\": " << e.what())
         if (file) file.close();
     }
 }
@@ -406,7 +403,7 @@ void TerrainSample::LOD::storeToFile(const std::string & filename) const {
         file.close();
 
     } catch (std::exception & e) {
-        std::cerr << "Error writing \"" << filename << '"' << std::endl;
+        INCA_ERROR("Error writing \"" << filename << "\": " << e.what())
         if (file) file.close();
     }
 }
@@ -417,7 +414,7 @@ void TerrainSample::LOD::resampleFromLOD(TerrainLOD lod) {
     _analyzed = false;
 }
 void TerrainSample::LOD::analyze() {
-    std::cerr << "Analyzing TerrainSample<" << name() << "> (" << sizes() << ')' << std::endl;
+    INCA_INFO("Analyzing TerrainSample<" << name() << "> (" << sizes() << ')')
     Timer<float, false> total, phase;
     total.start();
 
@@ -426,6 +423,7 @@ void TerrainSample::LOD::analyze() {
     if (object().filename() != "")
         report << " from " << object().filename();
     report << "...\n";
+
 
     // Calculate the per-cell gradient
     report << "\tCalculating gradient...";
@@ -440,6 +438,7 @@ void TerrainSample::LOD::analyze() {
     phase.stop();
     report << phase() << " seconds\n";
 
+
     // Calculate the global mean elevation, mean gradient, and range
     report << "\tCalculating global elevation statistics...";
     phase.reset(); phase.start();
@@ -449,7 +448,6 @@ void TerrainSample::LOD::analyze() {
     _globalElevationStatistics.done();
     phase.stop();
     report << phase() << " seconds\n";
-#if 1
     report << "\tCalculating global slope statistics...";
     phase.reset(); phase.start();
     _globalSlopeStatistics = apply(ScalarStatistics(), gradientMag);
@@ -473,8 +471,9 @@ void TerrainSample::LOD::analyze() {
     scalar_t period = metersPerSampleForLOD(levelOfDetail());
     scalar_t nyquist = 1.0f / period;
     scalar_t maxFreq = nyquist / 2.0f;    // Samples per meter
-    Heightfield fftMag = dcToCenter(cmagnitude(dft(_elevations)))
-                         / std::sqrt(scalar_t(size()));
+
+    Heightfield fftMag = dcToCenter(cmagnitude(dft(_elevations)));
+//                         / std::sqrt(scalar_t(size()));
 //        cerr << "Period is " << period << endl;
 //        cerr << "Nyquist is " << nyquist << endl;
 //        cerr << "Max freq is " << maxFreq << endl;
@@ -495,6 +494,7 @@ void TerrainSample::LOD::analyze() {
         _frequencySpectrum[i] /= counts[i];
     phase.stop();
     report << phase() << " seconds\n";
+
 
     // Create the scale-space representation of the heightfield
     std::vector<scalar_t> scales;
@@ -518,7 +518,6 @@ void TerrainSample::LOD::analyze() {
     scales.push_back(256.0f);
 
     report << "\tCreating scale space projection (" << scales.size() << " scales)...";
-//    ScaleSpaceImage scaleSpace;
     phase.reset(); phase.start();
     scale_space_project(scaleSpace, elevations(), scales);
     phase.stop();
@@ -538,13 +537,12 @@ void TerrainSample::LOD::analyze() {
     _ridges = inca::raster::find_ridges(scaleSpace, scales, CurveTracker(scales, NULL));
     phase.stop();
     report << '(' << _ridges.curves.size() << " ridges) " << phase() << " seconds\n";
-#endif
 
     total.stop();
     report << "Analysis took " << total() << " seconds\n";
 
     // Record what we did
-    std::cerr << report.str();
+    INCA_INFO(report.str())
     _analyzed = true;
 }
 
@@ -692,7 +690,7 @@ void TerrainSample::LOD::study() {
     report << "Study took " << total() << " seconds\n";
 
     // Record what we did
-    std::cerr << report.str();
+    INCA_DEBUG(report.str())
     _studied = true;
 
     // Write to the cache file
@@ -837,9 +835,14 @@ TerrainSample::TerrainSample(const std::string & file)
     // Make sure the file exists
     struct stat s;
     if (stat(file.c_str(), &s) != 0) {
-        char message[50];
         inca::StreamException e;
-        e << "TerrainSample(" << file << "): " << strerror_r(errno, message, 50);
+        e << "TerrainSample(" << file << "): ";
+#if __GNUC__
+        char message[50];
+        e << strerror_r(errno, message, 50);
+#elif _MS_WINDOZE_
+        e << strerror(errno);
+#endif
         throw e;
     }
 
@@ -879,7 +882,7 @@ void TerrainSample::loadFromFile(const std::string & filename) {
     DEMInterpreter dem(temp);
     dem.filename = filename;
     dem.parse();
-    cerr << "Extrema of DEM are " << min(temp) << " => " << max(temp) << endl;
+    INCA_DEBUG("Extrema of DEM are " << min(temp) << " => " << max(temp))
 
     // Trim it and store it to the right place
     Pixel       start(TRIM);
@@ -893,12 +896,12 @@ void TerrainSample::loadFromFile(const std::string & filename) {
     scalar_t resX(dem.resolution[0]);
     scalar_t resY(dem.resolution[1]);
     if (resX != resY) {
-        std::cerr << "loadFromFile(): DEM has different X and Y "
-                        "resolutions -- using X resolution" << std::endl;
+        INCA_WARNING("loadFromFile(): DEM has different X and Y "
+                     "resolutions -- using X resolution")
     }
 
     TerrainLOD fileLOD = LODForMetersPerSample(resX);
-    std::cerr << "File contains " << fileLOD << endl;
+    INCA_DEBUG("File contains " << fileLOD)
 
     // Take out min elevation
     scalar_t mini = min(selectBS(temp, start, size));
@@ -906,7 +909,7 @@ void TerrainSample::loadFromFile(const std::string & filename) {
     if (dem.verticalUnits == 1 || dem.resolution[2] != 1.0f) {
         scalar_t scaleFactor = dem.resolution[2];
         if (dem.verticalUnits == 1) scaleFactor *= 3.25f;
-        std::cerr << "Rescaling elevations by factor of " << scaleFactor << std::endl;
+        INCA_DEBUG("Rescaling elevations by factor of " << scaleFactor)
         (*this)[fileLOD].createFromRaster(selectBS(temp, start, size) * scaleFactor);
         //(*this)[fileLOD].createFromRaster(selectBS(resample(temp, 2) - dem.elevationExtrema[0], start, size) * scaleFactor);
     } else {
@@ -915,7 +918,7 @@ void TerrainSample::loadFromFile(const std::string & filename) {
 //, start, size));
     }
 
-    cerr << "Resulting min is " << min((*this)[fileLOD].elevations()) << endl;
+    INCA_DEBUG("Resulting min is " << min((*this)[fileLOD].elevations()))
 }
 
 // Lazy loading mechanism

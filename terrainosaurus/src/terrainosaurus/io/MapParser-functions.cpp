@@ -29,7 +29,7 @@ void MapParser::createVertex(scalar_t x, scalar_t y, RefToken pos) {
     map->createVertex(Point2D(x, y));
 }
 
-void MapParser::setTerrainType(const string &tt, RefToken pos) {
+void MapParser::setTerrainType(const std::string & tt, RefToken pos) {
 //    cerr << "Terrain: " << tt << endl;
     TerrainTypePtr ttp = map->terrainLibrary->terrainType(tt);
     if (ttp == NULL) {

@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.4: "Map.g" -> "MapLexer.cpp"$ */
+/* $ANTLR 2.7.5 (20050201): "Map.g" -> "MapLexer.cpp"$ */
 #include "MapLexer.hpp"
 #include <antlr/CharBuffer.hpp>
 #include <antlr/TokenStreamException.hpp>
@@ -156,9 +156,9 @@ tryAgain:;
 }
 
 void MapLexer::mDIGIT(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = DIGIT;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	matchRange('0','9');
@@ -172,9 +172,9 @@ void MapLexer::mDIGIT(bool _createToken) {
 }
 
 void MapLexer::mLETTER(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = LETTER;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	matchRange('a','z');
@@ -188,19 +188,19 @@ void MapLexer::mLETTER(bool _createToken) {
 }
 
 void MapLexer::mEOL(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = EOL;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	if ((LA(1) == 0xd /* '\r' */ ) && (LA(2) == 0xa /* '\n' */ )) {
 		match("\r\n");
 	}
 	else if ((LA(1) == 0xd /* '\r' */ ) && (true)) {
-		match('\r');
+		match('\r' /* charlit */ );
 	}
 	else if ((LA(1) == 0xa /* '\n' */ )) {
-		match('\n');
+		match('\n' /* charlit */ );
 	}
 	else {
 		throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
@@ -219,11 +219,11 @@ void MapLexer::mEOL(bool _createToken) {
 }
 
 void MapLexer::mCOMMENT(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = COMMENT;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
-	match('#');
+	match('#' /* charlit */ );
 	{ // ( ... )*
 	for (;;) {
 		if ((_tokenSet_0.member(LA(1)))) {
@@ -251,20 +251,20 @@ void MapLexer::mCOMMENT(bool _createToken) {
 }
 
 void MapLexer::mWS(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = WS;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	switch ( LA(1)) {
 	case 0x20 /* ' ' */ :
 	{
-		match(' ');
+		match(' ' /* charlit */ );
 		break;
 	}
 	case 0x9 /* '\t' */ :
 	{
-		match('\t');
+		match('\t' /* charlit */ );
 		break;
 	}
 	default:
@@ -285,9 +285,9 @@ void MapLexer::mWS(bool _createToken) {
 }
 
 void MapLexer::mDOT(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = DOT;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	match(".");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -299,9 +299,9 @@ void MapLexer::mDOT(bool _createToken) {
 }
 
 void MapLexer::mNUMBER(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = NUMBER;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{ // ( ... )+
 	int _cnt31=0;
@@ -326,20 +326,20 @@ void MapLexer::mNUMBER(bool _createToken) {
 }
 
 void MapLexer::mSIGN(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = SIGN;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	switch ( LA(1)) {
 	case 0x2b /* '+' */ :
 	{
-		match('+');
+		match('+' /* charlit */ );
 		break;
 	}
 	case 0x2d /* '-' */ :
 	{
-		match('-');
+		match('-' /* charlit */ );
 		break;
 	}
 	default:
@@ -357,9 +357,9 @@ void MapLexer::mSIGN(bool _createToken) {
 }
 
 void MapLexer::mNAME(bool _createToken) {
-	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
 	_ttype = NAME;
-	int _saveIndex;
+	std::string::size_type _saveIndex;
 	
 	{
 	switch ( LA(1)) {
@@ -395,7 +395,7 @@ void MapLexer::mNAME(bool _createToken) {
 	}
 	case 0x5f /* '_' */ :
 	{
-		match('_');
+		match('_' /* charlit */ );
 		break;
 	}
 	default:
@@ -453,7 +453,7 @@ void MapLexer::mNAME(bool _createToken) {
 		}
 		case 0x5f /* '_' */ :
 		{
-			match('_');
+			match('_' /* charlit */ );
 			break;
 		}
 		default:

@@ -17,7 +17,7 @@
 
 #line 19 "MapParser.hpp"
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.4: "Map.g" -> "MapParser.hpp"$ */
+/* $ANTLR 2.7.5 (20050201): "Map.g" -> "MapParser.hpp"$ */
 #include <antlr/TokenStream.hpp>
 #include <antlr/TokenBuffer.hpp>
 #include "MapTokenTypes.hpp"
@@ -37,7 +37,7 @@ class CUSTOM_API MapParser : public antlr::LLkParser, public MapTokenTypes
  *---------------------------------------------------------------------------*/
 protected:
     void createVertex(scalar_t x, scalar_t y, antlr::RefToken pos);
-    void setTerrainType(const string &tt, antlr::RefToken pos);
+    void setTerrainType(const std::string & tt, antlr::RefToken pos);
     void beginFace(antlr::RefToken pos);
     void addVertex(IDType id, antlr::RefToken pos);
     void endFace();

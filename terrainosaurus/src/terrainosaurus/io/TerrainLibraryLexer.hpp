@@ -13,7 +13,7 @@
     };
 
     // Import TerrainLibrary and related object definitions
-    #include "../data/TerrainLibrary.hpp"
+    #include <terrainosaurus/data/TerrainLibrary.hpp>
 
     // Import container definitions
     #include <inca/util/hash_container>
@@ -36,7 +36,7 @@
 
 #line 38 "TerrainLibraryLexer.hpp"
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryLexer.hpp"$ */
+/* $ANTLR 2.7.5 (20050201): "TerrainLibrary.g" -> "TerrainLibraryLexer.hpp"$ */
 #include <antlr/CommonToken.hpp>
 #include <antlr/InputBuffer.hpp>
 #include <antlr/BitSet.hpp>

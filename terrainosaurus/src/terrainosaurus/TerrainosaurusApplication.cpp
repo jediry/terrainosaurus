@@ -16,6 +16,10 @@
 #include "TerrainosaurusApplication.hpp"
 using namespace terrainosaurus;
 
+// Import Timer definition
+#include <inca/util/Timer>
+using namespace inca;
+
 
 // Import I/O class definitions
 #include <fstream>
@@ -35,12 +39,12 @@ TerrainosaurusApplication & TerrainosaurusApplication::instance() {
 /*---------------------------------------------------------------------------*
  | Application setup functions
  *---------------------------------------------------------------------------*/
-void TerrainosaurusApplication::setup(int &argc, char **argv) {
+void TerrainosaurusApplication::setup(int & argc, char ** argv) {
     // Seed the random number generator
     srand(getSystemClocks());
 
     // See if the user gave us any useful filenames
-    string arg, ext;
+    std::string arg, ext;
     while (argc > 1) {
         arg = shift(argc, argv);
         ext = arg.substr(arg.length() - 4);
@@ -56,7 +60,8 @@ void TerrainosaurusApplication::setup(int &argc, char **argv) {
 //    if (_mapFilenames.size() == 0)
 //        _mapFilenames.push_back("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.map");
     if (_libraryFilenames.size() == 0)
-        _libraryFilenames.push_back("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.ttl");
+        _libraryFilenames.push_back("C:\\Documents and Settings\\Dave\\My Documents\\Ry's Stuff\\Media\\terrainosaurus\\data\\test.ttl");
+//        _libraryFilenames.push_back("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.ttl");
 }
 
 // Put together our user interface
@@ -65,7 +70,7 @@ void TerrainosaurusApplication::constructInterface() {
     int windowCount = 0;
 
     // Load each of the terrain libraries on the command-line
-    for (IndexType i = 0; i < _libraryFilenames.size(); ++i)
+    for (IndexType i = 0; i < IndexType(_libraryFilenames.size()); ++i)
         try {
             loadTerrainLibrary(_libraryFilenames[i]);
         } catch (inca::StreamException & e) {
@@ -73,7 +78,7 @@ void TerrainosaurusApplication::constructInterface() {
         }
 
     // Create windows for each map on the command-line
-    for (IndexType i = 0; i < _mapFilenames.size(); ++i)
+    for (IndexType i = 0; i < IndexType(_mapFilenames.size()); ++i)
         try {
             createMapEditorWindow(_mapFilenames[i]);
             ++windowCount;
@@ -82,7 +87,7 @@ void TerrainosaurusApplication::constructInterface() {
         }
 
     // Create windows for each terrain on the command-line
-    for (IndexType i = 0; i < _terrainFilenames.size(); ++i)
+    for (IndexType i = 0; i < IndexType(_terrainFilenames.size()); ++i)
         try {
 //            createMapEditorWindow(_terrainFilenames[i]);
             ++windowCount;

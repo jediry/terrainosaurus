@@ -13,6 +13,8 @@
 #include "MapRasterization.hpp"
 
 using namespace terrainosaurus;
+using namespace inca;
+
 typedef MapRasterization::LOD::IDMap        IDMap;
 typedef MapRasterization::LOD::DistanceMap  DistanceMap;
 
@@ -23,9 +25,9 @@ typedef MapRasterization::LOD::DistanceMap  DistanceMap;
 #include <inca/raster/algorithms/flood_fill>
 using namespace inca::raster;
 
+
 // Import Timer definition
 #include <inca/util/Timer>
-
 
 /*****************************************************************************
  * LOD specialization for MapRasterization
@@ -65,7 +67,8 @@ void MapRasterization::LOD::createFromRaster(const IDMap & ids) {
 
 // Load an LOD from a DEM file
 void MapRasterization::LOD::loadFromFile(const std::string & filename) {
-    std::cerr << "MR::loadFromFile not implemented\n";
+    INCA_ERROR("MR::loadFromFile not implemented")
+
     // Record what we did
     _loaded   = true;
     _analyzed = false;
@@ -78,6 +81,7 @@ void MapRasterization::LOD::resampleFromLOD(TerrainLOD lod) {
     _loaded   = true;
     _analyzed = false;
 }
+
 
 // This is a rather dump, brute-force approach to finding the minimum distance to boundaries.
 // It first sweeps across the image along 'dim' in both directions and tracks the distance
@@ -160,6 +164,7 @@ void sweep(R0 & dist, const R1 & map, IndexType dim) {
     }
 }
 
+
 // Analyze the contents of an LOD and store the results
 void MapRasterization::LOD::analyze() {
     // Make sure we have a valid map to start with
@@ -191,8 +196,8 @@ void MapRasterization::LOD::analyze() {
     for (px[1] = bounds.base(1); px[1] <= bounds.extent(1); ++px[1]) {
         for (px[0] = bounds.base(0); px[0] <= bounds.extent(0); ++px[0]) {
             IDType cellID = _terrainTypeIDs(px);
-            if (cellID < 0 || cellID >= librarySize) {
-                std::cerr << "Out of bounds TT ID " << cellID << " at " << px << std::endl;
+            if (SizeType(cellID) < 0 || SizeType(cellID) >= librarySize) {
+                INCA_WARNING("Out of bounds TT ID " << cellID << " at " << px)
                 ::exit(1);      // FIXME: This should throw a meaningful exception
             } else if (refCellID != cellID) {
                 multipleTypes = true;

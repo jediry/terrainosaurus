@@ -60,7 +60,7 @@ namespace GA
             end.x = envelope.size() - 1;    end.y = 0;
             float * up = new float[envelope.size()];
             float * down = new float[envelope.size()];
-            for (int i = 0; i < envelope.size(); ++i) {
+            for (IndexType i = 0; i < IndexType(envelope.size()); ++i) {
 //                down[i] = envelope[i].second;
 //                up[i] = envelope[i].first;
                 up[i] = envelope[i].second;
@@ -69,7 +69,7 @@ namespace GA
             float * f = MakeLine(start, end, up, down, cycles);
 //            float * f = MakeLine(start, end, const_cast<RangeList*>(&envelope), cycles);
             AngleList angles(envelope.size());
-            for (int i = 0; i < angles.size(); ++i)
+            for (int i = 0; i < int(angles.size()); ++i)
                 angles[i] = f[i];
             delete f;
             return angles;

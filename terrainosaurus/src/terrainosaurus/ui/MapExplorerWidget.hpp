@@ -48,7 +48,7 @@ private:
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor with optional component name
-    MapExplorerWidget(const string &nm = "");
+    MapExplorerWidget(const std::string & nm = "");
 
     // The renderer we use for drawing
     rw_ptr_property(TerrainosaurusRenderer, renderer, NULL);

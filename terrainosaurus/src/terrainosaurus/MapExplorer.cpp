@@ -175,7 +175,7 @@ void MapExplorer::setup(int &argc, char **argv) {
 
 
     // See if the user gave us any useful filenames
-    string arg, ext, demFile;
+    std::string arg, ext, demFile;
     while (argc > 1) {
         arg = shift(argc, argv);
         ext = arg.substr(arg.length() - 4);
@@ -307,9 +307,9 @@ void MapExplorer::createMap() {
     setMap(MapPtr(new Map()));
 }
 
-void MapExplorer::loadMap(const string &filename) {
+void MapExplorer::loadMap(const std::string & filename) {
     try {
-        cerr << "[" << filename << "]: loading map\n";
+        INCA_INFO("[" << filename << "]: loading map")
 
         // Try to open the file and scream if we fail
         std::ifstream file(filename.c_str());
@@ -326,16 +326,16 @@ void MapExplorer::loadMap(const string &filename) {
         file >> *newMap;
         setMap(newMap);
 
-        cerr << "[" << filename << "]: loading map complete\n";
+        INCA_INFO("[" << filename << "]: loading map complete")
 
     } catch (const StreamException &e) {
-        cerr << "[" << filename << "]: " << e << endl;
+        INCA_ERROR("[" << filename << "]: " << e)
     }
 }
 
-void MapExplorer::storeMap(const string &filename) const {
+void MapExplorer::storeMap(const std::string & filename) const {
     try {
-        cerr << "[" << filename << "]: storing map\n";
+        INCA_INFO("[" << filename << "]: storing map")
 
         // Try to open the file and scream if we fail
         std::ofstream file(filename.c_str());
@@ -349,10 +349,10 @@ void MapExplorer::storeMap(const string &filename) const {
         // Write the map out to the file
         file << *map();
 
-        cerr << "[" << filename << "]: storing map complete\n";
+        INCA_INFO("[" << filename << "]: storing map complete")
 
     } catch (const StreamException &e) {
-        cerr << "[" << filename << "]: " << e << endl;
+        INCA_ERROR("[" << filename << "]: " << e)
     }
 }
 
@@ -375,9 +375,9 @@ void MapExplorer::createTerrainLibrary() {
 
 // Throws inca::io::FileAccessException if the file cannot be opened for reading
 // Throws inca::io::FileFormatException if the file is syntactically or semantically invalid
-void MapExplorer::loadTerrainLibrary(const string &filename) {
+void MapExplorer::loadTerrainLibrary(const std::string & filename) {
     try {
-        cerr << "[" << filename << "]: loading terrain library\n";
+        INCA_INFO("[" << filename << "]: loading terrain library")
 
         // Try to open the file and scream if we fail
         std::ifstream file(filename.c_str());
@@ -393,17 +393,17 @@ void MapExplorer::loadTerrainLibrary(const string &filename) {
         file >> *newLib;
         setTerrainLibrary(newLib);
 
-        cerr << "[" << filename << "]: loading terrain library complete\n";
+        INCA_INFO("[" << filename << "]: loading terrain library complete")
 
     } catch (const StreamException &e) {
-        cerr << "[" << filename << "]: " << e << endl;
+        INCA_ERROR("[" << filename << "]: " << e)
     }
 }
 
 // Throws inca::io::FileAccessException if the file cannot be opened for writing
-void MapExplorer::storeTerrainLibrary(const string &filename) const {
+void MapExplorer::storeTerrainLibrary(const std::string & filename) const {
     try {
-        cerr << "[" << filename << "]: storing terrain library\n";
+        INCA_INFO("[" << filename << "]: storing terrain library")
 
         // Try to open the file and scream if we fail
         std::ofstream file(filename.c_str());
@@ -417,9 +417,10 @@ void MapExplorer::storeTerrainLibrary(const string &filename) const {
         // Write the library out to the file
         file << *terrainLibrary();
 
-        cerr << "[" << filename << "]: storing terrain library complete\n";
+        INCA_INFO("[" << filename << "]: storing terrain library complete")
+
     } catch (const StreamException &e) {
-        cerr << "[" << filename << "]: " << e << endl;
+        INCA_ERROR("[" << filename << "]: " << e)
     }
 }
 

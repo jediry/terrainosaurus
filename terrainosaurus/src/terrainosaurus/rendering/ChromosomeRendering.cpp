@@ -17,7 +17,6 @@
 using namespace terrainosaurus;
 
 // XXX
-#define GL_HPP_IMPORT_GLUT 1
 #include <inca/integration/opengl/GL.hpp>
 
 // Import raster processing functions
@@ -140,13 +139,15 @@ bool ChromosomeRendering::toggle(const std::string & feature) {
     else
         index = -1;
     _features.at(index) = ! _features.at(index);
-    std::cerr << feature << (_features.at(index) ? " on" : " off") << std::endl;
+    INCA_DEBUG(feature << (_features.at(index) ? " on" : " off"))
     return _features.at(index);
 }
 
 
 // Rendering functor
 void ChromosomeRendering::operator()(ChromosomeRendering::Renderer & renderer) const {
+    INCA_DEBUG("Rendering C: " << this->_chromosome)
+
     if (! this->_chromosome)    // Nothing to do...
         return;
 
@@ -212,8 +213,8 @@ void ChromosomeRendering::_rebuildHeightfield() const {
             _renderHF.vertex(idx)[2] = h - meanHeight;
             _renderHF.normal(idx) = normalize(Vector3D(n[0], n[1], scalar_t(1)));
         }
-    std::cerr << nanCount << " NaNs and " << goodCount << " good values\n";
-    std::cerr << "Mean height is " << meanHeight << endl;
+    INCA_DEBUG(nanCount << " NaNs and " << goodCount << " good values")
+    INCA_DEBUG("Mean height is " << meanHeight)
 
     // All is well
     _heightfieldDirty = false;

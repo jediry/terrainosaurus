@@ -18,7 +18,7 @@
 using namespace antlr;
 
 // Import GA global parameters
-#include <terrainosaurus/genetics/terrain-ga.hpp>
+#include <terrainosaurus/genetics/HeightfieldGA.hpp>
 using namespace terrainosaurus;
 
 // Import file-related exception definitions
@@ -106,7 +106,7 @@ void TerrainLibraryParser::createTerrainType(RefToken tt) {
 
     // Make a new one with this name
     currentTT = library->addTerrainType(tt->getText());
-    cerr << "[TerrainType: " << tt->getText() << "]\n";
+    INCA_DEBUG("[TerrainType: " << tt->getText() << "]")
 }
 
 
@@ -151,14 +151,15 @@ void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
         throw e;
     }
 
+
     // Clear the collection of initialized properties
     setProperties = 0x0000;
 
     // This is the new current TS; mark it as "initialized"
     currentTS = ts;
     initializedTSs[currentTS] = true;
-    cerr << "[TerrainSeam: " << tt1->getText()
-         << " & " << tt2->getText() << "]\n";
+    INCA_DEBUG("[TerrainSeam: " << tt1->getText()
+               << " & " << tt2->getText() << "]")
 }
 
 
@@ -183,11 +184,10 @@ void TerrainLibraryParser::endRecord(RefToken t) {
 
 // Adds a new terrain sample to the current terrain type. There can be any
 // (non-zero) number of terrain samples for a single terrain type.
-void TerrainLibraryParser::addTerrainSample(const string & path, int line) {
+void TerrainLibraryParser::addTerrainSample(const std::string & path, int line) {
     currentTT->addTerrainSample(TerrainSamplePtr(new TerrainSample(path)));
-    cerr << "\tsample = "
-         << currentTT->terrainSample(currentTT->size() - 1)->filename()
-         << endl;
+    INCA_DEBUG("\tsample = "
+               << currentTT->terrainSample(currentTT->size() - 1)->filename())
 }
 
 
@@ -207,11 +207,10 @@ void TerrainLibraryParser::setColorProperty(PropertyType p, const Color &c, int 
         currentTT->setColor(c);
         break;
     default:
-        cerr << "Internal parser error: unhandled color property "
-             << p << endl;
+        INCA_ERROR("Internal parser error: unhandled color property " << p)
     }
     setProperties |= p;
-    cerr << "\t" << p << " = " << c << endl;
+    INCA_DEBUG("\t" << p << " = " << c)
 }
 
 
@@ -272,11 +271,10 @@ void TerrainLibraryParser::setScalarProperty(PropertyType p, scalar_t s, int lin
             MAX_OFFSET_AMOUNT = float(s);
         break;
     default:
-        cerr << "Internal parser error: unhandled scalar property "
-             << p << endl;
+        INCA_ERROR("Internal parser error: unhandled scalar property " << p)
     }
     setProperties |= p;
-    cerr << "\t" << p << " = " << s << endl;
+    INCA_DEBUG("\t" << p << " = " << s)
 }
 
 
@@ -311,9 +309,8 @@ void TerrainLibraryParser::setIntegerProperty(PropertyType p, int i, int line) {
             MAX_JITTER_PIXELS = i;
         break;
     default:
-        cerr << "Internal parser error: unhandled integer property "
-             << p << endl;
+        INCA_ERROR("Internal parser error: unhandled integer property " << p)
     }
     setProperties |= p;
-    cerr << "\t" << p << " = " << i << endl;
+    INCA_DEBUG("\t" << p << " = " << i)
 }

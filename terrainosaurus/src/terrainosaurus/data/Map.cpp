@@ -271,7 +271,7 @@ void MapData::EdgeData::buildDiamondEnvelope(int segments,
     envelope().resize(segments);    // Make sure we've got the right # of slots
 
     SizeType levels = segments / 2 + segments % 2;    // Make sure we hit middle
-    float y = 0.1;
+    float y = 0.1f;
     for (IndexType i = 0; i < IndexType(levels); ++i) {
         envelope()[i].first  = -y;  // Just reflect about the X axis...
         envelope()[i].second = y;

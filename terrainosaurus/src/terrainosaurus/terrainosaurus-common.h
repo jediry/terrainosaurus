@@ -25,8 +25,14 @@
 #include <inca/raster.hpp>
 
 namespace terrainosaurus {
-    using namespace boost;
-    using namespace inca;
+//    using namespace boost;
+//    using namespace inca;
+    using boost::shared_ptr;
+    using boost::scoped_ptr;
+    using boost::weak_ptr;
+    using boost::scoped_array;
+    using boost::shared_array;
+    using inca::Nothing;
 
     // Define scalar and vector types used for geometry
     INCA_MATH_SCALAR_TYPES(float, IS_NOT_WITHIN_TEMPLATE);
@@ -34,14 +40,20 @@ namespace terrainosaurus {
     INCA_MATH_LINALG_TYPES_CUSTOM(scalar_t, 3, /* */, 3D);
     typedef inca::math::Block<scalar_t, 2>  Block;
 
+    // Import numeric types
+    using inca::SizeType;
+    using inca::IndexType;
+    using inca::DifferenceType;
+    using inca::IDType;
+    
+    // Define array types
+    typedef inca::Array<inca::SizeType, 2>      SizeArray;
+    typedef inca::Array<inca::IndexType, 2>     IndexArray;
+
     // Define screenspace types
     typedef inca::math::Point<IndexType, 2>     Pixel;
     typedef inca::math::Vector<IndexType, 2>    Dimension;
     typedef inca::math::Vector<IndexType, 2>    Offset;
-
-    // Define array types
-    typedef inca::Array<inca::SizeType, 2>      SizeArray;
-    typedef inca::Array<inca::IndexType, 2>     IndexArray;
 
     // Define the Color type that will be used throughout
     INCA_MATH_COLOR_TYPES(float, sRGB, true);

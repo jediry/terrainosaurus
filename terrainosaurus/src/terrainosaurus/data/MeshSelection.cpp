@@ -15,8 +15,8 @@ SizeType MeshSelection::unselectedCount() const {
         case Faces:     return map()->faceCount() - size();
         case Edges:     return map()->edgeCount() - size();
         default:
-            cerr << "Oops! MeshSelection::unselectedCount -- unrecognized: "
-                    "ElementType " << int(elementType()) << endl;
+            INCA_ERROR("Oops! MeshSelection::unselectedCount -- unrecognized: "
+                       "ElementType " << int(elementType()))
             return 0;
     }
 }
@@ -175,7 +175,7 @@ void MeshSelection::getEffectiveSelection(const MeshSelection &ms,
     items.swap(effective);
     type = t;
 
-    cerr << "Effectively selected: " << items.size() << ' ' << t << endl;
+    INCA_DEBUG("Effectively selected: " << items.size() << ' ' << t)
 }
 
 

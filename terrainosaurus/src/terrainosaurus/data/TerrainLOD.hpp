@@ -238,7 +238,6 @@ namespace terrainosaurus {
         typename TYPE::ConstReference NAME(const IndexList & indices) const {\
             return NAME ## s()(indices);                                    \
         }
-
 }
 
 #endif

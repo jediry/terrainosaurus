@@ -28,7 +28,7 @@ header "pre_include_hpp" {
     };
 
     // Import TerrainLibrary and related object definitions
-    #include "../data/TerrainLibrary.hpp"
+    #include <terrainosaurus/data/TerrainLibrary.hpp>
 
     // Import container definitions
     #include <inca/util/hash_container>
@@ -276,7 +276,7 @@ terrainColor { Color c; }:
     { setColorProperty(TTColor, c, t->getLine()); } ;
 
 // sample = filename.dem
-terrainSample: { string s; }
+terrainSample: { std::string s; }
     t:SAMPLE ASSIGN s=filename EOL
     { addTerrainSample(s, t->getLine()); } ;
 
@@ -311,7 +311,7 @@ scalar returns [scalar_t s]:
 // A positive fractional value, >= 0.0
 fraction returns [scalar_t s]:
     w:NUMBER ( DOT f:NUMBER )?
-    {   string tmp(w->getText());           // Construct a composite string
+    {   std::string tmp(w->getText());      // Construct a composite string
         if (f != NULL) {                    // If we have a fractional part,
             tmp += '.';                     // then add it in
             tmp += f->getText();
@@ -343,7 +343,7 @@ integer returns [int value]: n:NUMBER { value = atoi(n->getText().c_str()); } ;
 
 
 // A file path
-filename returns [string path]:
+filename returns [std::string path]:
     ( q:QUOTED_STRING           { path += q->getText(); }
     | n:NAME                    { path += n->getText(); }
     | i:NUMBER                  { path += i->getText(); }

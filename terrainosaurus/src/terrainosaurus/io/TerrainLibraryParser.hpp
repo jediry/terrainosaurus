@@ -13,7 +13,7 @@
     };
 
     // Import TerrainLibrary and related object definitions
-    #include "../data/TerrainLibrary.hpp"
+    #include <terrainosaurus/data/TerrainLibrary.hpp>
 
     // Import container definitions
     #include <inca/util/hash_container>
@@ -36,7 +36,7 @@
 
 #line 38 "TerrainLibraryParser.hpp"
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryParser.hpp"$ */
+/* $ANTLR 2.7.5 (20050201): "TerrainLibrary.g" -> "TerrainLibraryParser.hpp"$ */
 #include <antlr/TokenStream.hpp>
 #include <antlr/TokenBuffer.hpp>
 #include "TerrainLibraryTokenTypes.hpp"
@@ -165,7 +165,7 @@ public:
 	public: scalar_t  fraction();
 	public: scalar_t  scalar();
 	public: Color  color();
-	public: string  filename();
+	public: std::string  filename();
 	public: scalar_t  nFraction();
 public:
 	antlr::RefAST getAST()

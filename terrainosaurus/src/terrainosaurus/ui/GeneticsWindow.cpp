@@ -4,7 +4,7 @@
 #define GL_HPP_IMPORT_GLUT 1
 #include <inca/integration/opengl/GL.hpp>
 
-#include <inca/ui/CameraNavigationWidget.hpp>
+//#include <inca/ui/CameraNavigationWidget.hpp>
 
 using namespace terrainosaurus;
 using namespace inca::ui;
@@ -24,28 +24,31 @@ GeneticsWindow::GeneticsWindow(MapRasterizationPtr mr,
     setFullScreen(FULL_SCREEN);
     GL::glutSetCursor(GLUT_CURSOR_NONE);
 
+    // Set up the renderer
+    this->_renderer.reset(new Renderer());
+
     // Set up the camera
-    CameraPtr camera(new PerspectiveCamera());
-    camera->transform()->position = Point3D(1000.0f, 1000.0f, 500.0f);
-    camera->nearClip = 50.0f;
-    camera->farClip  = 100000.0f;
-    camera->transform()->lookAt(Point3D(0.0f, 0.0f, 550.0f), Vector3D(0.0f, 0.0f, 1.0f));
-    camera->transform()->lookAt(Point3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 1.0f));
-
+    //CameraPtr camera(new PerspectiveCamera());
+    //camera->transform()->position = Point3D(1000.0f, 1000.0f, 500.0f);
+    //camera->nearClip = 50.0f;
+    //camera->farClip  = 100000.0f;
+    //camera->transform()->lookAt(Point3D(0.0f, 0.0f, 550.0f), Vector3D(0.0f, 0.0f, 1.0f));
+    //camera->transform()->lookAt(Point3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 1.0f));
+    
     // Set up the widget stack
-    CameraNavigationWidgetPtr nav(new CameraNavigationWidget(camera));
-        nav->longitudinalMotionScale = 30.0f;
-        nav->lateralMotionScale      = 30.0f;
-        nav->verticalMotionScale     = 30.0f;
-        nav->panScale                = 5.0f;
-        nav->lookScale               = inca::math::PI<scalar_t>() / 64.0 / 4;
+    //CameraNavigationWidgetPtr nav(new CameraNavigationWidget(camera));
+    //    nav->longitudinalMotionScale = 30.0f;
+    //    nav->lateralMotionScale      = 30.0f;
+    //    nav->verticalMotionScale     = 30.0f;
+    //    nav->panScale                = 5.0f;
+    //    nav->lookScale               = inca::math::PI<scalar_t>() / 64.0 / 4;
 
-    CompositeWidgetPtr composite(new CompositeWidget());
-    this->_renderView = RenderingViewPtr(new RenderingView(new ChromosomeRendering()));
-    this->widget = nav;
-        nav->widget = composite;
-            composite->view = this->_renderView;
-
+    //this->_renderView = RenderingViewPtr(new RenderingView(new ChromosomeRendering()));
+//    CompositeWidgetPtr composite(new CompositeWidget());
+//    this->widget = nav;
+//        nav->widget = composite;
+//            composite->view = this->_renderView;
+            
     // Store the map we'll be trying to approximate
     setMapRasterization(mr);
 
@@ -113,9 +116,45 @@ void GeneticsWindow::selectNextLOD() {
 
 // HACK!
 void GeneticsWindow::display() {
+    INCA_DEBUG("Display")
+
+    // This is messed up for at least two reasons. First of all, window
+    // construction may (and usually does) occur before the rendering system
+    // is initialized. So things that modify the OpenGL context can't be done
+    // until here. Need to figure out a way to handle this. Second, the
+    // shared_from_this pointer can't be used until after the constructor
+    // completes. Not sure why.
     static bool init = false;
     if (this->_renderer && ! init) {
         init = true;
+        
+        INCA_DEBUG("INitializing")
+
+    CameraPtr camera(new PerspectiveCamera());
+    camera->transform()->position = Point3D(1000.0f, 1000.0f, 500.0f);
+    camera->nearClip = 50.0f;
+    camera->farClip  = 100000.0f;
+    camera->transform()->lookAt(Point3D(0.0f, 0.0f, 550.0f), Vector3D(0.0f, 0.0f, 1.0f));
+    camera->transform()->lookAt(Point3D(0.0f, 0.0f, 0.0f), Vector3D(0.0f, 0.0f, 1.0f));
+
+        // Deferred widget construction
+        CameraNavigationWidgetPtr nav(new CameraNavigationWidget(camera));
+        nav->longitudinalMotionScale = 30.0f;
+        nav->lateralMotionScale      = 30.0f;
+        nav->verticalMotionScale     = 30.0f;
+        nav->panScale                = 5.0f;
+        nav->lookScale               = inca::math::PI<scalar_t>() / 64.0 / 4;
+        
+        INCA_DEBUG("Created widget is " << nav.get() << ": " << nav.use_count())
+
+        this->_renderView = RenderingViewPtr(new RenderingView(new ChromosomeRendering()));
+
+        CompositeWidgetPtr composite(new CompositeWidget());
+        this->widget = nav;
+            nav->widget = composite;
+                composite->view = this->_renderView;
+        
+        // Deferred OpenGL init
         // Black background, auto-cleared
         renderer().rasterizer().setBackgroundColor(Color(0.0f, 0.0f, 0.0f, 0.0f));
         renderer().addAutoClearBuffer(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

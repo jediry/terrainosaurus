@@ -39,6 +39,8 @@ namespace std {
     }
 }
 
+#include "HeightfieldGA.hpp"
+#if 0
 // GA global parameters, which may be set from the TTL file
 int      terrainosaurus::POPULATION_SIZE        = 5;
 int      terrainosaurus::EVOLUTION_CYCLES       = 5;
@@ -54,7 +56,7 @@ int      terrainosaurus::MAX_CROSSOVER_WIDTH    = 4;
 int      terrainosaurus::MAX_JITTER_PIXELS      = 0;
 scalar_t terrainosaurus::MAX_SCALE_FACTOR       = 1.1f;
 scalar_t terrainosaurus::MAX_OFFSET_AMOUNT      = 50.0f;
-
+#endif
 
 // This function runs the entire GA for a particular level of detail
 Heightfield terrainosaurus::refineHeightfield(const TerrainSample::LOD & pattern,
@@ -90,7 +92,7 @@ Heightfield terrainosaurus::refineHeightfield(const TerrainSample::LOD & pattern
         // will be crossed, with at most 'crossoverRatio' percent of the genes
         // exchanged between them.
         if (CROSSOVER_PROBABILITY > 0) {
-            for (IndexType i = 0; i < population.size(); ++i)
+            for (IndexType i = 0; i < IndexType(population.size()); ++i)
                 // XXX This may cross with a 'dead' chromosome...but I'm lazy
                 if (population[i].isAlive() && randomFraction() < CROSSOVER_PROBABILITY)
                     cross(population[i],
@@ -103,7 +105,7 @@ Heightfield terrainosaurus::refineHeightfield(const TerrainSample::LOD & pattern
         // 'mutationProbability' percent of the population will be mutated,
         // with at most 'mutationRatio' percent of the genes being affected.
         if (MUTATION_PROBABILITY > 0) {
-            for (IndexType i = 0; i < population.size(); ++i)
+            for (IndexType i = 0; i < IndexType(population.size()); ++i)
                 if (population[i].isAlive() && randomFraction() < MUTATION_PROBABILITY)
                     mutate(population[i], MUTATION_RATIO);
         }
@@ -131,7 +133,7 @@ void terrainosaurus::replenishPopulation(Population & population,
                                          const TerrainSample::LOD & pattern,
                                          const MapRasterization::LOD & map) {
     population.resize(POPULATION_SIZE);
-    for (int i = 0; i < population.size(); ++i)
+    for (IndexType i = 0; i < IndexType(population.size()); ++i)
         if (! population[i].isAlive())
             createChromosome(population[i], pattern, map);
 }
@@ -155,7 +157,7 @@ void terrainosaurus::prunePopulation(Population & population,
     FitnessMap popFit = getFitnessMap(population);
 
     // Select which to keep and kill
-    if (numberToSelect < population.size()) {
+    if (numberToSelect < IndexType(population.size())) {
         // We have to decide which ones we're going to keep
         int numberSelected = 0;
         std::vector<bool> selected(population.size(), false);
@@ -205,7 +207,7 @@ void terrainosaurus::prunePopulation(Population & population,
         std::cerr << "Selecting non-elites took " << attempts << " attempts\n";
 
         // OK. We know which ones to keep. Let's kill off the rest.
-        for (int i = 0; i < population.size(); ++i)
+        for (IndexType i = 0; i < IndexType(population.size()); ++i)
             if (! selected[i]) {
                 std::cerr << "'Reeducating' chromosome " << i << "\n";
                 population[i].setAlive(false);
@@ -243,7 +245,8 @@ void terrainosaurus::createChromosome(TerrainChromosome & c,
         for (idx[1] = 0; idx[1] < c.size(1); ++idx[1])
             randomize(c(idx), map.terrainType(c(idx).targetCenter()));
 
-    cerr << "Initialized chromosome with " << c.size(0) << "x" << c.size(1) << " genes\n";
+    INCA_INFO("Initialized chromosome with "
+              << c.size(0) << "x" << c.size(1) << " genes")
 }
 
 
@@ -280,7 +283,8 @@ void terrainosaurus::createChromosome(TerrainChromosome & c,
             reset(c(idx));
         }
 
-    cerr << "Initialized chromosome with " << c.size(0) << "x" << c.size(1) << " genes\n";
+    INCA_INFO("Initialized chromosome with "
+              << c.size(0) << "x" << c.size(1) << " genes")
 }
 
 #if 0
@@ -319,7 +323,7 @@ IndexType terrainosaurus::calculateFitness(Population & population) {
     PopulationStatistics popStats;
     IndexType mostFit = -1;
     scalar_t maxFitness = 0;
-    for (int i = 0; i < population.size(); ++i) {
+    for (IndexType i = 0; i < IndexType(population.size()); ++i) {
         calculateFitness(population[i]);            // Calculate this guy's fitness
         popStats(population[i].fitness());          // Incorporate into the stats
         if (population[i].fitness().overall() > maxFitness) {   // Update 'max'
@@ -339,12 +343,12 @@ IndexType terrainosaurus::calculateFitness(Population & population) {
                  "\tVariance:   " << popStats.variance() << std::endl;
 
     // Calculate the normalized fitness for each individual (s.t. sum(pop) == 1.0)
-    for (int i = 0; i < population.size(); ++i)
+    for (IndexType i = 0; i < IndexType(population.size()); ++i)
         population[i].fitness().normalized() = population[i].fitness() / popStats.sum();
 
     // Print the results
     std::cout << "Population normalized fitness:\n";
-    for (int i = 0; i < population.size(); ++i)
+    for (IndexType i = 0; i < IndexType(population.size()); ++i)
         std::cout << "[" << i << "]: " << population[i].fitness().normalized() << "\n";
 
     return mostFit;
@@ -372,7 +376,7 @@ void terrainosaurus::calculateFitness(TerrainChromosome & c) {
 
     // Calculate the area-weighted mean fitness of each terrain region
     scalar_t rf = 0;
-    for (IDType i = 0; i < c.map().regionCount(); ++i) {
+    for (IDType i = 0; i < IDType(c.map().regionCount()); ++i) {
         calculateRegionFitness(c, i);
         rf += c.regionFitness(i).normalized();
     }
@@ -448,7 +452,7 @@ struct FitnessMapGreaterThan {
 // on this vector, without copying the chromosomes themselves.
 FitnessMap terrainosaurus::getFitnessMap(const Population & population) {
     FitnessMap fitMap(population.size());
-    for (int i = 0; i < population.size(); ++i)
+    for (IndexType i = 0; i < IndexType(population.size()); ++i)
         fitMap[i] = FitnessMap::value_type(i, population[i].fitness().overall());
     std::sort(fitMap.begin(), fitMap.end(), FitnessMapGreaterThan());
     return fitMap;
@@ -461,7 +465,7 @@ FitnessMap terrainosaurus::getFitnessMap(const Population & population) {
 // preference to the more fit chromosomes.
 PMF terrainosaurus::getFitnessPMF(const Population & population) {
     PMF pmf;
-    for (int i = 0; i < population.size(); ++i)
+    for (IndexType i = 0; i < IndexType(population.size()); ++i)
         pmf.add(population[i].fitness().overall());
     return pmf;
 }

@@ -1,4 +1,4 @@
-// $ANTLR 2.7.4: TerrainLibrary.g -> TerrainLibraryTokenTypes.txt$
+// $ANTLR 2.7.5 (20050201): TerrainLibrary.g -> TerrainLibraryTokenTypes.txt$
 TerrainLibrary    // output token vocab name
 OPEN_SBRACKET=4
 GLOBAL="global"=5

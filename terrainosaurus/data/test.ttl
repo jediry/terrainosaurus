@@ -17,7 +17,7 @@ max jitter pixels       = 0     # How much can we jitter the gene locations?
 # These sections define the different, logical "terrain types"
 [TerrainType: California_Coast_Hills]
 color = <0.6, 0.6, 0.3, 1.0>
-sample = "/mnt/data/scratch/gis/dem/35120e8 - Cypress Mountain, CA (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/35120f8 - Lime Mountain, CA (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/35121f1 - Pebblestone Shut-in, CA (30m).dem"
+sample = "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/dem/35120e8 - Cypress Mountain, CA (30m).dem"
+sample = "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/dem/35120f8 - Lime Mountain, CA (30m).dem"
+sample = "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/dem/35121f1 - Pebblestone Shut-in, CA (30m).dem"
 

@@ -34,10 +34,10 @@ namespace terrainosaurus {
 #include <vector>
 
 class terrainosaurus::HeightfieldRendering
-    : public rendering::PrimitiveGrid<Point3D,
-                                      Vector3D,
-                                      Nothing,
-                                      Color> {
+    : public inca::rendering::PrimitiveGrid<Point3D,
+                                            Vector3D,
+                                            Nothing,
+                                            Color> {
 public:
     typedef inca::rendering::PrimitiveGrid<Point3D, Vector3D,
                                            Nothing, Color> Superclass;

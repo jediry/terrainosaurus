@@ -14,6 +14,7 @@
 // Import class definition
 #include "HeightfieldGA.hpp"
 using namespace terrainosaurus;
+using namespace inca;
 using namespace inca::math;
 
 
@@ -30,6 +31,23 @@ namespace terrainosaurus {
 }
 
 // HACK-age
+#if 1
+int      terrainosaurus::POPULATION_SIZE        = 5;
+int      terrainosaurus::EVOLUTION_CYCLES       = 5;
+scalar_t terrainosaurus::SELECTION_RATIO        = 0.75f;
+scalar_t terrainosaurus::ELITE_RATIO            = 0.2f;
+scalar_t terrainosaurus::MUTATION_PROBABILITY   = 0.1f;
+scalar_t terrainosaurus::MUTATION_RATIO         = 0.5f;
+scalar_t terrainosaurus::CROSSOVER_PROBABILITY  = 0.2f;
+scalar_t terrainosaurus::CROSSOVER_RATIO        = 0.5f;
+
+// Crossover/mutation operator limits
+int      terrainosaurus::MAX_CROSSOVER_WIDTH    = 4;
+int      terrainosaurus::MAX_JITTER_PIXELS      = 0;
+scalar_t terrainosaurus::MAX_SCALE_FACTOR       = 1.1f;
+scalar_t terrainosaurus::MAX_OFFSET_AMOUNT      = 50.0f;
+
+#else
 #define POPULATION_SIZE        5
 #define EVOLUTION_CYCLES       5
 #define SELECTION_RATIO        0.75f
@@ -43,6 +61,7 @@ namespace terrainosaurus {
 #define MAX_JITTER_PIXELS      0
 #define MAX_SCALE_FACTOR       1.1f
 #define MAX_OFFSET_AMOUNT      50.0f
+#endif
 
 #include <terrainosaurus/genetics/terrain-operations.hpp>
 
@@ -361,10 +380,17 @@ TerrainSamplePtr HeightfieldGA::run(TerrainLOD startLOD, TerrainLOD targetLOD) {
         if (! terrainSample())
             _terrainSample.reset(new TerrainSample());
 
-        // If we don't have a map, MAYDAY! MAYDAY!
-        if (! mapRasterization()) {
+        // If we don't have a map or a library, MAYDAY! MAYDAY!
+        MapRasterizationPtr mr = mapRasterization();
+        if (! mr) {
             GeneticAlgorithmException e;
             e << "HeightfieldGA incorrectly configured...no MapRasterization given";
+            throw e;
+        }
+        TerrainLibraryConstPtr tl = mr->terrainLibrary();
+        if (! tl) {
+            GeneticAlgorithmException e;
+            e << "HeightfieldGA incorrectly configured...no TerrainLibrary given";
             throw e;
         }
 
@@ -380,8 +406,6 @@ TerrainSamplePtr HeightfieldGA::run(TerrainLOD startLOD, TerrainLOD targetLOD) {
         // using.
         _loadingTime.start(true);
         INCA_INFO("Preloading terrain sample data")
-        TerrainLibraryConstPtr tl = mapRasterization()->terrainLibrary();
-        MapRasterizationPtr mr = mapRasterization();
         for (IndexType i = 0; i < (*mr)[targetLOD].regionCount(); ++i)
             (*mr)[targetLOD].regionTerrainType(i).object().ensureLoaded(startLOD, targetLOD);
         _loadingTime.stop();

@@ -25,11 +25,12 @@ namespace terrainosaurus {
 // Import rendering object definitions
 #include "ObjectRenderingView.hpp"
 #include <terrainosaurus/rendering/ChromosomeRendering.hpp>
+#include <inca/ui/CameraNavigationWidget.hpp>
 
 
 class terrainosaurus::GeneticsWindow
         : public WINDOW(GUI_TOOLKIT),
-          public GeneticAlgorithmListener {
+          public inca::GeneticAlgorithmListener {
 public:
     // HACK
     typedef ObjectRenderingView<ChromosomeRendering>    RenderingView;
@@ -70,6 +71,7 @@ protected:
     TerrainLOD          _selectedLOD;
 
     // GUI/rendering objects
+    inca::ui::CameraNavigationWidgetPtr _navigationWidget;
     RenderingViewPtr    _renderView;    // Render the selected chromosome
 };
 

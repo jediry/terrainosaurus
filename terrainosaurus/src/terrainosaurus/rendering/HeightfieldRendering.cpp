@@ -46,16 +46,15 @@ void HeightfieldRendering::load(const TerrainSample::LOD & ts,
                                 const MapRasterization::LOD & map) {
     // Make sure this is the right size
     this->resize(ts.sizes());
-//    ts.ensureAnalyzed();
-//    std::cerr << "Loading " << ts.levelOfDetail() << " with sizes " << ts.sizes()
-//              << " (" << ts.globalElevationStatistics().count() << " points " << std::endl;
-//    std::cerr << "Elevation range is " << ts.globalElevationStatistics().min()
-//              << " -> " << ts.globalElevationStatistics().max()
-//              << " and mean is " << ts.globalElevationStatistics().mean() << std::endl;
-//    Heightfield::ElementType meanHeight = ts.globalElevationStatistics().mean();
-    VectorMap grad = gradient(ts.elevations(), metersPerSampleForLOD(ts.levelOfDetail()));
-    Heightfield::ElementType meanHeight = mean(ts.elevations());
-    Heightfield::ElementType horizontalScale = metersPerSampleForLOD(ts.levelOfDetail());
+    
+    // Figure out the mean height and the horizontal resolution
+    Heightfield::ElementType meanHeight, horizontalScale;
+    horizontalScale = metersPerSampleForLOD(ts.levelOfDetail());
+    if (ts.analyzed())  meanHeight = ts.globalElevationStatistics().mean();
+    else                meanHeight = mean(ts.elevations());
+
+    VectorMap grad = gradient(ts.elevations(), horizontalScale);
+   
     Pixel px;
     int nanCount = 0, goodCount = 0;
     for (px[1] = ts.base(1); px[1] <= ts.extent(1); ++px[1])
@@ -73,7 +72,7 @@ void HeightfieldRendering::load(const TerrainSample::LOD & ts,
             p.normal() = normalize(Vector3D(gradient2D[0], gradient2D[1], scalar_t(1)));
             p.color() = map.terrainType(px).color();
         }
-    std::cerr << nanCount << " NaNs and " << goodCount << " good values\n";
+    INCA_DEBUG(nanCount << " NaNs and " << goodCount << " good values")
 }
 
 
@@ -91,7 +90,7 @@ bool HeightfieldRendering::toggle(const std::string & feature) {
     else
         index = -1;
     _features.at(index) = ! _features.at(index);
-    std::cerr << feature << (_features.at(index) ? " on" : " off") << std::endl;
+    INCA_DEBUG(feature << (_features.at(index) ? " on" : " off"))
     return _features.at(index);
 }
 
@@ -99,6 +98,7 @@ bool HeightfieldRendering::toggle(const std::string & feature) {
 // Rendering functor
 void HeightfieldRendering::operator()(HeightfieldRendering::Renderer & renderer) const {
     Renderer::Rasterizer & rasterizer = renderer.rasterizer();
+    INCA_DEBUG("Rendering HF")
 
     if (_features[AS_POLYGONS]) {
         if (_features[WITH_LIGHTING]) {
@@ -107,6 +107,7 @@ void HeightfieldRendering::operator()(HeightfieldRendering::Renderer & renderer)
         } else {
             rasterizer.setLightingEnabled(false);
         }
+        INCA_DEBUG("Rendering polygons: " << this->size() << " vertices")
 
         GL::glEnable(GL_POLYGON_OFFSET_FILL);
         rasterizer.setPolygonOffset(1.5f);
