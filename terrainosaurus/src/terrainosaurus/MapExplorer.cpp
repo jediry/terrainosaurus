@@ -34,6 +34,9 @@
 
 #endif
 
+#include <fstream>
+using namespace std;
+
 // Import IOstream operators for data objects
 #include "io/terrainosaurus-iostream.hpp"
 #include <fstream>
@@ -42,6 +45,7 @@
 #include <inca/io/FileExceptions.hpp>
 
 #include <inca/raster/operators/arithmetic>
+#include <inca/raster/operators/statistic>
 #include <inca/raster/operators/selection>
 #include <inca/raster/operators/transformation>
 #include <inca/raster/operators/DFT>
@@ -68,6 +72,17 @@ GrayscaleImage originalImage, originalImage2;
 #include <inca/integration/opengl/GL.hpp>
 #include <inca/ui.hpp>
 
+// XXX Hacked in ROAM impl.
+#define ROAM_ME 0
+#if ROAM_ME
+    #include "rendering/roam/Landscape.h"
+    #include "rendering/roam/Utility.h"
+
+    class ThreeDeeWindow;
+    typedef shared_ptr<ThreeDeeWindow> ThreeDeeWindowPtr;
+    ThreeDeeWindowPtr roamWindow;
+#endif
+
 #include "rendering/MapRasterization.hpp"
 #include "genetics/TerrainChromosome.hpp"
 #include "genetics/terrain-operations.hpp"
@@ -93,7 +108,6 @@ public:
                 inca::Array<float, 2> minMax = range(image);
                 cerr << "Range of output is " << minMax[0] << " -> " << minMax[1] << endl;
         Window::setSize(image.size(0), image.size(1));
-        return;
     }
 
     void reshape(int width, int height) {
@@ -146,63 +160,65 @@ protected:
     GrayscaleImage image;
 };
 
-#if 0
+#if ROAM_ME
 // Simple window displaying an image
 class ThreeDeeWindow : public inca::ui::GLUTWindow, public TerrainosaurusComponent {
 public:
     // Constructor taking an image
     ThreeDeeWindow(const GrayscaleImage &hf,
                    const std::string &title = "Image Window")
-            : GLUTWindow(title), heightfield(NULL), HFsize(0) {
+            : GLUTWindow(title), heightfield(512, 512) {
 
         // Setup the heightfield
+        gHeightMap = heightfield.array().elements();
         loadHeightfield(hf);
+
+        SetupRC();
+        SetDrawModeContext();
 
         // Set the size of the window
         Window::setSize(200, 200);
+
+        // Reinitialize ROAM
+        if (roamInit(gHeightMap) == 0)
+            gAnimating = 1;
+        else
+            cerr << "Uh oh...ROAM init failed\n";
     }
 
     void loadHeightfield(const GrayscaleImage & hf) {
-        // Clean up a wrong-sized HF
-        if (HFsize != hf.size() && heightfield != NULL) {
-            delete heightfield;
-            heightfield = NULL;
-            HFsize = 0;
-        }
-        
-        // Allocate another, if needed
-        if (heightfield == NULL) {
-            HFsize = hf.size();
-            heightfield = new unsigned char[HFsize];
-        }
-        
-        // Copy over the data, converting to bytes
-        
-        image = linearMap(img, Array<float, 2>(0.0f, 1.0f));
-                inca::Array<float, 2> minMax = range(image);
-                cerr << "Range of output is " << minMax[0] << " -> " << minMax[1] << endl;
-        Window::setSize(image.size(0), image.size(1));
-        return;
+        // Start from zero
+        fill(heightfield, 0);
+
+        // Copy over the data, converting to bytes (scale and offset)
+        Array<float, 2> r = range(hf);
+        select(heightfield, hf.sizes()) = select(linearMap(hf, r, 5.0f, -r[0]), heightfield.sizes());
+        cerr << "\nRange of heightfield is " << range(heightfield) << endl;
     }
 
     void reshape(int width, int height) {
         GLUTWindow::reshape(width, height);
-        GL::glMatrixMode(GL_PROJECTION);
-        GL::glLoadIdentity();
-        GL::gluPerspective(30, double(width) / height, 1.0, 1000.0);
-        GL::glMatrixMode(GL_MODELVIEW);
+        ChangeSize(width, height);
     }
 
     void display() {
-        GL::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//        GL::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        GL::
+//        GL::glLoadIdentity();
+//        GL::gluLookAt(100, 100, 100,
+//                      0,   0,   0,
+//                      0,   1,   0);
+        RenderScene();
 
         GL::glutSwapBuffers();
     }
+    void idle() {
+        IdleFunction();
+        requestRedisplay();
+    }
 
 protected:
-    unsigned char * heightfield;
+    MultiArrayRaster<unsigned char, 2> heightfield;
     int size;
 };
 #endif
@@ -256,9 +272,114 @@ void MapExplorer::setup(int &argc, char **argv) {
 // XXX Temporary function until the regular rendering architecture is
 // completed and we can use the editor again.
 void MapExplorer::constructInterface() {
-#if 1
+#define ANALYZE 0
+#if ANALYZE
+    const TerrainLibrary & lib = *terrainLibrary();
+
+    ofstream os;
+    os.exceptions(ofstream::failbit | ofstream::badbit);
+    os.open("analysis.log");
+
+    // Run analysis on each terrain type
+    for (IndexType tti = 1; tti < lib.size(); ++tti) {
+        const TerrainType & tt = *lib.terrainType(tti);
+        cerr << "[" << tti << "] " << tt.name() << ": " << tt.samples.size() << " samples" << endl;
+        
+        for (IndexType si = 0; si < tt.samples.size(); ++si) {
+            const TerrainSample & ts = *tt.samples[si];
+            const Heightfield & hf = ts.heightfield(0);
+            cerr << "\t[" << si << "] " << endl;
+
+            Array<float, 2> heightRange;
+            Array<float, 5> heightMeans, heightMoments;
+
+            // Analyze the entire heightfield
+            heightRange   = range(hf);
+            heightMeans   = means<Heightfield, 4>(hf);
+            heightMoments = moments<Heightfield, 4>(hf, heightMeans[1]);
+            
+            os << tt.name() << "-" << si
+                // Range
+               << "\t" << heightRange[0]
+               << "\t" << heightRange[1]
+               << "\t" << heightRange[1] - heightRange[0]
+
+                // Means
+               << "\t" << heightMeans[1]
+               << "\t" << heightMeans[2]
+               << "\t" << heightMeans[3]
+               << "\t" << heightMeans[4]
+
+                // Moments about the mean
+               << "\t" << heightMoments[1]
+               << "\t" << heightMoments[2]
+               << "\t" << heightMoments[3]
+               << "\t" << heightMoments[4]
+
+                // Skewness
+               << "\t" << heightMoments[3] / pow(heightMoments[2], 1.5f)
+
+                // Kurtosis
+               << "\t" << heightMoments[4] / (heightMoments[2] * heightMoments[2])
+               
+               << endl;
+
+            // Analyze square subregions
+            for (int bk_sz = 16; bk_sz <= 256; bk_sz <<= 1) {
+                Array<int, 2> st, ed;
+                int k = 0;
+                for (st[0] = 0; st[0] + bk_sz < hf.size(0); st[0] += bk_sz)
+                    for (st[1] = 0; st[1] + bk_sz < hf.size(1); st[1] += bk_sz) {
+                        ed[0] = st[0] + bk_sz;
+                        ed[1] = st[1] + bk_sz;
+                        Heightfield sub = select(hf, st, ed);
+                       
+                        // Analyze this subregion
+                        heightRange   = range(sub);
+                        heightMeans   = means<Heightfield, 4>(sub);
+                        heightMoments = moments<Heightfield, 4>(sub, heightMeans[1]);
+
+                        os << tt.name() << "-" << si << "(" << bk_sz << "-" << k << ")"
+                            // Range
+                        << "\t" << heightRange[0]
+                        << "\t" << heightRange[1]
+                        << "\t" << heightRange[1] - heightRange[0]
+
+                            // Means
+                        << "\t" << heightMeans[1]
+                        << "\t" << heightMeans[2]
+                        << "\t" << heightMeans[3]
+                        << "\t" << heightMeans[4]
+
+                            // Moments about the mean
+                        << "\t" << heightMoments[1]
+                        << "\t" << heightMoments[2]
+                        << "\t" << heightMoments[3]
+                        << "\t" << heightMoments[4]
+
+                            // Skewness
+                        << "\t" << heightMoments[3] / pow(heightMoments[2], 1.5f)
+
+                            // Kurtosis
+                        << "\t" << heightMoments[4] / (heightMoments[2] * heightMoments[2])
+                           
+                        << endl;
+                        
+                        k++;
+                    }
+            }
+
+        }
+    }
+
+    os.close();
+    exit(0, "All done w/ analyzing!");
+
+#elif 1
+    typedef Array<int, 2> IndexArray;
     originalImage = _terrainLibrary->terrainType(1)->samples[0]->heightfield(0);
-    originalImage2 = _terrainLibrary->terrainType(1)->samples[1]->heightfield(0);
+    select(originalImage, IndexArray(100, 100), IndexArray(200, 200))
+        = select(originalImage, IndexArray(0, 0), IndexArray(100, 100));
 #else
     originalImage.resize(600,500);
     for (int i = 0; i < originalImage.size(0); ++i)
@@ -271,19 +392,26 @@ void MapExplorer::constructInterface() {
         }
 #endif
 
+    // Always display the heightfield as an image
+    globalSourceWindow.reset(new ImageWindow(originalImage, "Original"));
+    registerWindow(globalSourceWindow);
+
+#if ROAM_ME
+    roamWindow.reset(new ThreeDeeWindow(originalImage, "Heightfield"));
+    registerWindow(roamWindow);
+#endif
 
 // If this is 0, do normal GA stuff. Non-zero values are for Ryan's testing.
 #define WINX 0
 
 #if WINX == 0
-    globalSourceWindow.reset(new ImageWindow(originalImage, "Original"));
     globalResultWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Derived"));
-    globalDifferenceWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Difference"));
-    registerWindow(globalSourceWindow);
     registerWindow(globalResultWindow);
+    globalDifferenceWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Difference"));
     registerWindow(globalDifferenceWindow);
 
 #else
+    originalImage2 = _terrainLibrary->terrainType(1)->samples[1]->heightfield(0);
     globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
     registerWindow(globalSourceWindow2);
 
@@ -530,8 +658,8 @@ void MapExplorer::loadMap(const string &filename) {
         std::ifstream file(filename.c_str());
         if (! file) {
             FileAccessException e(filename);
-            e.os() << "Unable to read map file [" << filename
-                << "]: does it exist?";
+            e << "Unable to read map file [" << filename
+              << "]: does it exist?";
             throw e;
         }
 
@@ -543,8 +671,8 @@ void MapExplorer::loadMap(const string &filename) {
 
         cerr << "[" << filename << "]: loading map complete\n";
 
-    } catch (const stream_exception &e) {
-        cerr << "[" << filename << "]: " << e.message() << endl;
+    } catch (const StreamException &e) {
+        cerr << "[" << filename << "]: " << e << endl;
     }
 }
 
@@ -556,8 +684,8 @@ void MapExplorer::storeMap(const string &filename) const {
         std::ofstream file(filename.c_str());
         if (! file) {
             FileAccessException e(filename);
-            e.os() << "Unable to write map file [" << filename
-                << "]: check directory/file permissions";
+            e << "Unable to write map file [" << filename
+              << "]: check directory/file permissions";
             throw e;
         }
 
@@ -566,8 +694,8 @@ void MapExplorer::storeMap(const string &filename) const {
 
         cerr << "[" << filename << "]: storing map complete\n";
 
-    } catch (const stream_exception &e) {
-        cerr << "[" << filename << "]: " << e.message() << endl;
+    } catch (const StreamException &e) {
+        cerr << "[" << filename << "]: " << e << endl;
     }
 }
 
@@ -598,8 +726,8 @@ void MapExplorer::loadTerrainLibrary(const string &filename) {
         std::ifstream file(filename.c_str());
         if (! file) {
             FileAccessException e(filename);
-            e.os() << "Unable to read terrain library file [" << filename
-                << "]: does it exist?";
+            e << "Unable to read terrain library file [" << filename
+              << "]: does it exist?";
             throw e;
         }
         
@@ -610,8 +738,8 @@ void MapExplorer::loadTerrainLibrary(const string &filename) {
 
         cerr << "[" << filename << "]: loading terrain library complete\n";
 
-    } catch (const stream_exception &e) {
-        cerr << "[" << filename << "]: " << e.message() << endl;
+    } catch (const StreamException &e) {
+        cerr << "[" << filename << "]: " << e << endl;
     }
 }
 
@@ -624,8 +752,8 @@ void MapExplorer::storeTerrainLibrary(const string &filename) const {
         std::ofstream file(filename.c_str());
         if (! file) {
             FileAccessException e(filename);
-            e.os() << "Unable to write terrain library file [" << filename
-                << "]: check directory/file permissions";
+            e << "Unable to write terrain library file [" << filename
+              << "]: check directory/file permissions";
             throw e;
         }
 
@@ -633,8 +761,8 @@ void MapExplorer::storeTerrainLibrary(const string &filename) const {
         file << *terrainLibrary();
 
         cerr << "[" << filename << "]: storing terrain library complete\n";
-    } catch (const stream_exception &e) {
-        cerr << "[" << filename << "]: " << e.message() << endl;
+    } catch (const StreamException &e) {
+        cerr << "[" << filename << "]: " << e << endl;
     }
 }
 

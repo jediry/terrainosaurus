@@ -16,6 +16,7 @@
 
 // Import raster operations
 #include <inca/raster/operators/arithmetic>
+#include <inca/raster/operators/statistic>
 #include <inca/raster/operators/selection>
 #include <inca/raster/operators/transformation>
 
@@ -59,9 +60,10 @@ void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
     TerrainChromosome::initializeStatic();
     TerrainChromosome c;
     initializeChromosome(c, 0, m->terrainLibrary->terrainType(1)->samples[0]->heightfield(0), raster);
+    TerrainChromosome dd = c;
 //    evaluateFitness(c);
-    renderChromosome(hf, c);
-    cerr << "Range of result is " << range(hf) << endl;
+    renderChromosome(hf, dd);
+    std::cerr << "Range of result is " << range(hf) << endl;
 //    raster.rasterize(d);
 //    hf.resize(d);
 }
@@ -217,7 +219,7 @@ float terrainosaurus::evaluateFitness(const TerrainChromosome & c) {
             rtms += (hf(i,j) - orig(i,j)) * (hf(i,j) - orig(i,j));
     rtms = sqrt(rtms / size(0) * size(1));
     cerr << "RMS value was " << rtms << endl;
-    cerr << "Functor measured it as " << rms(orig, hf) << endl;
+    cerr << "Functor measured it as " << rms(orig - hf) << endl;
 
 #if 0
     Heightfield::Iterator i = diff.begin();

@@ -5,6 +5,7 @@ using TerrainChromosome::Gene;
 
 // Import raster operators
 #include <inca/raster/operators/transformation>
+#include <inca/raster/operators/statistic>
 using namespace inca::raster;
 
 
@@ -80,6 +81,20 @@ GrayscaleImage * TerrainChromosome::geneMask(IndexType lod) {
 TerrainChromosome::TerrainChromosome() {
     if (! staticInitialized)
         initializeStatic();
+}
+
+// Copy constructor
+TerrainChromosome::TerrainChromosome(const TerrainChromosome &tc)
+        : _levelOfDetail(tc._levelOfDetail),
+          _heightfieldSize(tc._heightfieldSize) {
+    if (! staticInitialized)
+        initializeStatic();
+
+    // Make a grid of genes the right size and claim each of them
+    resize(tc.sizes(), false);
+
+    // Now copy tc's gene data
+    genes() = tc.genes();
 }
 
 //TerrainChromosome::TerrainChromosome(const Dimension &pixels, IndexType lod) {

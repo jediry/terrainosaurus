@@ -56,8 +56,8 @@ void TerrainLibraryParser::createTerrainType(RefToken tt) {
     TerrainTypePtr ttp = library->terrainType(tt->getText());
     if (ttp != NULL) {
         FileFormatException e(getFilename(), tt->getLine(), tt->getColumn());
-        e.os() << "TerrainType \"" << tt->getText()
-               << "\" has already been created";
+        e << "TerrainType \"" << tt->getText()
+          << "\" has already been created";
         throw e;
     }
 
@@ -80,18 +80,18 @@ void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
     TerrainTypePtr tt2p = library->terrainType(tt2->getText());
     if (tt1p == NULL || tt2p == NULL) {
         FileFormatException e(getFilename());
-        e.os() << "TerrainSeam between \"" << tt1->getText() << "\" and \""
-               << tt2->getText() << "\" cannot be created: ";
+        e << "TerrainSeam between \"" << tt1->getText() << "\" and \""
+          << tt2->getText() << "\" cannot be created: ";
         int col  = tt1->getColumn();
         int line = tt1->getLine();
         if (tt1p == NULL && tt2p == NULL) { // Both are missing
-            e.os() << "neither TerrainType record exists";
+            e << "neither TerrainType record exists";
         } else if (tt1p == NULL) {          // The first is missing
-            e.os() << "a TerrainType record for \"" << tt1->getText()
-                   << "\" does not exist";
+            e << "a TerrainType record for \"" << tt1->getText()
+              << "\" does not exist";
         } else {                            // The second is missing
-            e.os() << "a TerrainType record for \"" << tt2->getText()
-                   << "\" does not exist";
+            e << "a TerrainType record for \"" << tt2->getText()
+              << "\" does not exist";
             col = tt2->getColumn();
         }
         e.setLine(line);
@@ -105,8 +105,8 @@ void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
     // Make sure we've not already initialized this TerrainSeam
     if (initializedTSs[ts]) {
         FileFormatException e(getFilename(), tt1->getLine());
-        e.os() << "TerrainSeam between \"" << tt1->getText() << "\" and \""
-               << tt2->getText() << "\" has already been initialized";
+        e << "TerrainSeam between \"" << tt1->getText() << "\" and \""
+          << tt2->getText() << "\" has already been initialized";
         throw e;
     }
 
@@ -127,8 +127,8 @@ void TerrainLibraryParser::endRecord(RefToken t) {
         // Make sure it had at least one TerrainSample
         if (currentTT->samples.size() == 0) {
             FileFormatException e(getFilename(), t->getLine(), 0);
-            e.os() << "TerrainType \"" << currentTT->name()
-                << "\" does not have any data samples";
+            e << "TerrainType \"" << currentTT->name()
+              << "\" does not have any data samples";
             throw e;
         }
         currentTT.reset();      // We're no longer inside a TT
@@ -154,7 +154,7 @@ void TerrainLibraryParser::setColorProperty(PropertyType p, const Color &c, int 
     // Make sure we've not already set this
     if (p & setProperties) {
         FileFormatException e(getFilename(), line);
-        e.os() << "Color property \"" << p << "\" has already been set";
+        e << "Color property \"" << p << "\" has already been set";
         throw e;
     }
 
@@ -178,7 +178,7 @@ void TerrainLibraryParser::setScalarProperty(PropertyType p, scalar_t s, int lin
     // Make sure we've not already set this
     if (p & setProperties) {
         FileFormatException e(getFilename(), line);
-        e.os() << "Scalar property \"" << p << "\" has already been set\n";
+        e << "Scalar property \"" << p << "\" has already been set\n";
         throw e;
     }
 
@@ -214,7 +214,7 @@ void TerrainLibraryParser::setIntegerProperty(PropertyType p, int i, int line) {
     // Make sure we've not already set this
     if (p & setProperties) {
         FileFormatException e(getFilename(), line);
-        e.os() << "Integer property \"" << p << "\" has already been set";
+        e << "Integer property \"" << p << "\" has already been set";
         throw e;
     }
 

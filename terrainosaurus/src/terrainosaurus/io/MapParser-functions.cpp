@@ -34,7 +34,7 @@ void MapParser::setTerrainType(const string &tt, RefToken pos) {
     TerrainTypePtr ttp = map->terrainLibrary->terrainType(tt);
     if (ttp == NULL) {
         FileFormatException e(getFilename(), pos->getLine(), pos->getColumn());
-        e.os() << "TerrainType \"" << tt << "\" does not exist";
+        e << "TerrainType \"" << tt << "\" does not exist";
         throw e;
     }
 
@@ -46,7 +46,7 @@ void MapParser::beginFace(RefToken pos) {
     cerr << "Face: ";
     if (currentTT == NULL) {    // Ensure that a TT has been set
         FileFormatException e(getFilename(), pos->getLine(), pos->getColumn());
-        e.os() << "A TerrainType must be selected before faces may be created";
+        e << "A TerrainType must be selected before faces may be created";
         throw e;
     }
     vertices.clear();           // Start fresh
@@ -58,7 +58,7 @@ void MapParser::addVertex(IDType id, RefToken pos) {
     Map::VertexPtr v = map->vertex(id - 1);
     if (v == NULL) {                    // Ensure that the Vertex does exist
         FileFormatException e(getFilename(), pos->getLine(), pos->getColumn());
-        e.os() << "Vertex \"" << id << "\" does not exist";
+        e << "Vertex \"" << id << "\" does not exist";
         throw e;
     }
     vertices.push_back(v);      // Stick it in the list

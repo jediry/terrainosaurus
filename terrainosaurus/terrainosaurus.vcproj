@@ -493,6 +493,25 @@
 			<File
 				RelativePath=".\src\terrainosaurus\rendering\TerrainosaurusRenderer.hpp">
 			</File>
+			<Filter
+				Name="roam"
+				Filter="">
+				<File
+					RelativePath=".\src\terrainosaurus\rendering\roam\Landscape.h">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\rendering\roam\Patch.h">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\rendering\roam\Roamsimple.cpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\rendering\roam\Utility.cpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\rendering\roam\Utility.h">
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\src\terrainosaurus\MapExplorer.cpp">

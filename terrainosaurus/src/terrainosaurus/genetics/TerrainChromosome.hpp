@@ -82,6 +82,7 @@ private:
 public:
     // Constructor
     TerrainChromosome();
+    TerrainChromosome(const TerrainChromosome &tc);
 //    TerrainChromosome(const Dimension &pixels, IndexType lod);
 
     // Resize the grid of genes, specifying whether or not to preserve the
@@ -90,6 +91,11 @@ public:
     // that are created as a result of the resize are left uninitialized.
     void resize(const Dimension &sz, bool preserveContents = false);
     void resize(SizeType sx, SizeType sy, bool preserveContents = false);
+    template <class Collection>
+        void resize(const Collection &sz, bool preserveContents = false) {
+            Dimension d(sz);
+            resize(d, preserveContents);
+        }
 
 
 /*---------------------------------------------------------------------------*
