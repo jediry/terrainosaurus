@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="map editor"
-	ProjectGUID="{8C7FFB3A-BD69-4255-AB79-4E5D39F4C96F}"
-	RootNamespace="mapeditor"
+	Name="terrainosaurus"
+	ProjectGUID="{A2A58A27-92A1-496A-B285-1FBF96A23BDA}"
+	RootNamespace="terrainosaurus"
 	Keyword="ManagedCProj">
 	<Platforms>
 		<Platform
@@ -21,20 +21,21 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="H:\src\inca\3rd_party;H:\src\inca\src"
+				AdditionalIncludeDirectories="..\libinca\src;..\libinca\3rd_party"
 				PreprocessorDefinitions="WIN32;_DEBUG"
 				MinimalRebuild="FALSE"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
-				DisableLanguageExtensions="TRUE"
+				RuntimeTypeInfo="TRUE"
 				WarningLevel="3"
 				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/LTCG"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="1"/>
 			<Tool
@@ -108,19 +109,67 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\GLUTMapEditor.cpp">
+			RelativePath=".\src\DEMInterpreter.cpp">
 		</File>
 		<File
-			RelativePath=".\Map.cpp">
+			RelativePath=".\src\DEMInterpreter.hpp">
 		</File>
 		<File
-			RelativePath=".\Map.hpp">
+			RelativePath=".\src\DEMTest.cpp">
 		</File>
 		<File
-			RelativePath=".\MapEditorWidget.cpp">
+			RelativePath=".\src\ElevationMap.cpp">
 		</File>
 		<File
-			RelativePath=".\MapEditorWidget.hpp">
+			RelativePath=".\src\ElevationMap.hpp">
+		</File>
+		<File
+			RelativePath=".\src\GLUTMapEditor.cpp">
+			<FileConfiguration
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
+				<Tool
+					Name="VCCLCompilerTool"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\src\Map.cpp">
+			<FileConfiguration
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
+				<Tool
+					Name="VCCLCompilerTool"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\src\Map.hpp">
+			<FileConfiguration
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
+				<Tool
+					Name="VCCustomBuildTool"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\src\MapEditorWidget.cpp">
+			<FileConfiguration
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
+				<Tool
+					Name="VCCLCompilerTool"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\src\MapEditorWidget.hpp">
+			<FileConfiguration
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
+				<Tool
+					Name="VCCustomBuildTool"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\src\terrainosaurus-common.h">
 		</File>
 	</Files>
 	<Globals>

@@ -16,23 +16,45 @@
 #ifndef TERRAINOSAURUS_MAP_EDITOR_WIDGET
 #define TERRAINOSAURUS_MAP_EDITOR_WIDGET
 
+// Import library configuration
+#include "terrainosaurus-common.h"
+
 // This is part of the Terrainosaurus terrain generation engine
 namespace Terrainosaurus {
     // Forward declarations
     class MapEditorWidget;
+    
+    // Pointer typedefs
+    typedef shared_ptr<MapEditorWidget> MapEditorWidgetPtr;
 };
 
-// Import superclass definition
-#include <interface/generic/Widget.h++>
 
 // Import map definition
 #include "Map.hpp"
 
-// Import Inca::Geometry library
-#include <geometry/Geometry.h++>
+
+class Terrainosaurus::MapEditorWidget
+         : public Inca::Interface::CameraControl,
+           virtual public Inca::Interface::Widget {
+/*---------------------------------------------------------------------------*
+ | Constructor
+ *---------------------------------------------------------------------------*/
+public:
+    MapEditorWidget();
 
 
-class Terrainosaurus::MapEditorWidget : public Inca::Interface::Widget {
+/*---------------------------------------------------------------------------*
+ | Accessor functions
+ *---------------------------------------------------------------------------*/
+public:
+    MapPtr map() const { return _map; }
+
+
+protected:
+    MapPtr _map;                              // The terrain map drawn by the user
+    Inca::World::SolidObject2DPtr mapObject;  // Inca's full-blown object for it
+
+
 /*---------------------------------------------------------------------------*
  | Rendering functions
  *---------------------------------------------------------------------------*/
@@ -40,6 +62,11 @@ public:
     void initializeView();
     void resizeView(unsigned int w, unsigned int h);
     void renderView();
+
+protected:
+    Inca::Rendering::GLRenderer renderer;     // We use this for some OpenGL tasks
+    Inca::Rendering::GLRenderer::ObjectProxyPtr mapProxy;
+    Inca::Rendering::GLRenderer::CameraProxyPtr cameraProxy;
 
 
 /*---------------------------------------------------------------------------*
@@ -53,6 +80,10 @@ public:
     void keyPressed(Inca::Interface::KeyCode k,
                     unsigned int x, unsigned int y);
 
+protected:
+    // Input modes
+//    enum EditMode {
+        
 
 /*---------------------------------------------------------------------------*
  | Map I/O functions
@@ -60,9 +91,6 @@ public:
 public:
     void loadMap(const string &filename);
     void storeMap(const string &filename) const;
-
-protected:
-    Map map;    // The rough map drawn by the user
 };
 
 #endif

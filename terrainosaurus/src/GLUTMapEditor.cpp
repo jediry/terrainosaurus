@@ -16,10 +16,8 @@ const int WINDOW_WIDTH  = 640;
 const int WINDOW_HEIGHT = 480;
 
 
-// Import Inca's C++ wrapper around GLUT
-#include <interface/glut/GLUTApplication.h++>
-#include <interface/glut/GLUTWidgetContainer.h++>
-using namespace Inca::Interface;
+// Import library configuration
+#include "terrainosaurus-common.h"
 
 // Import the Widget definition
 #include "MapEditorWidget.hpp"
