@@ -75,6 +75,9 @@ GrayscaleImage originalImage, originalImage2;
 #include <inca/integration/opengl/GL.hpp>
 #include <inca/ui.hpp>
 
+#include <Magick++.h>
+
+
 // XXX Hacked in ROAM impl.
 #define ROAM_ME 0
 #if ROAM_ME
@@ -176,6 +179,11 @@ public:
         Window::setSize(image.size(0), image.size(1));
     }
 
+    void dumpImage() {
+        Magick::Image mi(image.size(0), image.size(1), "K", Magick::FloatPixel, image.elements());
+        mi.write(this->title() + ".tga");
+    }
+
     void reshape(int width, int height) {
         GLUTWindow::reshape(width, height);
         GL::glMatrixMode(GL_PROJECTION);
@@ -188,6 +196,9 @@ public:
         switch (k) {
             case ' ':
                 runGA();
+                break;
+            case 'p': case 'P':
+                dumpImage();
                 break;
         }
     }
@@ -242,6 +253,10 @@ MapExplorer & MapExplorer::instance() {
  *---------------------------------------------------------------------------*/
 // Get command-line arguments and set up the terrainscape
 void MapExplorer::setup(int &argc, char **argv) {
+
+    // Initialize Image Magick
+    Magick::InitializeMagick(argv[0]);
+
     // Create the selection objects
     _persistentSelection.reset(new MeshSelection());
     _transientSelection.reset(new MeshSelection());
@@ -268,6 +283,7 @@ void MapExplorer::setup(int &argc, char **argv) {
     // Create the alignment grid
     _grid.reset(new PlanarGrid());
         grid()->minorTickSpacing = 0.5;
+
 }
 
 

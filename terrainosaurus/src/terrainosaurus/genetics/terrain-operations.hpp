@@ -76,6 +76,9 @@ namespace terrainosaurus {
 //    void incrementLevelOfDetail(TerrainChromosome & dst,
 //                                const TerrainChromosome & src);
 
+    // Render a singe gene to an image (note -- not especially efficient!)
+    Heightfield renderSoloGene(const TerrainChromosome::Gene & g);
+
     // Generate a heightfield by splatting together the Gene data in c
     void renderChromosome(Heightfield & hf,
                           const TerrainChromosome & c);

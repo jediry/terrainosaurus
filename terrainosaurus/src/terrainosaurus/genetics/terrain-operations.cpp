@@ -478,6 +478,17 @@ void terrainosaurus::incrementLevelOfDetail(TerrainChromosome & dst,
 }*/
 
 
+Heightfield terrainosaurus::renderSoloGene(const TerrainChromosome::Gene & g) {
+    Pixel stS = g.sourceCoordinates - size / 2,
+          edS = stS + Dimension(g->mask.sizes());
+    Heightfield result = *(g.mask) * select(linearMap(
+                                                rotate(g.sourceSample->elevation(g.levelOfDetail), g.rotation),
+                                                g.scale, g.offset
+                                            ),
+                                            stS, edS);
+    return result;
+}
+
 void terrainosaurus::renderChromosome(Heightfield & hf,
                                       const TerrainChromosome & c) {
     // Augment the heightfield with an alpha channel
