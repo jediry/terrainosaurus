@@ -268,7 +268,7 @@ float terrainosaurus::evaluateCompatibility(const TerrainChromosome::Gene & g1,
 Vector2D terrainosaurus::gradient(const TerrainChromosome::Gene & g) {
     Vector2D result = g.sourceSample->averageGradient(g.levelOfDetail())(g.sourceCoordinates);
     if (! effectivelyZero(g.rotation))
-        result = rotate(result, g.rotation);
+        result = inca::math::rotate(result, g.rotation);
     if (! effectivelyEqual(scalar_t(1), g.scale))
         result *= g.scale;
     return result;
