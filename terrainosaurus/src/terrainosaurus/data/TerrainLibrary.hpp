@@ -43,29 +43,30 @@ public:
 
 
 /*---------------------------------------------------------------------------*
- | Static LOD-dependent query functions
- *---------------------------------------------------------------------------*/
-public:
-    static void initializeStatic();
-
-    // Highest level of detail allowed
-    static IndexType maximumLevelOfDetail();
-
-    // Heightfield resolution in pixels / meters at a specific LOD
-    static scalar_t resolution(IndexType lod);
-
-private:
-    static bool staticInitialized;
-    static IndexType _maximumLevelOfDetail;
-    static std::vector<scalar_t> resolutions;
-
-
-/*---------------------------------------------------------------------------*
  | Constructors
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor with optional number of TerrainTypes
     explicit TerrainLibrary(SizeType n = 0);
+
+
+/*---------------------------------------------------------------------------*
+ | LOD-dependent query functions
+ *---------------------------------------------------------------------------*/
+public:
+    // Highest level of detail allowed
+    IndexType maximumLevelOfDetail();
+
+    // Heightfield resolution in pixels / meters at a specific LOD
+    scalar_t resolution(IndexType lod);
+
+    // Window size in pixels at a specific LOD
+    int windowSize(IndexType lod);
+
+protected:
+    IndexType _maximumLevelOfDetail;
+    std::vector<scalar_t> resolutions;
+    std::vector<int>      windowSizes;
 
 
 /*---------------------------------------------------------------------------*

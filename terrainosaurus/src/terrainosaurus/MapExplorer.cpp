@@ -47,6 +47,8 @@ using namespace std;
 #include <inca/raster/operators/arithmetic>
 #include <inca/raster/operators/statistic>
 #include <inca/raster/operators/selection>
+#include <inca/raster/operators/gradient>
+#include <inca/raster/operators/gaussian>
 #include <inca/raster/operators/transformation>
 #include <inca/raster/operators/DFT>
 #include <inca/raster/operators/complex>
@@ -61,6 +63,7 @@ using namespace inca::io;
 #include <complex>
 
 typedef MultiArrayRaster< std::complex<float>, 2> ComplexImage;
+typedef MultiArrayRaster< inca::math::Vector<float, 2>, 2> GradientImage;
 
 
 class ImageWindow;
@@ -378,8 +381,6 @@ void MapExplorer::constructInterface() {
 #elif 1
     typedef Array<int, 2> IndexArray;
     originalImage = _terrainLibrary->terrainType(1)->samples[0]->heightfield(0);
-    select(originalImage, IndexArray(100, 100), IndexArray(200, 200))
-        = select(originalImage, IndexArray(0, 0), IndexArray(100, 100));
 #else
     originalImage.resize(600,500);
     for (int i = 0; i < originalImage.size(0); ++i)
@@ -411,7 +412,7 @@ void MapExplorer::constructInterface() {
     registerWindow(globalDifferenceWindow);
 
 #else
-    originalImage2 = _terrainLibrary->terrainType(1)->samples[1]->heightfield(0);
+    originalImage2 = _terrainLibrary->terrainType(2)->samples[0]->heightfield(0);
     globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
     registerWindow(globalSourceWindow2);
 
@@ -556,6 +557,17 @@ void MapExplorer::constructInterface() {
     win.reset(new ImageWindow(abs(log(mag(q1) - mag(q4))), "Diff 4-1 M"));
     win->setPosition(base + offsetX + offsetY);
     registerWindow(win);
+#endif
+#if WINX & 16
+    TerrainSamplePtr sample = terrainLibrary()->terrainType(1)->samples[0];
+    win.reset(new ImageWindow(vmag(sample->gradient(0)), "Gradient Magnitude"));
+    win->setPosition(300, 300);
+    registerWindow(win);
+
+    win.reset(new ImageWindow(vmag(sample->averageGradient(0)), "Average Gradient Magnitude"));
+    win->setPosition(400, 400);
+    registerWindow(win);
+
 #endif
 #endif
 }

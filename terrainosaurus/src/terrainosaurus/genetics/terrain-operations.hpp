@@ -89,6 +89,11 @@ namespace terrainosaurus {
     // Calculate a value in [0, 1] representing the compatibility of two Genes
     scalar_t evaluateCompatibility(const TerrainChromosome::Gene & g1,
                                    const TerrainChromosome::Gene & g2);
+
+    // Image-processing operations on the data carried by a Gene. These
+    // operations take into account any transformation included with the Gene
+    const Vector2D & gradient(const TerrainChromosome::Gene & g);
+    const Vector2D & range(const TerrainChromosome::Gene & g);
 };
 
 #endif

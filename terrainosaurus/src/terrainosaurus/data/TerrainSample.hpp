@@ -51,11 +51,16 @@ public:
     // Raster data accessors
     const Heightfield::SizeArray & size(IndexType lod) const;
     const Heightfield & heightfield(IndexType lod) const;
-    const GradientMap & gradient(IndexType lod) const;
+    const VectorMap & gradient(IndexType lod) const;
+    const VectorMap & averageGradient(IndexType lod) const;
+    const VectorMap & localRange(IndexType lod) const;
 
 protected:
     mutable bool loaded;           // Have we loaded this?
-    mutable std::vector<Heightfield> _heightfields;
+    mutable std::vector<Heightfield>    _heightfields;
+    mutable std::vector<VectorMap>      _gradients;
+    mutable std::vector<VectorMap>      _averageGradients;
+    mutable std::vector<VectorMap>      _localRanges;
 
 
 /*---------------------------------------------------------------------------*

@@ -29,7 +29,7 @@ namespace terrainosaurus {
     INCA_MATH_SCALAR_TYPES(float, IS_NOT_WITHIN_TEMPLATE);
     INCA_MATH_LINALG_TYPES_CUSTOM(scalar_t, 2, /* */, 2D);
     INCA_MATH_LINALG_TYPES_CUSTOM(scalar_t, 3, /* */, 3D);
-    typedef inca::math::Block<scalar_t, 2> Block;
+    typedef inca::math::Block<scalar_t, 2>  Block;
 
     // Define screenspace types
     typedef inca::math::Point<IndexType, 2>     Pixel;
@@ -39,8 +39,8 @@ namespace terrainosaurus {
     INCA_MATH_COLOR_TYPES(float, sRGB, true);
 
     // Raster types
-    typedef inca::raster::MultiArrayRaster<Vector2D, 2> GradientMap;
     typedef inca::raster::MultiArrayRaster<float, 2>    Heightfield;
+    typedef inca::raster::MultiArrayRaster<Vector2D, 2> VectorMap;
     typedef Heightfield                                 GrayscaleImage;
 };
 

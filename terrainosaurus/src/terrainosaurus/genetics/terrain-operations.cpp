@@ -10,6 +10,9 @@
  */
 
 
+// Import application class
+#include <terrainosaurus/MapExplorer.hpp>
+
 // Import function prototypes and class definitions
 #include "terrain-operations.hpp"
 #include <terrainosaurus/rendering/MapRasterization.hpp>
@@ -29,7 +32,7 @@ using TerrainChromosome::Gene;
 // This function runs the entire GA
 void terrainosaurus::generateTerrain(Heightfield & hf, MapConstPtr m,
                                      const Block & region, IndexType lod) {
-    scalar_t resolution = TerrainLibrary::resolution(lod);
+    scalar_t resolution = MapExplorer::instance().terrainLibrary()->resolution(lod);
 //    Dimension d(SizeType(region.size(0) * resolution),
 //                SizeType(region.size(1) * resolution));
     Dimension d(m->terrainLibrary->terrainType(1)->samples[0]->heightfield(0).sizes());
@@ -161,9 +164,12 @@ void terrainosaurus::renderChromosome(Heightfield & hf,
     sum = 0.0f;
 
     // Splat each gene into the augmented heightfield
-    for (int i = 0; i < c.size(0); ++i)
-        for (int j = 0; j < c.size(1); ++j)
-            renderGene(hf, sum, c.gene(i, j));
+//    for (int i = 0; i < c.size(0); ++i)
+//        for (int j = 0; j < c.size(1); ++j)
+//            renderGene(hf, sum, c.gene(i, j));
+    renderGene(hf, sum, c.gene(10, 10));
+    std::cerr << "Mean gradient is " << gradient(c.gene(10, 10)) << std::endl;
+    std::cerr << "Range around target is " << range(c.gene(10, 10)) << std::endl;
 
     // XXX HACK
     scalar_t m_hf = mean(hf),
@@ -189,8 +195,13 @@ void terrainosaurus::renderGene(Heightfield & hf,
           stT = g.targetCoordinates - size / 2,
           edT = stT + size;
 
-    // Add the masked pixels to the HF and the mask itself to sum
-    select(hf, stT, edT)  += *(g.mask) * select(g.sourceSample->heightfield(g.levelOfDetail()), stS, edS);
+    // Add the transformed, masked pixels to the HF and the mask itself to sum
+    select(hf, stT, edT)  += *(g.mask) * select(
+                                            linearMap(
+                                                rotate(g.sourceSample->heightfield(g.levelOfDetail()), g.rotation),
+                                                g.scale, g.offset
+                                            ),
+                                            stS, edS);
     select(sum, stT, edT) += *(g.mask);
 #if 0
     cerr << "Range of mask: " << range(*g.mask) << endl;
@@ -250,4 +261,15 @@ float terrainosaurus::evaluateFitness(const TerrainChromosome & c) {
 float terrainosaurus::evaluateCompatibility(const TerrainChromosome::Gene & g1,
                                             const TerrainChromosome::Gene & g2) {
     return 1.0f;
+}
+
+
+// This function calculates the average gradient across the gene
+const Vector2D & terrainosaurus::gradient(const TerrainChromosome::Gene & g) {
+    return g.sourceSample->averageGradient(g.levelOfDetail())(g.sourceCoordinates);
+}
+
+// This function calculates the absolute height range across the gene
+const Vector2D & terrainosaurus::range(const TerrainChromosome::Gene & g) {
+    return g.sourceSample->localRange(g.levelOfDetail())(g.sourceCoordinates);
 }

@@ -1,11 +1,11 @@
 # This file is neato
 
+[TerrainType: BMC_NV]
+sample = c:\Temp\terrain\blue_mass_canyon_NV.dem
+
 [TerrainType: BP_NV]
 color = <1.0, 0.7, 0.0, 1.0>    # This is yellow!
 sample = c:\Temp\terrain\becky_peak_NV.dem
-
-[TerrainType: BMC_NV]
-sample = c:\Temp\terrain\blue_mass_canyon_NV.dem
 
 [TerrainType: BPF_NV]
 sample = c:\Temp\terrain\baking_powder_flat_NV.dem

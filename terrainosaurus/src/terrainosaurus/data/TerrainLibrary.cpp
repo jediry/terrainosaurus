@@ -31,31 +31,11 @@ using namespace terrainosaurus;
 
 
 /*---------------------------------------------------------------------------*
- | LOD-dependent query functions
- *---------------------------------------------------------------------------*/
-bool TerrainLibrary::staticInitialized = false;
-IndexType             TerrainLibrary::_maximumLevelOfDetail;
-std::vector<scalar_t> TerrainLibrary::resolutions;
-
-void TerrainLibrary::initializeStatic() {
-    _maximumLevelOfDetail = 0;
-    resolutions.push_back(scalar_t(1) / 30);
-    staticInitialized = true;
-}
-
-IndexType TerrainLibrary::maximumLevelOfDetail() {
-    return _maximumLevelOfDetail;
-}
-scalar_t TerrainLibrary::resolution(IndexType lod) {
-    return resolutions[lod];
-}
-
-
-/*---------------------------------------------------------------------------*
  | Constructors
  *---------------------------------------------------------------------------*/
 // Default constructor with optional number of TerrainTypes
 TerrainLibrary::TerrainLibrary(SizeType n) {
+    // Initialize the static data structures
     addTerrainType("Void"); // This represents "empty space"
 
     // Create a bunch of TerrainTypes, held by shared_ptr
@@ -65,6 +45,21 @@ TerrainLibrary::TerrainLibrary(SizeType n) {
     // Set up the LOD stuff
     _maximumLevelOfDetail = 0;      // Crippled for right now
     resolutions.push_back(scalar_t(1) / 30);
+    windowSizes.push_back(16);
+}
+
+
+/*---------------------------------------------------------------------------*
+ | LOD-dependent query functions
+ *---------------------------------------------------------------------------*/
+IndexType TerrainLibrary::maximumLevelOfDetail() {
+    return _maximumLevelOfDetail;
+}
+scalar_t TerrainLibrary::resolution(IndexType lod) {
+    return resolutions[lod];
+}
+int TerrainLibrary::windowSize(IndexType lod) {
+    return windowSizes[lod];
 }
 
 
