@@ -265,11 +265,20 @@ float terrainosaurus::evaluateCompatibility(const TerrainChromosome::Gene & g1,
 
 
 // This function calculates the average gradient across the gene
-const Vector2D & terrainosaurus::gradient(const TerrainChromosome::Gene & g) {
-    return g.sourceSample->averageGradient(g.levelOfDetail())(g.sourceCoordinates);
+Vector2D terrainosaurus::gradient(const TerrainChromosome::Gene & g) {
+    Vector2D result = g.sourceSample->averageGradient(g.levelOfDetail())(g.sourceCoordinates);
+    if (! effectivelyZero(g.rotation))
+        result = rotate(result, g.rotation);
+    if (! effectivelyEqual(scalar_t(1), g.scale))
+        result *= g.scale;
+    return result;
 }
 
 // This function calculates the absolute height range across the gene
-const Vector2D & terrainosaurus::range(const TerrainChromosome::Gene & g) {
-    return g.sourceSample->localRange(g.levelOfDetail())(g.sourceCoordinates);
+Vector2D terrainosaurus::range(const TerrainChromosome::Gene & g) {
+    Vector2D result = g.sourceSample->localRange(g.levelOfDetail())(g.sourceCoordinates);
+    if (! effectivelyEqual(scalar_t(1), g.scale))
+        result *= g.scale;
+    return result;
 }
+

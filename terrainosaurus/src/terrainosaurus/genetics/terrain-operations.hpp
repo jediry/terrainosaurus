@@ -92,8 +92,8 @@ namespace terrainosaurus {
 
     // Image-processing operations on the data carried by a Gene. These
     // operations take into account any transformation included with the Gene
-    const Vector2D & gradient(const TerrainChromosome::Gene & g);
-    const Vector2D & range(const TerrainChromosome::Gene & g);
+    Vector2D gradient(const TerrainChromosome::Gene & g);
+    Vector2D range(const TerrainChromosome::Gene & g);
 };
 
 #endif
