@@ -37,6 +37,7 @@ namespace terrainosaurus {
     // Define screenspace types
     typedef inca::math::Point<IndexType, 2>     Pixel;
     typedef inca::math::Vector<IndexType, 2>    Dimension;
+    typedef inca::math::Vector<IndexType, 2>    Offset;
 
     // Define array types
     typedef inca::Array<inca::SizeType, 2>      SizeArray;

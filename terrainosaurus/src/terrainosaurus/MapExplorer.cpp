@@ -56,6 +56,7 @@ typedef MultiArrayRaster< inca::math::Vector<float, 2>, 2> GradientImage;
 #include "data/MapRasterization.hpp"
 #include "genetics/TerrainChromosome.hpp"
 #include "genetics/terrain-operations.hpp"
+#include "genetics/terrain-ga.hpp"
 using namespace terrainosaurus;
 
 // Hacked in thing
@@ -197,9 +198,9 @@ void MapExplorer::setup(int &argc, char **argv) {
     MapRasterizationPtr mr(new MapRasterization(terrainLibrary()));
     MapRasterization::LOD::IDMap idx(300, 300);
     fill(idx, 1);
-    select(idx, SizeArray(225, 225)) = select(constant<int, 2>(2), SizeArray(225, 225));
-    flood_fill(idx, Pixel(90, 36), InTriangle(Pixel(30,30), Pixel(90, 30), Pixel(120, 240)), constant<int, 2>(1));
-    flood_fill(idx, Pixel(210, 135), InTriangle(Pixel(225,90), Pixel(225, 180), Pixel(180, 150)), constant<int, 2>(1));
+//    select(idx, SizeArray(225, 225)) = select(constant<int, 2>(2), SizeArray(225, 225));
+//    flood_fill(idx, Pixel(90, 36), InTriangle(Pixel(30,30), Pixel(90, 30), Pixel(120, 240)), constant<int, 2>(1));
+//    flood_fill(idx, Pixel(210, 135), InTriangle(Pixel(225,90), Pixel(225, 180), Pixel(180, 150)), constant<int, 2>(1));
     (*mr)[LOD_30m].createFromRaster(idx);
 
 //    TerrainSamplePtr test = terrainLibrary()->terrainType(1)->terrainSample(0);
@@ -209,6 +210,7 @@ void MapExplorer::setup(int &argc, char **argv) {
 //    tsl.loadFromFile("test30.cache");
 
 #if 1
+    matchSample = terrainLibrary()->terrainType(1)->terrainSample(0);
     TerrainSamplePtr result = generateTerrain(mr, LOD_810m, LOD_90m);
 
     WindowPtr hw(new HackWindow(result, mr, LOD_90m, "Generated Terrain"));

@@ -280,8 +280,8 @@ public:
     void setOffset(scalar_arg_t o);
 
     // An amount in pixels by which to jitter the gene's target center-point.
-    const Pixel & jitter() const;
-    void setJitter(const Pixel & j);
+    const Offset & jitter() const;
+    void setJitter(const Offset & j);
 
 protected:
     // Transformation to apply to source data
@@ -291,7 +291,7 @@ protected:
     scalar_t            _rotation;      // Horizontal rotation in radians
     scalar_t            _scale;         // Vertical scale factor
     scalar_t            _offset;        // Vertical offset amount
-    Pixel               _jitter;        // How much to adjust the
+    Offset              _jitter;        // How much to adjust the
                                         // target center
 };
 

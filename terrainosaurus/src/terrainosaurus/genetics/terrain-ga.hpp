@@ -41,7 +41,8 @@
 #include <terrainosaurus/data/TerrainLibrary.hpp>
 #include "TerrainChromosome.hpp"
 
-
+// TOTALLY HACKED IN
+extern terrainosaurus::TerrainSamplePtr matchSample;
 
 // Genetic algorithm functions for building a heightfield
 namespace terrainosaurus {
@@ -68,25 +69,19 @@ namespace terrainosaurus {
     // For every slot in 'p' that is not already occupied by a living
     // chromosome, create a new chromosome there. At the first evolution
     // cycle, this initializes the whole population. In later cycles it only
-    // replaces those chromosomes that were not selected to continue.
-    void initializePopulation(Population & p,
-                              const TerrainSample::LOD & pattern,
-                              const MapRasterization::LOD & map);
-
-    // Fill a Chromosome by finding a set of Genes that are compatible with
-    // the data in 'pattern'.
-    void initializeChromosome(TerrainChromosome & c,
-                              const TerrainSample::LOD & pattern,
-                              const MapRasterization::LOD & map);
+    // replaces those chromosomes that were killed off in the previous cycle.
+    void replenishPopulation(Population & p,
+                             const TerrainSample::LOD & pattern,
+                             const MapRasterization::LOD & map);
 
     // Select a fraction of the population to keep for the next evolution
     // cycle and "kill off" all the others (they will be replaced with new
-    // chromosomes at the beginning of the next cycle). The 'selectRatio'
+    // chromosomes at the beginning of the next cycle). The 'selectionRatio'
     // parameter specifies the proportion of the population that will be kept,
     // chosen at random. The 'eliteRatio' parameter specifies the proportion
     // of "best" individuals who will be kept.
     //
-    // Note that 'selectRatio' includes 'eliteRatio'. For example, with
+    // Note that 'selectionRatio' includes 'eliteRatio'. For example, with
     //      selectRatio = 0.75 and
     //      eliteRatio  = 0.2
     // only 75% of the population will be kept, not 95%. If 'eliteRatio'
@@ -94,14 +89,20 @@ namespace terrainosaurus {
     // only the top 'eliteRatio' fraction will be kept.
     //
     // Finally, the function returns the index of the most fit individual
-    IndexType analyzePopulation(Population & p, float selectRatio, float eliteRatio);
+    void prunePopulation(Population & p, float selectRatio, float eliteRatio);
 
-    // Create a random Gene by chosing a random location within a terrain
-    // sample of the given terrain type and LOD
-    TerrainChromosome::Gene createRandomGene(const TerrainType::LOD & tt);
+    // Fill a Chromosome by finding a set of Genes that are compatible with
+    // the data in 'pattern'.
+    void createChromosome(TerrainChromosome & c,
+                          const TerrainSample::LOD & pattern,
+                          const MapRasterization::LOD & map);
 
-    // Create a gene at a particular point in a particular sample
-    TerrainChromosome::Gene createGene(const TerrainSample::LOD & ts, const Pixel & p);
+//     // Create a random Gene by chosing a random location within a terrain
+//     // sample of the given terrain type and LOD
+//     TerrainChromosome::Gene createRandomGene(const TerrainType::LOD & tt);
+//
+//     // Create a gene at a particular point in a particular sample
+//     TerrainChromosome::Gene createGene(const TerrainSample::LOD & ts, const Pixel & p);
 
 
 /*---------------------------------------------------------------------------*
@@ -111,7 +112,8 @@ namespace terrainosaurus {
     // Calculate the fitness for each individual in the population, then
     // calculate the normalized fitness for each individual (such
     // that the whole population's normalized fitness sums to 1.0).
-    void calculateFitness(Population & population);
+    // It returns the index of the most fit chromosome in the population.
+    IndexType calculateFitness(Population & population);
 
     // Calculate the fitness measure for a single chromosome.
     void calculateFitness(TerrainChromosome & c);
@@ -149,25 +151,29 @@ namespace terrainosaurus {
     // gene's compatibility with its surrounding environment.
     void mutate(TerrainChromosome & c, float ratio);
 
-    // Effectively replace the gene with a new one of the same TerrainType
-    // by randomizing all of the fields.
-    void randomize(TerrainChromosome::Gene & g);
+    // Effectively replace the gene with a new one of the specified TerrainType,
+    // with a randomized transformation.
+    void randomize(TerrainChromosome::Gene & g, const TerrainType::LOD & tt);
 
     // Offset the gene vertically from its current mean value
-    void offset(TerrainChromosome::Gene & g);
-
-    // Jitter the location of the center of the gene
-    void jitter(TerrainChromosome::Gene & g);
+    void offset(TerrainChromosome::Gene & g, scalar_t min, scalar_t max);
 
     // Scale the gene vertically around its mean value
-    void scale(TerrainChromosome::Gene & g);
+    void scale(TerrainChromosome::Gene & g, scalar_t min, scalar_t max);
 
     // Rotate the gene around its center
-    void rotate(TerrainChromosome::Gene & g);
+    void rotate(TerrainChromosome::Gene & g, scalar_t min, scalar_t max);
+
+    // Translate the location of the source coordinates of the gene
+    void translate(TerrainChromosome::Gene & g, const Offset & min,
+                                                const Offset & max);
+
+    // Jitter the location of the target coordinates of the gene
+    void jitter(TerrainChromosome::Gene & g, const Offset & min,
+                                             const Offset & max);
 
     // Swirl the gene around its center
-    void swirl(TerrainChromosome::Gene & g);
+//    void swirl(TerrainChromosome::Gene & g);
 };
 
 #endif
-

@@ -65,7 +65,7 @@ TerrainSamplePtr terrainosaurus::generateTerrain(MapRasterizationConstPtr map,
     TerrainSamplePtr result(new TerrainSample());
 
     // Run the GA for every LOD from the coarsest up to the requested
-    for (TerrainLOD lod = startLOD; lod < targetLOD; ++lod) {
+    for (TerrainLOD lod = startLOD; lod <= targetLOD; ++lod) {
         pass.reset();
         pass.start();
 
@@ -172,22 +172,18 @@ void terrainosaurus::renderChromosome(Heightfield & hf,
     for (int i = 0; i < c.size(0); ++i)
         for (int j = 0; j < c.size(1); ++j)
             renderGene(hf, sum, c.gene(i, j));
-//    renderGene(hf, sum, c.gene(10, 10));
-//    std::cerr << "Mean gradient is " << gradient(c.gene(10, 10)) << std::endl;
-//    std::cerr << "ElevationRange around target is " << range(c.gene(10, 10)) << std::endl;
-
-    // XXX HACK
-    scalar_t m_hf = mean(hf),
-             m_s = mean(sum),
-             mn = m_hf / m_s;
 
     // Divide out the alpha channel to produce a blended heightfield
     hf /= sum;
 
-    for (int i = 0; i < hf.size(0); ++i)
-        for (int j = 0; j < hf.size(1); ++j)
-            if (sum(i, j) == scalar_t(0))
-                hf(i, j) = mn;
+    // Go back and clean up any NaN's that appeared due to divide-by-zero
+//    scalar_t m_hf = mean(hf),
+//             m_s = mean(sum),
+//             mn = m_hf / m_s;
+//    for (int i = 0; i < hf.size(0); ++i)
+//        for (int j = 0; j < hf.size(1); ++j)
+//            if (sum(i, j) == scalar_t(0))
+//                hf(i, j) = mn;
 }
 
 void terrainosaurus::renderGene(Heightfield & hf,
@@ -205,12 +201,13 @@ void terrainosaurus::renderGene(Heightfield & hf,
     const TerrainSample::LOD & sample = g.terrainSample();
     scalar_t mean = sample.localElevationMean(g.sourceCenter());
     selectBE(hf, stT, edT)  += mask * selectBE(
-                                           linear_map(
+                                            linear_map(
                                                 rotate(sample.elevations(), g.rotation()),
                                                 g.scale(), g.offset() + mean * (1 - g.scale())
                                             ),
                                             stS, edS);
     selectBE(sum, stT, edT) += mask;
+
 #if 0
     cerr << "ElevationRange of mask: " << range(*g.mask) << endl;
     cerr << "RMS of mask: " << rms(*g.mask) << endl;

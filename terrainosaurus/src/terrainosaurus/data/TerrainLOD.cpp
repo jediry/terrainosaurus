@@ -65,6 +65,7 @@ SizeType terrainosaurus::windowSize(TerrainLOD lod) {
     return 16;
 }
 
+#include <inca/raster/operators/statistic>
 
 // Pixel blending masks
 const GrayscaleImage & terrainosaurus::gaussianMask(TerrainLOD lod) {
@@ -80,5 +81,6 @@ const GrayscaleImage & terrainosaurus::gaussianMask(TerrainLOD lod) {
                                inca::Array<SizeType, 2>(sz));
         }
     }
+
     return masks[lod];
 }

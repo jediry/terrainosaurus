@@ -13,6 +13,13 @@
 // Import class definition
 #include "TerrainSample.hpp"
 
+// HACK -- should be in math
+namespace std {
+    inline terrainosaurus::Vector2D pow(const terrainosaurus::Vector2D & v, float f) {
+        return terrainosaurus::Vector2D(std::pow(v[0], f), std::pow(v[1], f));
+    }
+}
+
 // Import application class
 //#include <terrainosaurus/MapExplorer.hpp>
 

@@ -1,12 +1,12 @@
 # This file is neato
 
 [TerrainType: Texas]
-color = <0.5, 0.3, 0.3, 1.0> 
+color = <0.8, 0.5, 0.5, 1.0>
 sample = "/mnt/data/scratch/gis/dem/Canary, TX (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/Kurten, TX (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/Millican, TX (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/Independence, TX (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/Ferguson Crossing, TX (30m).dem"
+#sample = "/mnt/data/scratch/gis/dem/Kurten, TX (30m).dem"
+#sample = "/mnt/data/scratch/gis/dem/Millican, TX (30m).dem"
+#sample = "/mnt/data/scratch/gis/dem/Independence, TX (30m).dem"
+#sample = "/mnt/data/scratch/gis/dem/Ferguson Crossing, TX (30m).dem"
 
 [TerrainType: Utah]
 color = <0.8, 0.3, 0.8, 1.0>

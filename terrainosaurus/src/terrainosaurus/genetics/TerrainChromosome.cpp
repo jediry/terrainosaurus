@@ -224,10 +224,10 @@ void TerrainChromosome::Gene::setOffset(scalar_arg_t o) {
 }
 
 // An amount in pixels by which to jitter the gene's target center-point.
-const Pixel & TerrainChromosome::Gene::jitter() const {
+const Offset & TerrainChromosome::Gene::jitter() const {
     return _jitter;
 }
-void TerrainChromosome::Gene::setJitter(const Pixel & j) {
+void TerrainChromosome::Gene::setJitter(const Offset & j) {
     _jitter = j;
     _targetCenter  = indices() * geneSpacing(levelOfDetail()) + j;
 }
