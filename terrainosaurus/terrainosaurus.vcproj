@@ -13,31 +13,32 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="C:\temp"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="C:\Temp"
+			IntermediateDirectory="C:\Temp"
 			ConfigurationType="1"
 			CharacterSet="2"
 			ManagedExtensions="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\libinca\src;H:\include"
+				AdditionalIncludeDirectories="src; h:\src\libinca\src"
 				PreprocessorDefinitions="WIN32;_DEBUG"
 				MinimalRebuild="FALSE"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="terrainosaurus\terrainosaurus-common.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/LTCG"
-				AdditionalDependencies="libinca.lib"
+				AdditionalDependencies="libinca.lib antlr.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(SolutionDir)\lib"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="TRUE"
 				AssemblyDebug="1"/>
 			<Tool
@@ -63,22 +64,26 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="C:\Temp"
+			IntermediateDirectory="C:\Temp"
 			ConfigurationType="1"
 			CharacterSet="2"
-			ManagedExtensions="TRUE">
+			ManagedExtensions="FALSE"
+			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="src; h:\src\libinca\src"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				MinimalRebuild="FALSE"
 				RuntimeLibrary="0"
+				RuntimeTypeInfo="TRUE"
 				WarningLevel="3"
 				DebugInformationFormat="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libinca.lib antlr.lib"
 				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(SolutionDir)\lib"
@@ -112,85 +117,349 @@
 	</References>
 	<Files>
 		<Filter
-			Name="genetics"
+			Name="data"
 			Filter="">
 			<File
-				RelativePath=".\src\genetics\Chromosome.h">
+				RelativePath=".\src\terrainosaurus\data\ElevationMap.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\genetics\GA.h">
+				RelativePath=".\src\terrainosaurus\data\ElevationMap.hpp">
 			</File>
 			<File
-				RelativePath=".\src\genetics\Pyramid.h">
+				RelativePath=".\src\terrainosaurus\data\Map.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\Map.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\MeshSelection.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\MeshSelection.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\TerrainChunk.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\TerrainLibrary.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\TerrainLibrary.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\TerrainPatch.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\Terrainscape.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\TerrainSeam.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\data\TerrainType.hpp">
 			</File>
 		</Filter>
 		<Filter
-			Name="gui"
+			Name="genetics"
 			Filter="">
 			<File
-				RelativePath=".\src\MapEditWidget.hpp">
+				RelativePath=".\src\terrainosaurus\genetics\Chromosome.h">
 			</File>
 			<File
-				RelativePath=".\src\MapExplorerWidget.cpp">
+				RelativePath=".\src\terrainosaurus\genetics\GA.h">
 			</File>
 			<File
-				RelativePath=".\src\MapExplorerWidget.hpp">
+				RelativePath=".\src\terrainosaurus\genetics\Pyramid.h">
 			</File>
 			<File
-				RelativePath=".\src\MapSelectWidget.cpp">
+				RelativePath=".\src\terrainosaurus\genetics\RandomLine.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="io"
+			Filter="">
+			<File
+				RelativePath=".\src\terrainosaurus\io\DEMInterpreter.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\MapSelectWidget.hpp">
+				RelativePath=".\src\terrainosaurus\io\DEMInterpreter.hpp">
 			</File>
 			<File
-				RelativePath=".\src\RotateWidget.hpp">
+				RelativePath=".\src\terrainosaurus\io\DEMTest.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\ScaleWidget.hpp">
+				RelativePath=".\src\terrainosaurus\io\DirectElevationModelHandler.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\TopologyWidget.cpp">
+				RelativePath=".\src\terrainosaurus\io\Map.g">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating parser/lexer for map (.map) file format"
+						CommandLine="h:\bin\antlr.exe -o $(InputDir) $(InputPath)
+"
+						Outputs="$(InputDir)\$(InputName)Parser.hpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating parser/lexer for map (.map) file format"
+						CommandLine="h:\bin\antlr.exe -o $(InputDir) $(InputPath)
+"
+						Outputs="$(InputDir)\$(InputName)Parser.hpp"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\TopologyWidget.hpp">
+				RelativePath=".\src\terrainosaurus\io\MapParser-functions.cpp">
 			</File>
 			<File
-				RelativePath=".\src\TranslateWidget.cpp">
+				RelativePath=".\src\terrainosaurus\io\TerrainLibrary.g">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating parser/lexer for terrain type library (.ttl) file format"
+						CommandLine="h:\bin\antlr.exe -o $(InputDir) $(InputPath)
+"
+						Outputs="$(InputDir)\$(InputName)Parser.hpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating parser/lexer for terrain type library (.ttl) file format"
+						CommandLine="h:\bin\antlr.exe -o $(InputDir) $(InputPath)
+"
+						Outputs="$(InputDir)\$(InputName)Parser.hpp"/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\TranslateWidget.hpp">
+				RelativePath=".\src\terrainosaurus\io\TerrainLibraryParser-functions.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\io\terrainosaurus-iostream.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\io\terrainosaurus-iostream.hpp">
+			</File>
+			<Filter
+				Name="generated"
+				Filter="">
+				<File
+					RelativePath=".\src\terrainosaurus\io\MapLexer.cpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\MapLexer.hpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\MapParser.cpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\MapParser.hpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\MapTokenTypes.hpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\TerrainLibraryLexer.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\TerrainLibraryLexer.hpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\TerrainLibraryParser.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\TerrainLibraryParser.hpp">
+				</File>
+				<File
+					RelativePath=".\src\terrainosaurus\io\TerrainLibraryTokenTypes.hpp">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="ui"
+			Filter="">
+			<File
+				RelativePath=".\src\terrainosaurus\ui\AddFaceWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\AddFaceWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\AddVertexWidget.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\AddVertexWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\CameraNavigationWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\CameraNavigationWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\MapEditWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\MapEditWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\MapExplorerWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\MapExplorerWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\ModifyPropertyWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\ModifyPropertyWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\RotateWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\ScaleWidget.hpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\TranslateWidget.cpp">
+			</File>
+			<File
+				RelativePath=".\src\terrainosaurus\ui\TranslateWidget.hpp">
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\src\Map.cpp">
+			RelativePath=".\src\terrainosaurus\MapExplorer.cpp">
 		</File>
 		<File
-			RelativePath=".\src\Map.hpp">
+			RelativePath=".\src\terrainosaurus\MapExplorer.hpp">
+		</File>
+		<File
+			RelativePath=".\src\terrainosaurus\PlanarGrid.cpp">
+		</File>
+		<File
+			RelativePath=".\src\terrainosaurus\PlanarGrid.hpp">
+		</File>
+		<File
+			RelativePath=".\src\terrainosaurus\PolygonTessellator.cpp">
 			<FileConfiguration
-				Name="Debug|Win32">
+				Name="Debug|Win32"
+				ExcludedFromBuild="TRUE">
 				<Tool
-					Name="VCCustomBuildTool"/>
+					Name="VCCLCompilerTool"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				ExcludedFromBuild="TRUE">
+				<Tool
+					Name="VCCLCompilerTool"/>
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\src\MapExplorer.cpp">
+			RelativePath=".\src\terrainosaurus\PolygonTessellator.hpp">
 		</File>
 		<File
-			RelativePath=".\src\MapSelection.cpp">
+			RelativePath=".\src\terrainosaurus\terrainosaurus-common.h">
 		</File>
 		<File
-			RelativePath=".\src\MapSelection.hpp">
+			RelativePath=".\src\terrainosaurus\TerrainosaurusComponent.cpp">
 		</File>
 		<File
-			RelativePath=".\src\TerrainDescriptor.hpp">
+			RelativePath=".\src\terrainosaurus\TerrainosaurusComponent.hpp">
 		</File>
 		<File
-			RelativePath=".\src\terrainosaurus-common.h">
-			<FileConfiguration
-				Name="Debug|Win32">
-				<Tool
-					Name="VCCustomBuildTool"/>
-			</FileConfiguration>
+			RelativePath=".\src\terrainosaurus\TerrainosaurusRenderer.cpp">
+		</File>
+		<File
+			RelativePath=".\src\terrainosaurus\TerrainosaurusRenderer.hpp">
+		</File>
+		<File
+			RelativePath=".\test.map">
+		</File>
+		<File
+			RelativePath=".\test.ttl">
 		</File>
 	</Files>
 	<Globals>

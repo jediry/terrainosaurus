@@ -10,12 +10,12 @@
 # Autoconf/Automake configuration
 AC_PREREQ(2.53)
 AC_INIT(terrainosaurus, 0.2.0, rls@tamu.edu)
-AC_CONFIG_SRCDIR(src/terrainosaurus-common.h)
 AC_CONFIG_AUX_DIR(config)
 #AC_CONFIG_MACRO_DIR(./ac_tools)
 AC_CONFIG_FILES(Makefile src/Makefile)
-AC_CONFIG_HEADERS(src/config-ac.h)
+AC_CONFIG_SRCDIR(src/terrainosaurus/terrainosaurus-common.h)
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
+AM_CONFIG_HEADER(src/config-ac.h)
 AC_CANONICAL_HOST
 
 
