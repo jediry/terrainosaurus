@@ -224,7 +224,8 @@
 						Outputs="$(InputDir)\$(InputName)Parser.hpp"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating parser/lexer for map (.map) file format"
@@ -249,7 +250,8 @@
 						Outputs="$(InputDir)\$(InputName)Parser.hpp"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating parser/lexer for terrain type library (.ttl) file format"

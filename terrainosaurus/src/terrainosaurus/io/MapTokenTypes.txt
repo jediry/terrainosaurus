@@ -1,0 +1,14 @@
+// $ANTLR 2.7.3: Map.g -> MapTokenTypes.txt$
+Map    // output token vocab name
+VERTEX="v"=4
+EOL("end of line")=5
+FACE="f"=6
+TERRAIN_TYPE="tt"=7
+NAME("name")=8
+SIGN=9
+NUMBER("number")=10
+DOT(".")=11
+DIGIT("digit")=12
+LETTER("letter")=13
+COMMENT("comment")=14
+WS=15

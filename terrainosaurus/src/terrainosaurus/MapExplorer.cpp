@@ -146,6 +146,66 @@ protected:
     GrayscaleImage image;
 };
 
+#if 0
+// Simple window displaying an image
+class ThreeDeeWindow : public inca::ui::GLUTWindow, public TerrainosaurusComponent {
+public:
+    // Constructor taking an image
+    ThreeDeeWindow(const GrayscaleImage &hf,
+                   const std::string &title = "Image Window")
+            : GLUTWindow(title), heightfield(NULL), HFsize(0) {
+
+        // Setup the heightfield
+        loadHeightfield(hf);
+
+        // Set the size of the window
+        Window::setSize(200, 200);
+    }
+
+    void loadHeightfield(const GrayscaleImage & hf) {
+        // Clean up a wrong-sized HF
+        if (HFsize != hf.size() && heightfield != NULL) {
+            delete heightfield;
+            heightfield = NULL;
+            HFsize = 0;
+        }
+        
+        // Allocate another, if needed
+        if (heightfield == NULL) {
+            HFsize = hf.size();
+            heightfield = new unsigned char[HFsize];
+        }
+        
+        // Copy over the data, converting to bytes
+        
+        image = linearMap(img, Array<float, 2>(0.0f, 1.0f));
+                inca::Array<float, 2> minMax = range(image);
+                cerr << "Range of output is " << minMax[0] << " -> " << minMax[1] << endl;
+        Window::setSize(image.size(0), image.size(1));
+        return;
+    }
+
+    void reshape(int width, int height) {
+        GLUTWindow::reshape(width, height);
+        GL::glMatrixMode(GL_PROJECTION);
+        GL::glLoadIdentity();
+        GL::gluPerspective(30, double(width) / height, 1.0, 1000.0);
+        GL::glMatrixMode(GL_MODELVIEW);
+    }
+
+    void display() {
+        GL::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        GL::
+
+        GL::glutSwapBuffers();
+    }
+
+protected:
+    unsigned char * heightfield;
+    int size;
+};
+#endif
 // End of nasty stuff (for a while).
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -211,22 +271,27 @@ void MapExplorer::constructInterface() {
         }
 #endif
 
-    globalSourceWindow.reset(new ImageWindow(originalImage, "Original"));
-    globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
-//    globalResultWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Derived"));
-//    globalDifferenceWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Difference"));
-    registerWindow(globalSourceWindow);
-    registerWindow(globalSourceWindow2);
-//    registerWindow(globalResultWindow);
-//    registerWindow(globalDifferenceWindow);
 
+// If this is 0, do normal GA stuff. Non-zero values are for Ryan's testing.
+#define WINX 0
+
+#if WINX == 0
+    globalSourceWindow.reset(new ImageWindow(originalImage, "Original"));
+    globalResultWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Derived"));
+    globalDifferenceWindow.reset(new ImageWindow(GrayscaleImage(100, 100), "Difference"));
+    registerWindow(globalSourceWindow);
+    registerWindow(globalResultWindow);
+    registerWindow(globalDifferenceWindow);
+
+#else
+    globalSourceWindow2.reset(new ImageWindow(originalImage2, "Original"));
+    registerWindow(globalSourceWindow2);
 
     ComplexImage dft1, dft2, dft3;
     GrayscaleImage mag1, ph1, mag2, ph2, mag3, ph3;
     WindowPtr win;
     bool DCInCenter = true;
 
-#define WINX 1
 #if WINX & 1
     dft1 = DFT(originalImage, DCInCenter);
     mag1 = blur(mag(dft1));
@@ -363,6 +428,7 @@ void MapExplorer::constructInterface() {
     win.reset(new ImageWindow(abs(log(mag(q1) - mag(q4))), "Diff 4-1 M"));
     win->setPosition(base + offsetX + offsetY);
     registerWindow(win);
+#endif
 #endif
 }
 
