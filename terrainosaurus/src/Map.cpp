@@ -95,3 +95,4 @@ void Map::refineBoundary(const Boundary &b, RefinedBoundary &rb) {
 void Map::refineIntersection(Intersection &i) {
     // Blah, blah, blah. printf, i++, rm -rf /*
 }
+

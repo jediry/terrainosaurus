@@ -50,6 +50,8 @@ public:
     void mouseTracked(unsigned int x, unsigned int y);
     void buttonPressed(Inca::Interface::MouseButton button,
                        unsigned int x, unsigned int y);
+    void keyPressed(Inca::Interface::KeyCode k,
+                    unsigned int x, unsigned int y);
 
 
 /*---------------------------------------------------------------------------*

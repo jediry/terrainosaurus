@@ -50,7 +50,7 @@ namespace Terrainosaurus {
  * launches it.
  *****************************************************************************/
 int main(int argc, char **argv) {
-    Terrainosaurus::GLUTMapEditor application;
-    application.initialize(argc, argv);
-    return application.run();
+    Terrainosaurus::GLUTMapEditor app;
+    app.initialize(argc, argv);
+    return app.run();
 }
