@@ -30,6 +30,9 @@ using namespace terrainosaurus;
 //IndexType calculateLevelOfDetail(double res) {
 #define TRIM 30     // How many pixels to trim from each side
 
+// Timer!
+#include <inca/util/Timer>
+
 
 // Constructor taking a filename
 TerrainSample::TerrainSample(const std::string & file)
@@ -63,14 +66,16 @@ TerrainSample & TerrainSample::operator=(const TerrainSample &ts) {
         _gradients  = ts._gradients;
 
         // Copy local heightfield properties
-        _localElevationMeans = ts._localElevationMeans;
-        _localGradientMeans  = ts._localGradientMeans;
-        _localElevationRanges         = ts._localElevationRanges;
+        _localElevationMeans    = ts._localElevationMeans;
+        _localGradientMeans     = ts._localGradientMeans;
+        _localElevationRanges   = ts._localElevationRanges;
+        _localSlopeRanges       = ts._localSlopeRanges;
 
         // Copy global heightfield properties
-        _globalElevationMeans = ts._globalElevationMeans;
-        _globalGradientMeans  = ts._globalGradientMeans;
-        _globalElevationRanges         = ts._globalElevationRanges;
+        _globalElevationMeans   = ts._globalElevationMeans;
+        _globalGradientMeans    = ts._globalGradientMeans;
+        _globalElevationRanges  = ts._globalElevationRanges;
+        _globalSlopeRanges      = ts._globalSlopeRanges;
     }
 
     return *this;
@@ -112,6 +117,10 @@ const VectorMap & TerrainSample::localElevationRange(IndexType lod) const {
     ensureAnalyzed();
     return _localElevationRanges[lod];
 };
+const VectorMap & TerrainSample::localSlopeRange(IndexType lod) const {
+    ensureAnalyzed();
+    return _localSlopeRanges[lod];
+}
 
 
 // Global heightfield property accessors
@@ -126,6 +135,10 @@ const VectorMap::ElementType & TerrainSample::globalGradientMean(IndexType lod) 
 const VectorMap::ElementType & TerrainSample::globalElevationRange(IndexType lod) const {
     ensureAnalyzed();
     return _globalElevationRanges[lod];
+}
+const VectorMap::ElementType & TerrainSample::globalSlopeRange(IndexType lod) const {
+    ensureAnalyzed();
+    return _globalSlopeRanges[lod];
 }
 
 
@@ -146,9 +159,11 @@ void TerrainSample::ensureLoaded() const {
         _localElevationMeans.resize(levelsOfDetail);
         _localGradientMeans.resize(levelsOfDetail);
         _localElevationRanges.resize(levelsOfDetail);
+        _localSlopeRanges.resize(levelsOfDetail);
         _globalElevationMeans.resize(levelsOfDetail);
         _globalGradientMeans.resize(levelsOfDetail);
         _globalElevationRanges.resize(levelsOfDetail);
+        _globalSlopeRanges.resize(levelsOfDetail);
 
         // Figure out what LOD to store this as
 //        IndexType lod = calculateLevelOfDetail(dem.resolution[0]);
@@ -169,11 +184,26 @@ void TerrainSample::ensureLoaded() const {
 // Perform on-demand analysis of the elevation data
 void TerrainSample::ensureAnalyzed() const {
     if (! analyzed()) {
+        Timer<float, false> total, phase;
+
         IndexType lod = 0;
         std::cerr << "Analyzing LOD " << lod << " from " << filename() << "...";
 
+        std::cerr << '\n';
+        total.start();
+
         // Calculate the per-cell gradient
+        std::cerr << "\tgradient...";
+        phase.start();
         _gradients[lod] = raster::gradient(_elevations[lod]);
+        phase.stop();
+        std::cerr << phase() << '\n';
+
+        std::cerr << "\tgradient magnitude...";
+        phase.reset(); phase.start();
+        Heightfield gradientMag = vmag(_gradients[lod]);
+        phase.stop();
+        std::cerr << phase() << '\n';
 
         // XXX HACK Calculate the local mean elevation, mean gradient and range
         SizeType windowSize = MapExplorer::instance().terrainLibrary()->windowSize(lod);
@@ -182,22 +212,73 @@ void TerrainSample::ensureAnalyzed() const {
         _localElevationMeans[lod].resize(lodSize);
         _localGradientMeans[lod].resize(lodSize);
         _localElevationRanges[lod].resize(lodSize);
+        _localSlopeRanges[lod].resize(lodSize);
         Pixel px, start, end;
+        std::cerr << "\tlocal elevation mean...";
+        phase.reset(); phase.start();
         for (px[0] = 0; px[0] < lodSize[0]; ++px[0])
             for (px[1] = 0; px[1] < lodSize[1]; ++px[1]) {
                 start = Pixel(px[0] - windowSize / 2, px[1] - windowSize / 2);
                 end = Pixel(start[0] + windowSize, start[1] + windowSize);
                 _localElevationMeans[lod](px) = mean(select(_elevations[lod], start, end));
+            }
+        phase.stop();
+        std::cerr << phase() << '\n';
+        std::cerr << "\tlocal gradient mean...";
+        phase.reset(); phase.start();
+        for (px[0] = 0; px[0] < lodSize[0]; ++px[0])
+            for (px[1] = 0; px[1] < lodSize[1]; ++px[1]) {
+                start = Pixel(px[0] - windowSize / 2, px[1] - windowSize / 2);
+                end = Pixel(start[0] + windowSize, start[1] + windowSize);
                 _localGradientMeans[lod](px) = mean(select(_gradients[lod], start, end));
+            }
+        phase.stop();
+        std::cerr << phase() << '\n';
+        std::cerr << "\tlocal elevation range...";
+        phase.reset(); phase.start();
+        for (px[0] = 0; px[0] < lodSize[0]; ++px[0])
+            for (px[1] = 0; px[1] < lodSize[1]; ++px[1]) {
+                start = Pixel(px[0] - windowSize / 2, px[1] - windowSize / 2);
+                end = Pixel(start[0] + windowSize, start[1] + windowSize);
                 _localElevationRanges[lod](px) = Vector2D(range(select(_elevations[lod], start, end)));
             }
+        phase.stop();
+        std::cerr << phase() << '\n';
+        std::cerr << "\tlocal slope range...";
+        phase.reset(); phase.start();
+        for (px[0] = 0; px[0] < lodSize[0]; ++px[0])
+            for (px[1] = 0; px[1] < lodSize[1]; ++px[1]) {
+                start = Pixel(px[0] - windowSize / 2, px[1] - windowSize / 2);
+                end = Pixel(start[0] + windowSize, start[1] + windowSize);
+                _localSlopeRanges[lod](px)   = Vector2D(range(select(gradientMag, start, end)));
+            }
+        phase.stop();
+        std::cerr << phase() << '\n';
 
         // Calculate the global mean elevation, mean gradient, and range
+        std::cerr << "\tglobal elevation mean...";
+        phase.reset(); phase.start();
         _globalElevationMeans[lod]  = mean(_elevations[lod]);
+        phase.stop();
+        std::cerr << phase() << '\n';
+        std::cerr << "\tglobal gradient mean...";
+        phase.reset(); phase.start();
         _globalGradientMeans[lod]   = mean(_gradients[lod]);
+        phase.stop();
+        std::cerr << phase() << '\n';
+        std::cerr << "\tglobal elevation range...";
+        phase.reset(); phase.start();
         _globalElevationRanges[lod] = VectorMap::ElementType(range(_elevations[lod]));
+        phase.stop();
+        std::cerr << phase() << '\n';
+        std::cerr << "\tglobal slope range...";
+        phase.reset(); phase.start();
+        _globalSlopeRanges[lod]     = VectorMap::ElementType(range(gradientMag));
+        phase.stop();
+        std::cerr << phase() << '\n';
 
         _analyzed = true;
-        std::cerr << "done\n";
+        total.stop();
+        std::cerr << "done..." << total() << '\n';
     }
 }

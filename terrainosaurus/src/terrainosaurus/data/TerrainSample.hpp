@@ -82,11 +82,13 @@ public:
     const Heightfield & localElevationMean(IndexType lod) const;
     const VectorMap &   localGradientMean(IndexType lod) const;
     const VectorMap &   localElevationRange(IndexType lod) const;
+    const VectorMap &   localSlopeRange(IndexType lod) const;
 
     // Global heightfield property accessors
     const Heightfield::ElementType & globalElevationMean(IndexType lod) const;
     const VectorMap::ElementType &   globalGradientMean(IndexType lod) const;
     const VectorMap::ElementType &   globalElevationRange(IndexType lod) const;
+    const VectorMap::ElementType &   globalSlopeRange(IndexType lod) const;
 
 protected:
     // Per-cell heightfield properties
@@ -97,11 +99,13 @@ protected:
     mutable std::vector<Heightfield>    _localElevationMeans;
     mutable std::vector<VectorMap>      _localGradientMeans;
     mutable std::vector<VectorMap>      _localElevationRanges;
+    mutable std::vector<VectorMap>      _localSlopeRanges;
 
     // Global heightfield properties
     mutable std::vector<Heightfield::ElementType>   _globalElevationMeans;
     mutable std::vector<VectorMap::ElementType>     _globalGradientMeans;
     mutable std::vector<VectorMap::ElementType>     _globalElevationRanges;
+    mutable std::vector<VectorMap::ElementType>     _globalSlopeRanges;
 };
 
 #endif

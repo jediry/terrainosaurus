@@ -98,6 +98,7 @@ namespace terrainosaurus {
     scalar_t elevationMean(const TerrainChromosome & c, IndexType i, IndexType j);
     const Vector2D & gradientMean(const TerrainChromosome & c, IndexType i, IndexType j);
     const Vector2D & elevationRange(const TerrainChromosome & c, IndexType i, IndexType j);
+    const Vector2D & slopeRange(const TerrainChromosome & c, IndexType i, IndexType j);
 
     // Heightfield measurement operations for a Gene.
     // These operations return average values of the data represented by the
@@ -105,6 +106,19 @@ namespace terrainosaurus {
     scalar_t elevationMean(const TerrainChromosome::Gene & g);
     Vector2D gradientMean(const TerrainChromosome::Gene & g);
     Vector2D elevationRange(const TerrainChromosome::Gene & g);
+    Vector2D slopeRange(const TerrainChromosome::Gene & g);
+
+/*---------------------------------------------------------------------------*
+ | Mike's chromosome methods: crossover and mutation
+ *---------------------------------------------------------------------------*/
+	  void Crossover(TerrainChromosome* l,TerrainChromosome* r,float ratio,IndexType lod,const Heightfield & pattern,const MapRasterization & raster);	
+		void Mutate(TerrainChromosome* c,float ratio, IndexType lod,const Heightfield & pattern,const MapRasterization & raster);        
+		void generateNewIndividuals(TerrainChromosome*** c,const MapConstPtr m, const MapRasterization raster,int start,int end);
+		float evaluateFitness_temporary(const TerrainChromosome & c);
+		void ComputeFitnessOfPopulation(TerrainChromosome** c, float* fitness_A,double& totalfitness);
+		void NormalizeFitnessValues(float* fitness_A, float* cumulativefitness_A, double totalfitness);		
+		float GetRandomFloat(float start,float end);
+		int GetRandomInt(int start,int end);
 };
 
 #endif
