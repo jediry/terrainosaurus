@@ -29,124 +29,201 @@
 #include "TerrainLibrary.hpp"
 using namespace terrainosaurus;
 
+// Import random number generator
+#include <inca/math/generator/RandomUniform>
+using inca::math::RandomUniform;
 
+
+/*****************************************************************************
+ * LOD specialization for TerrainLibrary
+ *****************************************************************************/
+ // Default constructor
+TerrainLibrary::LOD::LOD()
+    : LODBase<TerrainLibrary>() { }
+
+// Constructor linking back to TerrainLibrary
+TerrainLibrary::LOD::LOD(TerrainLibraryPtr tl, TerrainLOD lod)
+    : LODBase<TerrainLibrary>(tl, lod) { }
+
+
+// Access to related LOD objects
+TerrainType::LOD & TerrainLibrary::LOD::terrainType(IndexType index) {
+    return (*object().terrainType(index))[levelOfDetail()];
+}
+const TerrainType::LOD & TerrainLibrary::LOD::terrainType(IndexType index) const {
+    return (*object().terrainType(index))[levelOfDetail()];
+}
+TerrainType::LOD & TerrainLibrary::LOD::terrainType(const std::string & name) {
+    return (*object().terrainType(name))[levelOfDetail()];
+}
+const TerrainType::LOD & TerrainLibrary::LOD::terrainType(const std::string & name) const {
+    return (*object().terrainType(name))[levelOfDetail()];
+}
+TerrainType::LOD & TerrainLibrary::LOD::randomTerrainType() {
+    return (*object().randomTerrainType())[levelOfDetail()];
+}
+const TerrainType::LOD & TerrainLibrary::LOD::randomTerrainType() const {
+    return (*object().randomTerrainType())[levelOfDetail()];
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Loading & analysis
+ *---------------------------------------------------------------------------*/
+void TerrainLibrary::LOD::ensureLoaded() const {
+    if (! loaded()) {
+        for (IndexType i = 0; i < size(); ++i)
+            terrainType(i).ensureLoaded();
+        _loaded = true;
+    }
+}
+void TerrainLibrary::LOD::ensureAnalyzed() const {
+    if (! analyzed()) {
+        for (IndexType i = 0; i < size(); ++i)
+            terrainType(i).ensureAnalyzed();
+        _analyzed = true;
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Access to parent TerrainLibrary's properties
+ *---------------------------------------------------------------------------*/
+SizeType TerrainLibrary::LOD::size() const {
+    return object().size();
+}
+
+TerrainSeamPtr TerrainLibrary::LOD::terrainSeam(IndexType tt1,
+                                                IndexType tt2) {
+    return object().terrainSeam(tt1, tt2);
+}
+TerrainSeamConstPtr TerrainLibrary::LOD::terrainSeam(IndexType tt1,
+                                                     IndexType tt2) const {
+    return object().terrainSeam(tt1, tt2);
+}
+TerrainSeamPtr TerrainLibrary::LOD::terrainSeam(const std::string & tt1,
+                                                const std::string & tt2) {
+    return object().terrainSeam(tt1, tt2);
+}
+TerrainSeamConstPtr TerrainLibrary::LOD::terrainSeam(const std::string & tt1,
+                                                     const std::string & tt2) const {
+    return object().terrainSeam(tt1, tt2);
+}
+
+
+/*****************************************************************************
+ * TerrainLibrary containing all the TerrainType definitions
+ *****************************************************************************/
 /*---------------------------------------------------------------------------*
  | Constructors
  *---------------------------------------------------------------------------*/
 // Default constructor with optional number of TerrainTypes
-TerrainLibrary::TerrainLibrary(SizeType n) {
-    // Initialize the static data structures
-    addTerrainType("Void"); // This represents "empty space"
-
-    // Create a bunch of TerrainTypes, held by shared_ptr
-    for (IndexType i = 0; i < IndexType(n); ++i)
-        addTerrainType();       // Create a TT with default attributes
-
-    // Set up the LOD stuff
-    _maximumLevelOfDetail = 0;      // Crippled for right now
-    resolutions.push_back(scalar_t(1) / 30);
-    windowSizes.push_back(16);
-}
-
-
-/*---------------------------------------------------------------------------*
- | LOD-dependent query functions
- *---------------------------------------------------------------------------*/
-IndexType TerrainLibrary::maximumLevelOfDetail() {
-    return _maximumLevelOfDetail;
-}
-scalar_t TerrainLibrary::resolution(IndexType lod) {
-    return resolutions[lod];
-}
-int TerrainLibrary::windowSize(IndexType lod) {
-    return windowSizes[lod];
-}
+TerrainLibrary::TerrainLibrary(SizeType n) { }
 
 
 /*---------------------------------------------------------------------------*
  | Accessor functions
  *---------------------------------------------------------------------------*/
 // Number of TerrainTypes in the library
-SizeType TerrainLibrary::size() const { return types.size(); }
+SizeType TerrainLibrary::size() const { return terrainTypes().size(); }
 
 
 // Look up a TerrainType by name
-IndexType TerrainLibrary::indexOf(const string &name) const {
-    TerrainTypeList::const_iterator i;
-    for (i = types.begin(); i != types.end(); ++i)
-        if ((*i)->name() == name)
-            return i - types.begin();
+IndexType TerrainLibrary::indexOf(const std::string & name) const {
+    const TerrainTypeList & ttl = terrainTypes();
+    TerrainTypeList::const_iterator it;
+    for (it = ttl.begin(); it != ttl.end(); ++it)
+        if ((*it)->name() == name)
+            return it - ttl.begin();
     return -1;
 }
 
 
 // Access to the TerrainType objects
 const TerrainLibrary::TerrainTypeList & TerrainLibrary::terrainTypes() const {
-    return types;
-}
-TerrainTypeConstPtr TerrainLibrary::terrainType(IndexType i) const {
-    if (i < 0 || i >= IndexType(types.size()))
-        return TerrainTypeConstPtr();
-    else
-        return types[i];
+    // If this is the first time this was called, we need to do a litle extra
+    // initialization -- creating a "Void" TerrainType representing empty
+    // space. We can't do this in the constructor because the
+    // shared_from_this call in addTerrainType isn't valid in the
+    // constructor. Sigh.
+    static bool initialized = false;
+    if (! initialized) {
+        initialized = true;     // Have to do this FIRST, 'cause we call recursively
+        const_cast<TerrainLibrary*>(this)->addTerrainType("Void");
+    }
+    return _terrainTypes;
 }
 TerrainTypePtr TerrainLibrary::terrainType(IndexType i) {
-    if (i < 0 || i >= IndexType(types.size()))
+    if (i < 0 || i >= IndexType(terrainTypes().size()))
         return TerrainTypePtr();
     else
-        return types[i];
+        return _terrainTypes[i];
 }
-TerrainTypeConstPtr TerrainLibrary::terrainType(const string &tt) const {
+TerrainTypeConstPtr TerrainLibrary::terrainType(IndexType i) const {
+    if (i < 0 || i >= IndexType(terrainTypes().size()))
+        return TerrainTypeConstPtr();
+    else
+        return _terrainTypes[i];
+}
+TerrainTypePtr TerrainLibrary::terrainType(const std::string &tt) {
     return terrainType(indexOf(tt));
 }
-TerrainTypePtr TerrainLibrary::terrainType(const string &tt) {
+TerrainTypeConstPtr TerrainLibrary::terrainType(const std::string &tt) const {
     return terrainType(indexOf(tt));
+}
+TerrainTypePtr TerrainLibrary::randomTerrainType() {
+    RandomUniform<IndexType> randomIndex(0, terrainTypes().size() - 1);
+    return _terrainTypes[randomIndex()];
+}
+TerrainTypeConstPtr TerrainLibrary::randomTerrainType() const {
+    RandomUniform<IndexType> randomIndex(0, terrainTypes().size() - 1);
+    return _terrainTypes[randomIndex()];
 }
 
 
 // Access to the TerrainSeam objects
 const TerrainLibrary::TerrainSeamMatrix & TerrainLibrary::terrainSeams() const {
-    return seams;
+    return _terrainSeams;
 }
-TerrainSeamConstPtr TerrainLibrary::terrainSeam(IndexType tt1,
-                                                IndexType tt2) const {
+TerrainSeamPtr TerrainLibrary::terrainSeam(IndexType tt1, IndexType tt2) {
     // We must make sure that the first index is the greater of the two,
     // since this is how the TerrainSeams are stored in the triangular
     // matrix described above.
     IndexType ttMajor = std::max(tt1, tt2),
-            ttMinor = std::min(tt1, tt2);
-    if (ttMinor < 0 || ttMajor >= IndexType(types.size()))
-        return TerrainSeamConstPtr();
-    else
-        return seams[ttMajor][ttMinor];
-}
-TerrainSeamPtr TerrainLibrary::terrainSeam(IndexType tt1, IndexType tt2) {
-    // See previous comment
-    IndexType ttMajor = std::max(tt1, tt2),
-            ttMinor = std::min(tt1, tt2);
-    if (ttMinor < 0 || ttMajor >= IndexType(types.size()))
+              ttMinor = std::min(tt1, tt2);
+    if (ttMinor < 0 || ttMajor >= IndexType(terrainTypes().size()))
         return TerrainSeamPtr();
     else
-        return seams[ttMajor][ttMinor];
+        return _terrainSeams[ttMajor][ttMinor];
 }
-TerrainSeamConstPtr TerrainLibrary::terrainSeam(const string &tt1,
-                                                const string &tt2) const {
+TerrainSeamConstPtr TerrainLibrary::terrainSeam(IndexType tt1,
+                                                IndexType tt2) const {
+    // See previous comment
+    IndexType ttMajor = std::max(tt1, tt2),
+              ttMinor = std::min(tt1, tt2);
+    if (ttMinor < 0 || ttMajor >= IndexType(terrainTypes().size()))
+        return TerrainSeamConstPtr();
+    else
+        return _terrainSeams[ttMajor][ttMinor];
+}
+TerrainSeamPtr TerrainLibrary::terrainSeam(const std::string &tt1,
+                                           const std::string &tt2) {
     return terrainSeam(indexOf(tt1), indexOf(tt2));
 }
-TerrainSeamPtr TerrainLibrary::terrainSeam(const string &tt1,
-                                           const string &tt2) {
+TerrainSeamConstPtr TerrainLibrary::terrainSeam(const std::string &tt1,
+                                                const std::string &tt2) const {
     return terrainSeam(indexOf(tt1), indexOf(tt2));
-}
-TerrainSeamConstPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
-                                                TerrainTypeConstPtr tt2) const {
-    IDType id1 = (tt1 == NULL ? 0 : tt1->id());
-    IDType id2 = (tt2 == NULL ? 0 : tt2->id());
-    return terrainSeam(id1, id2);
 }
 TerrainSeamPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
                                            TerrainTypeConstPtr tt2) {
-    IDType id1 = (tt1 == NULL ? 0 : tt1->id());
-    IDType id2 = (tt2 == NULL ? 0 : tt2->id());
+    IDType id1 = (tt1 == NULL ? 0 : tt1->terrainTypeID());
+    IDType id2 = (tt2 == NULL ? 0 : tt2->terrainTypeID());
+    return terrainSeam(id1, id2);
+}
+TerrainSeamConstPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
+                                                TerrainTypeConstPtr tt2) const {
+    IDType id1 = (tt1 == NULL ? 0 : tt1->terrainTypeID());
+    IDType id2 = (tt2 == NULL ? 0 : tt2->terrainTypeID());
     return terrainSeam(id1, id2);
 }
 
@@ -157,30 +234,30 @@ TerrainSeamPtr TerrainLibrary::terrainSeam(TerrainTypeConstPtr tt1,
 TerrainTypePtr TerrainLibrary::addTerrainType(const string &name) {
     cerr << "Adding terrain type " << name << endl;
 
+    TerrainLibraryPtr self = shared_from_this();
+
     // Create a new TerrainType object...
-    TerrainTypePtr tt(new TerrainType(types.size(), name));
-    types.push_back(tt);
+    TerrainTypePtr tt(new TerrainType(self, _terrainTypes.size(), name));
+    _terrainTypes.push_back(tt);
 
     // ...then create a TerrainSeam for each new combination.
-    seams.resize(seams.size() + 1);     // Expand to include one more vector
-    for (IndexType i = 0; i < IndexType(types.size()); ++i) {// Fill with TSTs
-        TerrainSeamPtr ts(new TerrainSeam(types.size() - 1, i));
-        seams.back().push_back(ts);
+    _terrainSeams.resize(_terrainSeams.size() + 1);     // Expand to include one more vector
+    for (IndexType i = 0; i < IndexType(_terrainTypes.size()); ++i) {// Fill with TSTs
+        TerrainSeamPtr ts(new TerrainSeam(self, _terrainTypes.size() - 1, i));
+        _terrainSeams.back().push_back(ts);
     }
 
     // Finally, put NULL in for the diagonal (no seam between identical TTs)
-    seams.back().push_back(TerrainSeamPtr());
+    _terrainSeams.back().push_back(TerrainSeamPtr());
 
     // Finally, pass along the newly created TT
     return tt;
 }
 
 TerrainTypePtr TerrainLibrary::addTerrainType(TerrainTypePtr tt) {
+    cerr << "addTerrainType(TTP) not implemented...not sure why..." << endl;
     return TerrainTypePtr();
     // FIXME: this is broken! -- copy c_tor for props, and appropriate add/name/index
 //    add();                  // Create a new TerrainType and its TerrainTypeSeams
-//    *types.back() = *tt;    // Copy the attributes from 'tt'
+//    *_terrainTypes.back() = *tt;    // Copy the attributes from 'tt'
 }
-
-void TerrainLibrary::ensureLoaded(IndexType tt) const { types[tt]->ensureLoaded(); }
-void TerrainLibrary::ensureLoaded(const string &tt) const { ensureLoaded(indexOf(tt)); }

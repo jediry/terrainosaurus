@@ -3,152 +3,252 @@
 using namespace terrainosaurus;
 
 // Import raster operators
-#include <inca/raster/operators/transformation>
 #include <inca/raster/operators/statistic>
-#include <inca/raster/operators/selection>
-#include <inca/raster/operators/gaussian>
+#include <inca/raster/operators/select>
+#include <inca/raster/generators/gaussian>
 using namespace inca::raster;
 
 
 /*---------------------------------------------------------------------------*
- | Static LOD-dependent query functions
- *---------------------------------------------------------------------------*/
-bool TerrainChromosome::staticInitialized = false;
-std::vector<scalar_t>       TerrainChromosome::geneRadii;
-std::vector<GrayscaleImage> TerrainChromosome::geneMasks;
-
-void TerrainChromosome::initializeStatic() {
-    geneRadii.push_back(16);
-
-    // Generate an appropriately-sized alpha mask
-    int lod = 0;
-    int maskSize = 2 * int(geneRadius(lod));
-    geneMasks.push_back(GrayscaleImage(maskSize, maskSize));
-    GrayscaleImage & mask = geneMasks[0];
-#if 0
-    for (int i = 0; i < mask.size(0); ++i)
-        for (int j = 0; j < mask.size(1); ++j) {
-            scalar_t dx, dy;
-            dx = abs(i - mask.size(0) / 2) / geneRadius(lod);
-            dy = abs(j - mask.size(1) / 2) / geneRadius(lod);
-            if (dx < 0) dx = 0;
-            if (dy < 0) dy = 0;
-#if 0
-            // Frustum
-            if (dx < mask.size(0) / 4)  dx = 1.0;
-            else                        dx = (mask.size(0) / 2 - dx) * 2;
-            if (dy < mask.size(1) / 4)  dy = 1.0;
-            else                        dy = (mask.size(1) / 2 - dy) * 2;
-            mask(i, j) = dx * dy;
-#elif 0
-            // r^1 falloff
-            mask(i, j) = scalar_t(1) - sqrt(dx * dx + dy * dy);
-            if (mask(i, j) < 0) mask(i, j) = 0;
-#elif 1
-            // r^2 falloff
-            mask(i, j) = scalar_t(1) - (dx*dx + dy*dy);
-            if (mask(i, j) < 0) mask(i, j) = 0;
-#elif 0
-            // Product (?)
-            mask(i, j) = dx * dy;
-#else
-            // Constant
-            mask(i, j) = 1.0f;
-#endif
-        }
-#else
-    mask = select(gaussian(Array<scalar_t, 2>(maskSize / 2.0f),
-                           Array<scalar_t, 2>(maskSize / 8.0f)),
-                  Array<int, 2>(maskSize));
-#endif
-//    mask = linearMap(mask, Array<scalar_t, 2>(0.0f, 1.0f));
-    cerr << "Range of mask is " << range(mask) << endl;
-
-    staticInitialized = true;
-}
-
-scalar_t TerrainChromosome::geneRadius(IndexType lod) {
-    return geneRadii[0];
-}
-scalar_t TerrainChromosome::geneOverlapFactor(IndexType lod) {
-    return scalar_t(0.5);
-}
-SizeType TerrainChromosome::geneSpacing(IndexType lod) {
-    return SizeType(2 * geneRadius(lod) * (1 - geneOverlapFactor(lod)));
-}
-GrayscaleImage * TerrainChromosome::geneMask(IndexType lod) {
-    return & geneMasks[0];
-}
-
-
-/*---------------------------------------------------------------------------*
- | TerrainChromosome functions
+ | TerrainChromosome constructors
  *---------------------------------------------------------------------------*/
 // Constructor
-TerrainChromosome::TerrainChromosome() {
-    if (! staticInitialized)
-        initializeStatic();
-}
+TerrainChromosome::TerrainChromosome()
+    : _alive(false), _map(NULL), _pattern(NULL) { }
 
 // Copy constructor
-TerrainChromosome::TerrainChromosome(const TerrainChromosome &tc)
-        : _levelOfDetail(tc._levelOfDetail), _pattern(tc._pattern) {
-    if (! staticInitialized)
-        initializeStatic();
+TerrainChromosome::TerrainChromosome(const TerrainChromosome & tc) {
+    // We're alive only if he is
+    _alive = tc.isAlive();
 
     // Make a grid of genes the right size and claim each of them
     resize(tc.sizes(), false);
+
+    // Copy pointers to data objects
+    setPattern(tc.pattern());
+    setMap(tc.map());
 
     // Now copy tc's gene data
     genes() = tc.genes();
 }
 
-void TerrainChromosome::resize(const Dimension &sz,
-                               bool preserveContents) {
-    genes().resize(sz, preserveContents); // Become the new size
-
-    // Inform each Gene of its parent and coordinates
+// Notify each gene of its place in the world
+void TerrainChromosome::claimGenes() {
+    // Inform each Gene of its parent, lod, and coordinates
     Pixel idx;
-    for (idx[0] = 0; idx[0] < sz[0]; ++idx[0])
-        for (idx[1] = 0; idx[1] < sz[1]; ++idx[1])
-            gene(idx).claim(this, idx);
-}
-void TerrainChromosome::resize(SizeType sx, SizeType sy,
-                               bool preserveContents) {
-    resize(Dimension(sx, sy), preserveContents);
+    TerrainLOD lod = levelOfDetail();
+    for (idx[0] = 0; idx[0] < size(0); ++idx[0])
+        for (idx[1] = 0; idx[1] < size(0); ++idx[1])
+            gene(idx).claim(this, lod, idx);
 }
 
 
 /*---------------------------------------------------------------------------*
  | Gene functions
  *---------------------------------------------------------------------------*/
+void TerrainChromosome::resize(const Dimension &sz,
+                               bool preserveContents) {
+    genes().setSizes(sz, preserveContents); // Become the new size
+    claimGenes();                           // Notify the newcomers
+}
+void TerrainChromosome::resize(SizeType si, SizeType sj,
+                               bool preserveContents) {
+    resize(Dimension(si, sj), preserveContents);
+}
+
+// Access to the multivariate fitness measure of the chromosome
+TerrainChromosome::FitnessMeasure & TerrainChromosome::fitness() {
+    return _fitness;
+}
+const TerrainChromosome::FitnessMeasure & TerrainChromosome::fitness() const {
+    return _fitness;
+}
+
+// What level of detail are we?
+TerrainLOD TerrainChromosome::levelOfDetail() const {
+    return _lod;
+}
+void TerrainChromosome::setLevelOfDetail(TerrainLOD lod) {
+    if (lod != _lod) {
+        _lod = lod;
+        claimGenes();       // Go tell it on the mountain...
+    }                       // that our L-O-D has changed
+}
+
+// Access to the heightfield properties of the chromosome
+const Heightfield::SizeArray & TerrainChromosome::heightfieldSizes() const {
+    return pattern().sizes();
+}
+
+
+// Access to the pattern sample we're trying to match
+const TerrainSample::LOD & TerrainChromosome::pattern() const {
+    return *_pattern;
+}
+void TerrainChromosome::setPattern(const TerrainSample::LOD & p) {
+    _pattern = &p;
+    if (_pattern)
+        setLevelOfDetail(_pattern->levelOfDetail());
+}
+
+// Access to the rasterized map
+const MapRasterization::LOD & TerrainChromosome::map() const {
+    return *_map;
+}
+void TerrainChromosome::setMap(const MapRasterization::LOD & m) {
+    _map = &m;
+    if (_map)
+        setLevelOfDetail(_map->levelOfDetail());
+}
+
+// Life and death kinda stuff
+bool TerrainChromosome::isAlive() const {
+    return _alive;
+}
+void TerrainChromosome::setAlive(bool alive) {
+    _alive = alive;
+}
+
+
+/*****************************************************************************
+ * Gene class corresponding to TerrainChromosome
+ *****************************************************************************/
+/*---------------------------------------------------------------------------*
+ | Connections to TerrainChromosome
+ *---------------------------------------------------------------------------*/
 // Function called by chromosome to claim ownership of the gene
-void TerrainChromosome::Gene::claim(TerrainChromosome * p, const Pixel & idx) {
+void TerrainChromosome::Gene::claim(TerrainChromosome * p,
+                                    TerrainLOD lod,
+                                    const Pixel & idx) {
     _parent = p;
+    _levelOfDetail = lod;
     _indices = idx;
 }
 
-// Assignment operator
+// Access to the parent TerrainChromosome
+TerrainChromosome & TerrainChromosome::Gene::parent() {
+    return *_parent;
+}
+const TerrainChromosome & TerrainChromosome::Gene::parent() const {
+    return *_parent;
+}
+
+// Where in our parent's grid are we?
+const Pixel & TerrainChromosome::Gene::indices() const { return _indices; }
+
+
+/*---------------------------------------------------------------------------*
+ | Source heightfield & terrain-type data
+ *---------------------------------------------------------------------------*/
+// Chromosome level of detail
+TerrainLOD TerrainChromosome::Gene::levelOfDetail() const { return _levelOfDetail; }
+
+// What TerrainType and TerrainSample do we represent?
+const TerrainType::LOD & TerrainChromosome::Gene::terrainType() const {
+    return terrainSample().terrainType();
+}
+const TerrainSample::LOD & TerrainChromosome::Gene::terrainSample() const {
+    return *_terrainSample;
+}
+void TerrainChromosome::Gene::setTerrainSample(const TerrainSample::LOD & ts) {
+    _terrainSample = & ts;
+}
+
+
+/*---------------------------------------------------------------------------*
+ | Data fields
+ *---------------------------------------------------------------------------*/
+// Assignment operator (only copies data fields)
 TerrainChromosome::Gene &
 TerrainChromosome::Gene::operator=(const TerrainChromosome::Gene &g) {
     // Source data
-    terrainType         = g.terrainType;
-    sourceSample        = g.sourceSample;
-    sourceCoordinates   = g.sourceCoordinates;
-    levelOfDetail       = g.levelOfDetail;
+    setTerrainSample(g.terrainSample());
 
     // Transformation data
-    rotation    = g.rotation;
-    scale       = g.scale;
-    offset      = g.offset;
-
-    // Trimming alpha mask
-    mask = g.mask;
-
-    // Target data
-    targetJitter = g.targetJitter;
-    targetCoordinates = indices() * geneSpacing(levelOfDetail) + targetJitter;
+    setSourceCenter(g.sourceCenter());
+    setRotation(g.rotation());
+    setScale(g.scale());
+    setOffset(g.offset());
+    setJitter(g.jitter());
 
     return *this;
 }
 
+// The pixel blending mask we're using to splat this gene.
+const GrayscaleImage & TerrainChromosome::Gene::mask() const {
+    return gaussianMask(levelOfDetail());
+}
+
+// The pixel indices (within the source sample) of the center of our data
+const Pixel & TerrainChromosome::Gene::sourceCenter() const {
+    return _sourceCenter;
+}
+void TerrainChromosome::Gene::setSourceCenter(const Pixel & p) {
+    _sourceCenter = p;
+}
+
+// The pixel indices (within the resulting, generated heightfield) where
+// this Gene will center its data. This field cannot be set directly, but
+// is derived from the gene's indices() and jitter().
+const Pixel & TerrainChromosome::Gene::targetCenter() const {
+    return _targetCenter;
+}
+
+// A scalar amount, in radians, by which to rotate the elevation data.
+scalar_t TerrainChromosome::Gene::rotation() const {
+    return _rotation;
+}
+void TerrainChromosome::Gene::setRotation(scalar_arg_t r) {
+    _rotation = r;
+}
+
+
+// A scalar factor by which to scale the elevation data around its local
+// mean. In other words, the mean will remain the same, but the range will
+// increase or decrease.
+scalar_t TerrainChromosome::Gene::scale() const {
+    return _scale;
+}
+void TerrainChromosome::Gene::setScale(scalar_arg_t s) {
+    if (s > scalar_t(0))    _scale = s;
+    else                    _scale = scalar_t(1);
+}
+
+// A scalar amount by which to offset the elevation data from its local
+// mean. The elevation range is not changed by this.
+scalar_t TerrainChromosome::Gene::offset() const {
+    return _offset;
+}
+void TerrainChromosome::Gene::setOffset(scalar_arg_t o) {
+    _offset = o;
+}
+
+// An amount in pixels by which to jitter the gene's target center-point.
+const Pixel & TerrainChromosome::Gene::jitter() const {
+    return _jitter;
+}
+void TerrainChromosome::Gene::setJitter(const Pixel & j) {
+    _jitter = j;
+    _targetCenter  = indices() * geneSpacing(levelOfDetail()) + j;
+}
+
+
+/*****************************************************************************
+ * Free gene query functions
+ *****************************************************************************/
+int terrainosaurus::geneSpacing(TerrainLOD lod) {
+    return int(2 * geneRadius(lod) * (1 - geneOverlapFactor(lod)));
+}
+scalar_t terrainosaurus::geneRadius(TerrainLOD lod) {
+    return windowSize(lod);
+}
+scalar_t terrainosaurus::geneOverlapFactor(TerrainLOD lod) {
+    return scalar_t(0.5);
+}
+
+void terrainosaurus::swap(TerrainChromosome::Gene & g1,
+                          TerrainChromosome::Gene & g2) {
+    TerrainChromosome::Gene temp = g1;
+    g1 = g2;
+    g2 = temp;
+}

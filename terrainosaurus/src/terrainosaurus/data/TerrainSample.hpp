@@ -7,111 +7,281 @@
  *      distribute this file freely for educational purposes.
  *
  * Description:
- *      A TerrainSample represents a single, real-world sample of terrain
- *      data. In addition to the height data
+ *      A TerrainSample represents a single sample of terrain data, either
+ *      loaded from a data file or constructed in-memory. In addition to the
+ *      elevation data, it also stores a number of global and local statistics
+ *      derived from the elevation data (e.g., gradient, range, etc.).
+ *
+ *      A TerrainSample is a multi-resolution object, holding multiple levels
+ *      of detail (LOD) of its data, in much the same way that mipmaps do for
+ *      texture data. See TerrainLOD.hpp for more information.
+ *
+ * Usage:
+ *      Because a TerrainSample has multiple levels of detail, to access a
+ *      property of the object requires you to specify which LOD you are
+ *      interested in (a zero-based, integer index, with zero being the finest
+ *      LOD). For example, to access a pixel of elevation data in the second
+ *      LOD:
+ *
+ *          scalar_t e = ts.elevation(LOD_30m)(10, 10);
+ *
+ *      However, since you will often be using only one LOD at a time, it
+ *      would be much more convenient not to have to specify the LOD index with
+ *      every function call. Therefore, TerrainSample provides an interface
+ *      called "LOD" encapsulating all the attributes of a particular LOD (This
+ *      is implemented as a lightweight proxy class, so all writes and reads
+ *      operate on the actual data, not a copy). To access the same data as
+ *      in the above example, any of the following forms may be used:
+ *
+ *          TerrainSample::LOD lod = ts[LOD_30m];
+ *          scalar_t e0 = lod.elevation()(10, 10);      // Get whole raster
+ *          scalar_t e1 = lod.elevation(10, 10);        // (i, j) coordinates
+ *          scalar_t e2 = lod.elevation(Pixel(10, 10)); // Array coordinates
  */
 
-#ifndef TERRAINOSAURUS_TERRAIN_SAMPLE
-#define TERRAINOSAURUS_TERRAIN_SAMPLE
+#ifndef TERRAINOSAURUS_DATA_TERRAIN_SAMPLE
+#define TERRAINOSAURUS_DATA_TERRAIN_SAMPLE
 
 // Import library configuration
 #include <terrainosaurus/terrainosaurus-common.h>
+
+// Import LOD template declaration
+#include "TerrainLOD.hpp"
 
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
     class TerrainSample;
+    class CurveTracker;
+    template <typename S> class Curve;
+    template <> class LOD<TerrainSample>;   // Specialization of LOD template
 
     // Pointer typedefs
     typedef shared_ptr<TerrainSample>       TerrainSamplePtr;
     typedef shared_ptr<TerrainSample const> TerrainSampleConstPtr;
 };
 
-// Import TerrainType class
+// Import related data class definitions
 #include "TerrainType.hpp"
 
+// Import statistics object definition
+#include <inca/math/statistics/Statistics>
 
-class terrainosaurus::TerrainSample {
+
+template <typename S>
+class terrainosaurus::Curve {
+public:
+    typedef S Scalar;
+    typedef math::Point<Scalar, 4> Point;
+
+    Curve(int nSc) : atScale(nSc) { }
+
+    std::vector<Point> points;
+    std::vector<int> atScale;
+    math::Statistics<Scalar> lengthStats, strengthStats, scaleStats;
+};
+
+
+// Edge-detection tracker class
+class terrainosaurus::CurveTracker {
+public:
+    typedef Curve<scalar_t> Curve;
+    typedef Curve::Point    Point;
+
+
+    CurveTracker() { }
+    CurveTracker(GrayscaleImage * img, std::vector<scalar_t> sc);
+
+    // Data
+    std::vector<scalar_t> scales;
+    std::vector<int> atScale;
+    std::vector<Curve> curves;
+    GrayscaleImage * image;
+    math::Statistics<scalar_t> lengthStats, strengthStats, scaleStats;
+
+    template <class P>
+    void operator()(const P & p, scalar_t s) {
+        Point px(p[0], p[1], p[2], s);
+        add(px);
+    }
+
+    void begin();
+    void add(const Point & p);
+    void end();
+    void done();
+    void print(std::ostream & os);
+};
+
+
+/*****************************************************************************
+ * LOD specialization for TerrainSample
+ *****************************************************************************/
+template <>
+class terrainosaurus::LOD<terrainosaurus::TerrainSample>
+    : public LODBase<TerrainSample> {
+/*---------------------------------------------------------------------------*
+ | Type & constant definitions
+ *---------------------------------------------------------------------------*/
+public:
+    // How many "buckets" do we break up the frequency spectrum into?
+    static const SizeType frequencyBands = 10;
+
+    typedef Heightfield::SizeArray              SizeArray;
+    typedef Heightfield::IndexArray             IndexArray;
+    typedef Heightfield::ElementType            Scalar;
+    typedef VectorMap::ElementType              Vector;
+    typedef math::Statistics<Scalar>            ScalarStatistics;
+    typedef math::Statistics<Vector>            VectorStatistics;
+    typedef inca::Array<Scalar, frequencyBands> FrequencySpectrum;
+
+
+/*---------------------------------------------------------------------------*
+ | Constructors & fundmental properties
+ *---------------------------------------------------------------------------*/
+public:
+    // Constructors
+    explicit LOD();
+    explicit LOD(TerrainSamplePtr ts, TerrainLOD lod);
+
+    // Access to related LOD objects
+          LOD<TerrainType> & terrainType();
+    const LOD<TerrainType> & terrainType() const;
+
+
+/*---------------------------------------------------------------------------*
+ | Loading & analysis
+ *---------------------------------------------------------------------------*/
+public:
+    // Initialization & analysis of elevation data
+    template <typename R>
+    void createFromRaster(const R & r) { createFromRaster(Heightfield(r)); }
+    void createFromRaster(const Heightfield & hf);
+    void loadFromFile(const std::string & filename);
+    void storeToFile(const std::string & filename) const;
+    void resampleFromLOD(TerrainLOD lod);
+    void analyze();
+
+    // Lazy loading & analysis mechanism
+    void ensureLoaded() const;
+    void ensureAnalyzed() const;
+
+
+/*---------------------------------------------------------------------------*
+ | Loaded & analyzed data
+ *---------------------------------------------------------------------------*/
+public:
+    // Raster geometry accessors
+    SizeType size() const;
+    SizeType size(IndexType d) const;
+    IndexType base(IndexType d) const;
+    IndexType extent(IndexType d) const;
+    const SizeArray & sizes() const;
+    const IndexArray & bases() const;
+    const IndexArray & extents() const;
+
+    // FIXME Orphaned function (needs other versions)
+    void setSizes(const SizeArray & sz);
+
+    // Per-cell sample data accessors
+    RASTER_PROPERTY_ACCESSORS(Heightfield, elevation)
+    RASTER_PROPERTY_ACCESSORS(VectorMap,   gradient)
+    RASTER_PROPERTY_ACCESSORS(Heightfield, localElevationMean)
+    RASTER_PROPERTY_ACCESSORS(VectorMap,   localGradientMean)
+    RASTER_PROPERTY_ACCESSORS(VectorMap,   localElevationRange)
+    RASTER_PROPERTY_ACCESSORS(VectorMap,   localSlopeRange)
+
+    // Global sample data accessors
+    const FrequencySpectrum & frequencyContent() const;
+    const ScalarStatistics & globalElevationStatistics() const;
+    const ScalarStatistics & globalSlopeStatistics() const;
+    const VectorStatistics & globalGradientStatistics() const;
+    const CurveTracker & edges() const;
+    const CurveTracker & ridges() const;
+
+protected:
+    // Per-cell sample data
+    Heightfield _elevations, _localElevationMeans;
+    VectorMap   _gradients, _localGradientMeans,
+                _localElevationRanges, _localSlopeRanges;
+
+    // Global sample data
+    FrequencySpectrum   _frequencySpectrum;
+    ScalarStatistics    _globalElevationStatistics, _globalSlopeStatistics;
+    VectorStatistics    _globalGradientStatistics;
+    CurveTracker        _edges, _ridges;
+
+
+/*---------------------------------------------------------------------------*
+ | Access to parent TerrainSample properties
+ *---------------------------------------------------------------------------*/
+public:
+    std::string name() const;
+    IndexType index() const;
+};
+
+
+class terrainosaurus::TerrainSample
+        : public MultiResolutionObject<TerrainSample> {
+/*---------------------------------------------------------------------------*
+ | Type & constant definitions
+ *---------------------------------------------------------------------------*/
 private:
     // Set up this object to own properties
     PROPERTY_OWNING_OBJECT(TerrainSample);
 
 
 /*---------------------------------------------------------------------------*
- | Constructors & assignment operator
+ | Constructors
  *---------------------------------------------------------------------------*/
 public:
-    // Constructors
-    explicit TerrainSample(const std::string & file,
-                           TerrainTypePtr tt = TerrainTypePtr());
-    explicit TerrainSample(const Heightfield & hf,
-                           TerrainTypePtr tt = TerrainTypePtr());
+    // Create an empty TerrainSample
+    explicit TerrainSample();
 
-    // Assignment operator overload
-    TerrainSample & operator=(const TerrainSample &ts);
+    // Create a TerrainSample that will be loaded from a file, on demand
+    explicit TerrainSample(const std::string & file);
+
+    // Create a TerrainSample from a heightfield representing a particular LOD
+    explicit TerrainSample(const Heightfield & hf, TerrainLOD lod);
 
 
 /*---------------------------------------------------------------------------*
- | Loading/analysis (lazily performed)
+ | Lazy loading and analysis
  *---------------------------------------------------------------------------*/
 public:
-    // Lazy evaluation status
-    bool loaded() const;        // Do we have heightfield data?
-    bool analyzed() const;      // Have we analyzed it?
+    // Loading from DEM files
+    const std::string & filename() const;
+    void loadFromFile(const std::string & filename);
 
-    // Functions to force evalutation
-    void ensureLoaded() const;      // If we've not loaded, do it now
-    void ensureAnalyzed() const;    // If we've not analyzed, do it now
+    // Lazy loading & analysis mechanism
+    bool fileLoaded() const;
+    void ensureFileLoaded() const;
 
 protected:
-    mutable bool _loaded;           // Have we loaded this?
-    mutable bool _analyzed;         // Have we analyzed it yet?
+    // File loading
+    std::string _filename;
+    bool _fileLoaded;
 
 
 /*---------------------------------------------------------------------------*
  | Property accessor functions
  *---------------------------------------------------------------------------*/
 public:
-    // Properties
-    ro_property(std::string, filename, "");             // The data file
-    ro_property(IndexType, levelsOfDetail, 1);          // How many LODs?
-    ro_ptr_property(TerrainType, terrainType, NULL);    // What do I belong to?
+    // Associated terrain type
+    TerrainTypePtr terrainType();
+    TerrainTypeConstPtr terrainType() const;
+    void setTerrainType(TerrainTypePtr tt);
 
-    // LOD property accessors
-    const Heightfield::SizeArray & sizes(IndexType lod) const;
+    std::string name() const;
 
-    // Per-cell heightfield property accessors
-    const Heightfield & elevation(IndexType lod) const;
-    const VectorMap &   gradient(IndexType lod) const;
-
-    // Local (windowed) heightfield property accessors
-    const Heightfield & localElevationMean(IndexType lod) const;
-    const VectorMap &   localGradientMean(IndexType lod) const;
-    const VectorMap &   localElevationRange(IndexType lod) const;
-    const VectorMap &   localSlopeRange(IndexType lod) const;
-
-    // Global heightfield property accessors
-    const Heightfield::ElementType & globalElevationMean(IndexType lod) const;
-    const VectorMap::ElementType &   globalGradientMean(IndexType lod) const;
-    const VectorMap::ElementType &   globalElevationRange(IndexType lod) const;
-    const VectorMap::ElementType &   globalSlopeRange(IndexType lod) const;
+    IndexType index() const;
+    void setIndex(IndexType idx);
 
 protected:
-    // Per-cell heightfield properties
-    mutable std::vector<Heightfield>    _elevations;
-    mutable std::vector<VectorMap>      _gradients;
+    // Associated terrain type
+    TerrainTypePtr _terrainType;
 
-    // Local (windowed) heightfield properties
-    mutable std::vector<Heightfield>    _localElevationMeans;
-    mutable std::vector<VectorMap>      _localGradientMeans;
-    mutable std::vector<VectorMap>      _localElevationRanges;
-    mutable std::vector<VectorMap>      _localSlopeRanges;
-
-    // Global heightfield properties
-    mutable std::vector<Heightfield::ElementType>   _globalElevationMeans;
-    mutable std::vector<VectorMap::ElementType>     _globalGradientMeans;
-    mutable std::vector<VectorMap::ElementType>     _globalElevationRanges;
-    mutable std::vector<VectorMap::ElementType>     _globalSlopeRanges;
+    // Index within TerrainType
+    IndexType _index;
 };
 
 #endif

@@ -6,24 +6,24 @@
 namespace GA
 {
 	///<Summary> The chromosome class is a collection of floating point numbers </Summary>
-	///<Features> Fixed length chromosome </Features>	
-	
+	///<Features> Fixed length chromosome </Features>
+
 	class Chromosome
 	{
 		public:
 			Chromosome(){ genes = NULL; fitness = 0.0; length = 0;};
 			void Initialize(float* fA_genes, int i_length);
-			~Chromosome(){delete[] genes;};		
+			~Chromosome(){delete[] genes;};
 			void MutateGene(int i_offset);
 			double GetRand(double d_max);
 			double GetFitness(float f_UserSmoothnessParam)
 			{
-				if(fitness == 0.0) 
-				{ 
+				if(fitness == 0.0)
+				{
 					return EvaluateFitness(f_UserSmoothnessParam);
-				} 
+				}
 				return fitness;
-			};						
+			};
 			void PrintDebugString()
 			{
 				for(int i = 0; i < length ;i++)
@@ -39,8 +39,8 @@ namespace GA
 			float* genes;
 		private:
 			float AbsFloat(float f_value) { if(f_value < 0.0){f_value *= -1;} return f_value;};
-			double EvaluateFitness(float f_UserSmoothnessParam);			
-			double fitness;						
+			double EvaluateFitness(float f_UserSmoothnessParam);
+			double fitness;
 	};
 	float* Chromosome::GetGenes()
 	{
@@ -54,7 +54,7 @@ namespace GA
 	void Chromosome::MutateGene(int i_offset)
 	{
 		float PIdiv2 = (float)(PI/2.0);
-		float original = genes[i_offset];		
+		float original = genes[i_offset];
 		float current = (float)(GetRand(PIdiv2/2.0) * pow(-1,rand()));
 		float result = original + current;
 		while(!(result < PIdiv2 && result >= -PIdiv2))
@@ -62,10 +62,10 @@ namespace GA
 			result = result / 2.0f;
 		}
 		genes[i_offset] = result;
-	}	
+	}
 	double Chromosome::GetRand(double d_max)
 	{
-		double value=(double)rand() / (double)RAND_MAX; 
+		double value=(double)rand() / (double)RAND_MAX;
 		return value * d_max;
 	}
 	void Chromosome::Copy(Chromosome* chrom_from)
@@ -99,7 +99,7 @@ namespace GA
 	// return value: The closer a line is to 1, the smoother it is. Range of the value: 0 to 1
 	double Chromosome::EvaluateFitness(float f_UserSmoothnessParam)
 	{
-		double totalsmoothness = perfectsmoothline;		
+		double totalsmoothness = perfectsmoothline;
 		double averagedsmoothness = 0.0;
 		for(int i = 0; i < length; i++)
 		{
@@ -115,7 +115,7 @@ namespace GA
 			fitness = f_UserSmoothnessParam * 1.0/averagedsmoothness;
 		}
 		if(fitness < 0)
-			return 0.0;		
+			return 0.0;
 		return fitness;
 	}
 }

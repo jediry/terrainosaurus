@@ -16,8 +16,10 @@ using namespace terrainosaurus;
 // Import container definitions
 #include <vector>
 
+// Import standard library math functions
+#include <cmath>
 
-using std::cout;
+
 using std::cerr;
 using std::endl;
 using std::string;
@@ -30,8 +32,8 @@ const std::size_t DEMInterpreter::CHUNK_SIZE = 1024;
 
 
 // Constructor
-DEMInterpreter::DEMInterpreter(Raster & r)
-    : buffer(new char[BUFFER_SIZE]), raster(r), filename(this) { }
+DEMInterpreter::DEMInterpreter(Heightfield & hf)
+    : buffer(new char[BUFFER_SIZE]), raster(hf), filename(this) { }
 
 // Destructor
 DEMInterpreter::~DEMInterpreter() {
@@ -47,7 +49,7 @@ void DEMInterpreter::parse() {
         cerr << "Error opening \"" << string(filename) << "\"\n";
         return;
     }
-    
+
     // Header information
     parseRecordTypeA();
 
@@ -97,20 +99,20 @@ void DEMInterpreter::parseRecordTypeA() {
     //       Abbreviations for other countries, such as Canada and Mexico,
     //       shall not be represented in the DEM header."
     string fileName = readChars(40);
-    cout << "File name: " << fileName << endl;
+//    cerr << "File name: " << fileName << endl;
 
     // Element 2: Free-format text -- 40 characters
     //      "Free format descriptor field, contains useful information related
     //       to digital processes such as digitizing instrument, photo codes,
     //       slot widths, etc."
     string comment = readChars(40);
-    cout << "Comment: " << comment << endl;
+//    cerr << "Comment: " << comment << endl;
 
     // Element 3: Filler space -- 29 characters
     //      "Blank fill."
     string filler1 = readChars(29);
-    if (filler1 != string(29, ' '))
-        cout << "Filler: " << filler1 << endl;
+//    if (filler1 != string(29, ' '))
+//        cerr << "Filler: " << filler1 << endl;
 
     // Element 4: SE geographic corner -- 26 bytes => 2 * (I4 I2 F7.4)
     //      "SE geographic quadrangle corner ordered as:
@@ -119,7 +121,7 @@ void DEMInterpreter::parseRecordTypeA() {
     //       (negative sign (S) right-justified, no leading zeroes,
     //        plus sign (S) implied)."
     string seCorner = readChars(26);
-    cout << "SE corner: " << seCorner << endl;
+//    cerr << "SE corner: " << seCorner << endl;
 
     // Element 5: Process code -- 1 byte => 1 integer
     //      "1 = Autocorrelation RESAMPLE simple bilinear
@@ -132,26 +134,26 @@ void DEMInterpreter::parseRecordTypeA() {
     //       7 = Electronic imaging (non-photogrammetric),
     //           active or passive, sensor systems"
     int processCode = readInteger(1);
-    cout << "Process code: " << processCode << endl;
+//    cerr << "Process code: " << processCode << endl;
 
     // Element 6: Filler -- 1 byte
     //      "Blank fill."
     string filler2 = readChars(1);
-    if (filler2 != " ")
-        cout << "Filler: " << filler2 << endl;
+//    if (filler2 != " ")
+//        cerr << "Filler: " << filler2 << endl;
 
     // Element 7: Sectional indicator -- 3 characters
     //      "This code is specific to 30-minute DEMs. Identifies
     //       1:100,000-scale sections. (See appendix 2-I
     //       [of the DEM specification].)"
     string sectionalIndicator = readChars(3);
-    cout << "Sectional indicator: " << sectionalIndicator << endl;
+//    cerr << "Sectional indicator: " << sectionalIndicator << endl;
 
     // Element 8: Origin code -- 4 characters
     //      "Free format Mapping Origin Code. Example: MAC, WMC, MCMC, RMMC,
     //       FS, BLM, CONT (contractor), XX (state postal code)."
     string originCode = readChars(4);
-    cout << "Origin code: " << originCode << endl;
+//    cerr << "Origin code: " << originCode << endl;
 
     // Element 9: DEM level code -- 6 bytes => 1 integer
     //      "Code 1 = DEM-1
@@ -159,13 +161,13 @@ void DEMInterpreter::parseRecordTypeA() {
     //            3 = DEM-3
     //            4 = DEM-4"
     int demLevel = readInteger(6);
-    cout << "DEM level code: " << demLevel << endl;
+//    cerr << "DEM level code: " << demLevel << endl;
 
     // Element 10: Elevation pattern code -- 6 bytes => 1 integer
     //      "Code 1 = regular
     //            2 = random, reserved for future use"
     int elevationPattern = readInteger(6);
-    cout << "Elevation pattern: " << elevationPattern << endl;
+//    cerr << "Elevation pattern: " << elevationPattern << endl;
 
     // Element 11: Ground planimetric coord. system code -- 6 bytes => 1 integer
     //      "Code 0 = Geographic
@@ -176,14 +178,14 @@ void DEMInterpreter::parseRecordTypeA() {
     //       30-minute, 1-degree, and Alaska DEMs. Code 1 represents the
     //       current use of the UTM coordinate system for 7.5-minute DEMs."
     int coordinateSystem = readInteger(6);
-    cout << "Coordinate system: " << coordinateSystem << endl;
+//    cerr << "Coordinate system: " << coordinateSystem << endl;
 
     // Element 12: Ground planimetric zone code -- 6 bytes => 1 integer
     //      "Codes for State plane and UTM coordinate zones are given in
     //       appendices E and F for 7.5-minute DEMs. Code is set to zero if
     //       element 5 is also set to zero, defining data as geographic."
     int coordinateZone = readInteger(6);
-    cout << "Coordinate zone: " << coordinateZone << endl;
+//    cerr << "Coordinate zone: " << coordinateZone << endl;
 
     // Element 13: Map projection parameters -- 360 bytes => 15 24-byte reals
     //      "Definition of parameters for various projections is given in
@@ -193,8 +195,8 @@ void DEMInterpreter::parseRecordTypeA() {
     double projectionParameters[15];
     for (IndexType i = 0; i < 15; i++) {
         projectionParameters[i] = readDouble(24);
-        cout << "Projection parameter " << i << ": "
-             << projectionParameters[i] << endl;
+//        cerr << "Projection parameter " << i << ": "
+//             << projectionParameters[i] << endl;
     }
 
     // Element 14: Ground planimetric unit of measure -- 6 bytes => 1 integer
@@ -204,21 +206,21 @@ void DEMInterpreter::parseRecordTypeA() {
     //            3 = arc-seconds
     //       Normally set to code 2 for 7.5-minute DEMs. Always set to code
     //       3 for 30-minute, 1-degree and Alaska DEMs."
-    int horizontalUnits = readInteger(6);
-    cout << "Horizontal units: " << horizontalUnits << endl;
+    horizontalUnits = readInteger(6);
+//    cerr << "Horizontal units: " << horizontalUnits << endl;
 
     // Element 15: Elevation unit of measure -- 6 bytes => 1 integer
     //      "Code 1 = feet
     //            2 = meters
     //       Normally code 2 (meters) for 7.5-minute, 30-minute, 1-degree
     //       and Alaska DEMs."
-    int verticalUnits = readInteger(6);
-    cout << "Vertical units: " << verticalUnits << endl;
+    verticalUnits = readInteger(6);
+//    cerr << "Vertical units: " << verticalUnits << endl;
 
     // Element 16: Number of sides in boundary polygon -- 6 bytes => 1 integer
     //      "Set to n = 4."
     int boundaryPolygonSides = readInteger(6);
-    cout << "Boundary polygon sides: " << boundaryPolygonSides << endl;
+//    cerr << "Boundary polygon sides: " << boundaryPolygonSides << endl;
 
     // Element 17: Quadrangle corner coordinates -- 192 bytes => 4 24-byte reals
     //      "The coordinates of the quadrangle corners are ordered in a
@@ -239,10 +241,10 @@ void DEMInterpreter::parseRecordTypeA() {
             if (corners[i][1] < extents[0][1])  extents[0][1] = corners[i][1];
             if (corners[i][1] > extents[1][1])  extents[1][1] = corners[i][1];
         }
-        cout << "Corner " << i << ": " << corners[i][0] << ", " << corners[i][1] << endl;
+//        cerr << "Corner " << i << ": " << corners[i][0] << ", " << corners[i][1] << endl;
     }
-//    cout << "Min extents: " << extents[0][0] << ", " << extents[0][1] << endl;
-//    cout << "Max extents: " << extents[1][0] << ", " << extents[1][1] << endl;
+//    cerr << "Min extents: " << extents[0][0] << ", " << extents[0][1] << endl;
+//    cerr << "Max extents: " << extents[1][0] << ", " << extents[1][1] << endl;
 //    std::vector<Handler::Point2D> vertices;
 //    for (IndexType i = 0; i < 4; i++)
 //        vertices.push_back(Handler::Point2D(corners[i][0], corners[i][1]));
@@ -256,9 +258,9 @@ void DEMInterpreter::parseRecordTypeA() {
     double elevationExtrema[2];
     for (IndexType i = 0; i < 2; i++)
         elevationExtrema[i] = readDouble(24);
-    cout << "Elevation extrema: " << elevationExtrema[0]
-                        << " => " << elevationExtrema[1] << endl;
-    
+//    cerr << "Elevation extrema: " << elevationExtrema[0]
+//                        << " => " << elevationExtrema[1] << endl;
+
 
     // Element 19: Deviation angle -- 24 bytes => 1 24-byte real
     //      "Counterclockwise angle (in radians) from the primary axis of
@@ -266,14 +268,14 @@ void DEMInterpreter::parseRecordTypeA() {
     //       reference system. Set to zero [if aligned] with the coordinate
     //       system specified in element [11]."
     deviationAngle = readDouble(24);
-    cout << "Deviation angle: " << deviationAngle << endl;
+//    cerr << "Deviation angle: " << deviationAngle << endl;
 
     // Element 20: Accuracy record -- 6 bytes => 1 boolean
     //      "Accuracy code for elevations.
     //       Code 0 = unknown accuracy
     //            1 = accuracy information is given in logical record type C."
     bool hasAccuracyRecord = readBoolean(6);
-    cout << "Has accuracy record: " << hasAccuracyRecord << endl;
+//    cerr << "Has accuracy record: " << hasAccuracyRecord << endl;
 
     // Element 21: Spatial resolution -- 36 bytes => 3 12-byte reals
     //      "A three-element array of DEM spatial resolution for x, y, z.
@@ -292,7 +294,7 @@ void DEMInterpreter::parseRecordTypeA() {
     resolution[3];
     for (IndexType i = 0; i < 3; i++) {
         resolution[i] = readDouble(12);
-        cout << "Resolution " << i << ": " << resolution[i] << endl;
+//        cerr << "Resolution " << i << ": " << resolution[i] << endl;
     }
 //    handler->xResolution = resolution[0];
 //    handler->yResolution = resolution[1];
@@ -306,9 +308,9 @@ void DEMInterpreter::parseRecordTypeA() {
     int columns = readInteger(6);
     double colGuess = (extents[1][0] - extents[0][0]) / resolution[0];
     double rowGuess = (extents[1][1] - extents[0][1]) / resolution[1];
-    cout << "Profiles: " << rows << " rows x " << columns << " columns\n";
-    cout << "Guess: " << rowGuess << " rows x " << colGuess << " columns\n";
-    raster.resize(columns, std::size_t(rowGuess + 1));
+//    cerr << "Profiles: " << rows << " rows x " << columns << " columns\n";
+//    cerr << "Guess: " << rowGuess << " rows x " << colGuess << " columns\n";
+    raster.setSizes(inca::SizeType(columns), inca::SizeType(rowGuess + 1));
 
 
     /*************************************************************************
@@ -322,10 +324,10 @@ void DEMInterpreter::parseRecordTypeA() {
     //       (level 2 DEMs only)."
     int largestInterval = readInteger(5);
     if (string(buffer.get()) == "     ") {
-        cout << "This DEM appears to follow the pre-1988 format" << endl;
+        cerr << "This DEM appears to follow the pre-1988 format" << endl;
         return;
     }
-    cout << "Largest contour interval: " << largestInterval << endl;
+//    cerr << "Largest contour interval: " << largestInterval << endl;
 
     // Element 24: Largest contour interval units -- 1 byte => 1 integer
     //      "Corresponds to the units of the map largest primary contour
@@ -334,13 +336,13 @@ void DEMInterpreter::parseRecordTypeA() {
     //            1 = feet
     //            2 = meters (level 2 DEMs only)"
     int largestIntervalUnits = readInteger(1);
-    cout << "Largest contour interval units: " << largestIntervalUnits << endl;
+//    cerr << "Largest contour interval units: " << largestIntervalUnits << endl;
 
     // Element 25: Smallest primary contour interval -- 5 bytes => 1 integer
     //      "Smallest or only primary contour interval
     //       (level 2 DEMs only)."
     int smallestInterval = readInteger(5);
-    cout << "Smallest contour interval: " << smallestInterval << endl;
+//    cerr << "Smallest contour interval: " << smallestInterval << endl;
 
     // Element 26: Smallest contour interval units -- 1 byte => 1 integer
     //      "Corresponds to the units of the map smallest primary contour
@@ -348,26 +350,26 @@ void DEMInterpreter::parseRecordTypeA() {
     //       Code 1 = feet
     //            2 = meters (level 2 DEMs only)"
     int smallestIntervalUnits = readInteger(1);
-    cout << "Smallest contour interval units: " << smallestIntervalUnits << endl;
+//    cerr << "Smallest contour interval units: " << smallestIntervalUnits << endl;
 
     // Element 27: Data source date -- 4 bytes => 1 integer
     //      "YYYY 4 character year. The original compilation date and/or
     //       the date of the photography."
     int sourceDate = readInteger(4);
-    cout << "Data source date: " << sourceDate << endl;
+//    cerr << "Data source date: " << sourceDate << endl;
 
     // Element 28: Inspection/revision date -- 4 bytes => 1 integer
     //      "YYYY 4 character year. The date of completion and/or the date of
     //       revision."
     int inspectionDate = readInteger(4);
-    cout << "Inspection date: " << inspectionDate << endl;
+//    cerr << "Inspection date: " << inspectionDate << endl;
 
     // Element 29: Inspection flag -- 1 character
     //      "'I' indicates all processes of part 3 (Quality Control) have
     //       been performed."
     char inspCh = readChar();
     bool inspected = (inspCh == 'I');
-    cout << "Inspected: " << inspected << endl;
+//    cerr << "Inspected: " << inspected << endl;
 
     // Element 30: Data validation flag -- 1 byte => 1 integer
     //      "Code 0 = No validation performed
@@ -385,7 +387,7 @@ void DEMInterpreter::parseRecordTypeA() {
     //                hydrography if authorized). RMSE computed from test
     //                points."
     int validationLevel = readInteger(1);
-    cout << "Validation level: " << validationLevel << endl;
+//    cerr << "Validation level: " << validationLevel << endl;
 
     // Element 31: Suspect/void flag -- 2 bytes => 1 integer
     //      "Code 0 = None
@@ -395,8 +397,8 @@ void DEMInterpreter::parseRecordTypeA() {
     int svFlags = readInteger(2);
     bool hasSuspect = (svFlags & 0x01) != 0;
     bool hasVoid = (svFlags & 0x02) != 0;
-    cout << "Has suspect areas: " << hasSuspect << endl;
-    cout << "Has void areas: " << hasVoid << endl;
+//    cerr << "Has suspect areas: " << hasSuspect << endl;
+//    cerr << "Has void areas: " << hasVoid << endl;
 
     // Element 32: Vertical datum -- 2 bytes => 1 integer
     //      "Code 1 = local mean sea-level
@@ -404,7 +406,7 @@ void DEMInterpreter::parseRecordTypeA() {
     //            3 = North American Vertical Datum 1988 (NAVD 88)
     //       See appendix H for datum information."
     int verticalDatum = readInteger(2);
-    cout << "Vertical datum: " << verticalDatum << endl;
+//    cerr << "Vertical datum: " << verticalDatum << endl;
 
     // Element 33: Horizontal datum -- 2 bytes => 1 integer
     //      "Code 1 = North American Datum 1927 (NAD 27)
@@ -415,19 +417,19 @@ void DEMInterpreter::parseRecordTypeA() {
     //            6 = Puerto Rico Datum
     //       See appendix H for datum information."
     int horizontalDatum = readInteger(2);
-    cout << "Horizontal datum: " << horizontalDatum << endl;
+//    cerr << "Horizontal datum: " << horizontalDatum << endl;
 
     // Element 34: Data edition -- 4 bytes => 1 integer
     //      "[01, 99] Primarilya DMA specific field. For USGS use, set to 01.
     int dataEdition = readInteger(4);
-    cout << "Data edition: " << dataEdition << endl;
+//    cerr << "Data edition: " << dataEdition << endl;
 
     // Element 35: Percent void -- 4 bytes => 1 integer
     //      "If element [31] indicates [the presence of] void [nodes], this
     //       field (right justified) contains the percentage of nodes in the
     //       file set to void (-32767)."
     int percentVoid = readInteger(4);
-    cout << "Percent void: " << percentVoid << endl;
+//    cerr << "Percent void: " << percentVoid << endl;
 
     // Element 36: Edge match flags -- 8 bytes => 4 integers
     //      "Ordered west, north, east, and south. See section 2.2.4 for valid
@@ -435,7 +437,7 @@ void DEMInterpreter::parseRecordTypeA() {
     int edgeMatch[4];
     for (IndexType i = 0; i < 4; i++) {
         edgeMatch[i] = readInteger(2);
-        cout << "Edge match " << i << ": " << edgeMatch[i] << endl;
+//        cerr << "Edge match " << i << ": " << edgeMatch[i] << endl;
     }
 
     // Element 37: Vertical datum shift -- 7 bytes => 1 real
@@ -443,7 +445,7 @@ void DEMInterpreter::parseRecordTypeA() {
     //       for the four quadrangle corners obtained from the program VERTCON.
     //       Always add this value to convert to NAVD 88."
     double verticalShift = readDouble(8);
-    cout << "Vertical datum shift: " << verticalShift << endl;
+//    cerr << "Vertical datum shift: " << verticalShift << endl;
 }
 
 // Parse the next B-record (elevation profile) in the file
@@ -473,21 +475,21 @@ void DEMInterpreter::parseRecordTypeB(IndexType r, IndexType c) {
     //       is set to 1, specifying 1 column per record."
     std::size_t pRows = readInteger(6);
     std::size_t pCols = readInteger(6);
-//    cout << "Contents: " << pRows << " rows and " << pCols << " columns " << endl;
+//    cerr << "Contents: " << pRows << " rows and " << pCols << " columns " << endl;
 
     // Element 3: Planimetric coordinates of start -- 48 bytes => 2 24-byte reals
     //      "A two-element array containing the ground planimetric coordinates
     //       (Xgp, Ygp) of the first elevation in the profile."
     double startX = readDouble(24);
     double startY = readDouble(24);
-//    cout << "Start coordinates: " << startX << ", " << startY << endl;
+//    cerr << "Start coordinates: " << startX << ", " << startY << endl;
 
     // Element 4: Local elevation datum -- 24 bytes => 1 24-byte real
     //      "Elevation of local datum for the profile. The values are in the
     //       units of measure given by data element [15] in logical record
     //       type A."
     double referenceDatum = readDouble(24);
-//    cout << "Local reference elevation: " << referenceDatum << endl;
+//    cerr << "Local reference elevation: " << referenceDatum << endl;
 
     // Element 5: Elevation extrema -- 48 bytes => 2 24-byte reals
     //      "A two-element array of minimum and maximum elevations for the
@@ -496,18 +498,18 @@ void DEMInterpreter::parseRecordTypeB(IndexType r, IndexType c) {
     //       result of the method outlined in data element 6 of this record."
     double minElevation = readDouble(24);
     double maxElevation = readDouble(24);
-//    cout << "Elevation extrema: " << minElevation << ", " << maxElevation << endl;
+//    cerr << "Elevation extrema: " << minElevation << ", " << maxElevation << endl;
 
     // Calculation of what grid row the first elevation belongs in. Since
     // these goofy coordinates may result in non-rectangular quadrilaterals,
     // we need to account for the offset that our row may have.
     double dx = startX - extents[0][0];
     double dy = startY - extents[0][1];
-    double cos_phi = cos(deviationAngle);
-    double sin_phi = sin(deviationAngle);
+    double cos_phi = std::cos(deviationAngle);
+    double sin_phi = std::sin(deviationAngle);
     IndexType startCol = IndexType((dx * cos_phi + dy * sin_phi) / resolution[0]);
     IndexType startRow = IndexType((dx * -sin_phi + dy * cos_phi) / resolution[1]);
-//    cout << "Start indices: " << startRow << ", " << startCol << endl;
+//    cerr << "Start indices: " << startRow << ", " << startCol << endl;
 
     // Element 6: Elevations -- m * n * 6 bytes => m * n 6-byte integers
     //      "An m x n array of elevations for the profile. Elevations are
@@ -524,7 +526,7 @@ void DEMInterpreter::parseRecordTypeB(IndexType r, IndexType c) {
     // Fill in out-of bounds areas below
     for (IndexType thisRow = 0; thisRow < startRow; thisRow++)
         raster(startCol, thisRow) = float(OUT_OF_BOUNDS);
-    
+
     // Fill in the valid area in the middle
     for (IndexType thisRow = startRow; thisRow < IndexType(startRow + pRows); thisRow++) {
         int val;

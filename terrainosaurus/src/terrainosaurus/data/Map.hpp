@@ -66,8 +66,8 @@ class terrainosaurus::MapData {
  *---------------------------------------------------------------------------*/
 public:
     // Import geometric type definitions from the namespace
-    typedef scalar_t        scalar_t;
-    typedef scalar_arg_t    scalar_arg_t;
+    typedef ::terrainosaurus::scalar_t        scalar_t;
+    typedef ::terrainosaurus::scalar_arg_t    scalar_arg_t;
     typedef Point2D         Point;
     typedef Vector2D        Vector;
 
@@ -98,7 +98,6 @@ public:
 
     // Query the resolution (samples/world-space unit) of the elevation data
     scalar_t resolution() const;
-
 
     // The extra data that goes into a vertex:
     class VertexData {
@@ -176,7 +175,7 @@ public:
 };
 
 
-class terrainosaurus::Map 
+class terrainosaurus::Map
     : public inca::math::WingedEdgeMesh<terrainosaurus::MapData,
                                         terrainosaurus::MapData::VertexData,
                                         terrainosaurus::MapData::FaceData,

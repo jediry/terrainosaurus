@@ -1,48 +1,37 @@
 # This file is neato
 
-[TerrainType: BMC_NV]
-sample = c:\Temp\terrain\blue_mass_canyon_NV.dem
+[TerrainType: Texas]
+color = <0.5, 0.3, 0.3, 1.0> 
+sample = "/mnt/data/scratch/gis/dem/Canary, TX (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/Kurten, TX (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/Millican, TX (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/Independence, TX (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/Ferguson Crossing, TX (30m).dem"
 
-[TerrainType: BP_NV]
-color = <1.0, 0.7, 0.0, 1.0>    # This is yellow!
-sample = c:\Temp\terrain\becky_peak_NV.dem
+[TerrainType: Utah]
+color = <0.8, 0.3, 0.8, 1.0>
+sample = "/mnt/data/scratch/gis/dem/Chandler (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/39111g1 - Colton, UT (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/39111e2 - Candland Mountain, UT (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/39110d1 - Chandler Falls, UT (30m).dem"
 
-[TerrainType: BPF_NV]
-sample = c:\Temp\terrain\baking_powder_flat_NV.dem
+[TerrainType: Florida]
+color = <1.0, 0.8, 0.0, 1.0>
+sample = "/mnt/data/scratch/gis/dem/29082d1 - Citra, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082d3 - Flemington, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082d5 - Bronson NE, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082e1 - Hawthorne, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082e4 - Arredondo, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082e5 - Archer, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082f3 - Gainesville East, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082f4 - Gainesville West, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082g4 - Alachua, FL (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/29082h3 - Brooker, FL (30m).dem"
 
-[TerrainType: WG_WV]
-sample = c:\Temp\terrain\wolf_gap_WV.dem
-
-[TerrainType: GM_CO]
-sample = c:\Temp\terrain\grand_mesa_CO.dem
-
-[TerrainType: MD_VA]
-sample = c:\Temp\terrain\middletown_VA.dem
-
-[TerrainType: WI_WA]
-sample = c:\Temp\terrain\waldron_island_WA.dem
-
-[TerrainType: MV]
-sample = c:\Temp\terrain\mystery_valley.dem
-
-[TerrainType: AP]
-sample = c:\Temp\terrain\agathla_peak.dem
-
-[TerrainType: K]
-sample = c:\Temp\terrain\kayenta.dem
-
-#[TerrainType: Grass]
-#color = <0.0, 0.8, 0.0, 1.0>    # This is green
-#sample = c:\Temp\terrain\grand_mesa.dem
-
-#[TerrainType: Snow]
-#color = <0.8, 0.8, 0.8, 1.0>    # This is grey
-#sample = c:\Temp\terrain\grand_mesa.dem
-
-#[TerrainSeam: Desert & Snow]
-#Smoothness = 0.8
-#Number of Chromosomes = 10
-#Mutation Ratio = 0
-#Crossover Ratio = 0.2
-#Selection Ratio = 0.8
-#Aspect Ratio = 2.0
+[TerrainSeam: Florida & Utah]
+Smoothness = 0.8
+Number of Chromosomes = 10
+Mutation Ratio = 0
+Crossover Ratio = 0.2
+Selection Ratio = 0.8
+Aspect Ratio = 2.0

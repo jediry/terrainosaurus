@@ -19,7 +19,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class MapExplorerWidget;
-    
+
     // Pointer typedefs
     typedef shared_ptr<MapExplorerWidget>       MapExplorerWidgetPtr;
     typedef shared_ptr<MapExplorerWidget const> MapExplorerWidgetConstPtr;

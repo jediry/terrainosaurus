@@ -27,8 +27,13 @@ namespace terrainosaurus {
     typedef shared_ptr<TerrainSeam const> TerrainSeamConstPtr;
 };
 
+// Import associated data classes
+#include "TerrainLibrary.hpp"
+#include "TerrainType.hpp"
 
-class terrainosaurus::TerrainSeam {
+
+class terrainosaurus::TerrainSeam
+    : public boost::enable_shared_from_this<TerrainSeam> {
 private:
     // Set up this object to own properties
     PROPERTY_OWNING_OBJECT(TerrainSeam);
@@ -38,11 +43,11 @@ private:
  | Constructors & properties
  *---------------------------------------------------------------------------*/
 public:
-    // Constructor 
-    TerrainSeam(IDType id1, IDType id2) : tt1(id1), tt2(id2),
-        numberOfCycles(this), numberOfChromosomes(this), smoothness(this),
-        mutationRatio(this), crossoverRatio(this), selectionRatio(this),
-        aspectRatio(this) { };
+    // Constructor
+    explicit TerrainSeam(TerrainLibraryPtr lib, IDType id1, IDType id2);
+
+    // Associated data objects
+    ro_ptr_property(TerrainLibrary, terrainLibrary, NULL);
 
     // IDs for constituent TerrainTypes
     IDType terrainType1() const { return tt1; }

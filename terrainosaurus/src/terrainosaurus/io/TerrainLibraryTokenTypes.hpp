@@ -2,7 +2,7 @@
 #define INC_TerrainLibraryTokenTypes_hpp_
 
 ANTLR_BEGIN_NAMESPACE(terrainosaurus)
-/* $ANTLR 2.7.3: "TerrainLibrary.g" -> "TerrainLibraryTokenTypes.hpp"$ */
+/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryTokenTypes.hpp"$ */
 
 #ifndef CUSTOM_API
 # define CUSTOM_API
@@ -38,16 +38,19 @@ struct CUSTOM_API TerrainLibraryTokenTypes {
 		OPEN_ABRACKET = 26,
 		COMMA = 27,
 		CLOSE_ABRACKET = 28,
-		BACKSLASH = 29,
-		FORESLASH = 30,
-		SPACE = 31,
-		DIGIT = 32,
-		LETTER = 33,
-		WS_CHAR = 34,
-		EOL_CHAR = 35,
-		DOUBLE_QUOTE = 36,
-		COMMENT = 37,
-		WS = 38,
+		QUOTED_STRING = 29,
+		BACKSLASH = 30,
+		FORESLASH = 31,
+		NBSP = 32,
+		DIGIT = 33,
+		LETTER = 34,
+		WS_CHAR = 35,
+		EOL_CHAR = 36,
+		DQUOTE = 37,
+		SQUOTE = 38,
+		SPACE = 39,
+		COMMENT = 40,
+		WS = 41,
 		NULL_TREE_LOOKAHEAD = 3
 	};
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-// $ANTLR 2.7.3: TerrainLibrary.g -> TerrainLibraryTokenTypes.txt$
+// $ANTLR 2.7.4: TerrainLibrary.g -> TerrainLibraryTokenTypes.txt$
 TerrainLibrary    // output token vocab name
 OPEN_SBRACKET=4
 TERRAIN_TYPE="terraintype"=5
@@ -25,13 +25,16 @@ DOT=25
 OPEN_ABRACKET=26
 COMMA=27
 CLOSE_ABRACKET=28
-BACKSLASH=29
-FORESLASH=30
-SPACE=31
-DIGIT=32
-LETTER=33
-WS_CHAR=34
-EOL_CHAR=35
-DOUBLE_QUOTE=36
-COMMENT("comment")=37
-WS=38
+QUOTED_STRING("quoted string")=29
+BACKSLASH=30
+FORESLASH=31
+NBSP=32
+DIGIT=33
+LETTER=34
+WS_CHAR=35
+EOL_CHAR=36
+DQUOTE=37
+SQUOTE=38
+SPACE=39
+COMMENT("comment")=40
+WS=41

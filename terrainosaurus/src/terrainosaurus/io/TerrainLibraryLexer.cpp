@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.3: "TerrainLibrary.g" -> "TerrainLibraryLexer.cpp"$ */
+/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryLexer.cpp"$ */
 #include "TerrainLibraryLexer.hpp"
 #include <antlr/CharBuffer.hpp>
 #include <antlr/TokenStreamException.hpp>
@@ -31,19 +31,19 @@ TerrainLibraryLexer::TerrainLibraryLexer(const antlr::LexerSharedInputState& sta
 
 void TerrainLibraryLexer::initLiterals()
 {
-	literals["terraintype"] = 5;
-	literals["color"] = 12;
+	literals["crossover"] = 21;
+	literals["terrainseam"] = 10;
+	literals["ratio"] = 20;
+	literals["mutation"] = 19;
+	literals["smoothness"] = 18;
 	literals["sample"] = 14;
+	literals["aspect"] = 23;
 	literals["of"] = 16;
 	literals["number"] = 15;
 	literals["chromosomes"] = 17;
-	literals["aspect"] = 23;
-	literals["mutation"] = 19;
-	literals["smoothness"] = 18;
-	literals["ratio"] = 20;
+	literals["color"] = 12;
 	literals["selection"] = 22;
-	literals["terrainseam"] = 10;
-	literals["crossover"] = 21;
+	literals["terraintype"] = 5;
 }
 
 antlr::RefToken TerrainLibraryLexer::nextToken()
@@ -129,12 +129,6 @@ antlr::RefToken TerrainLibraryLexer::nextToken()
 				theRetToken=_returnToken;
 				break;
 			}
-			case 0x5c /* '\\' */ :
-			{
-				mBACKSLASH(true);
-				theRetToken=_returnToken;
-				break;
-			}
 			case 0x2f /* '/' */ :
 			{
 				mFORESLASH(true);
@@ -195,8 +189,23 @@ antlr::RefToken TerrainLibraryLexer::nextToken()
 				theRetToken=_returnToken;
 				break;
 			}
-			default:
+			case 0x22 /* '"' */ :
+			case 0x27 /* '\'' */ :
 			{
+				mQUOTED_STRING(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			default:
+				if ((LA(1) == 0x5c /* '\\' */ ) && (LA(2) == 0x20 /* ' ' */ )) {
+					mNBSP(true);
+					theRetToken=_returnToken;
+				}
+				else if ((LA(1) == 0x5c /* '\\' */ ) && (true)) {
+					mBACKSLASH(true);
+					theRetToken=_returnToken;
+				}
+			else {
 				if (LA(1)==EOF_CHAR)
 				{
 					uponEOF();
@@ -316,12 +325,46 @@ void TerrainLibraryLexer::mEOL_CHAR(bool _createToken) {
 	_saveIndex=0;
 }
 
-void TerrainLibraryLexer::mDOUBLE_QUOTE(bool _createToken) {
+void TerrainLibraryLexer::mDQUOTE(bool _createToken) {
 	int _ttype; antlr::RefToken _token; int _begin=text.length();
-	_ttype = DOUBLE_QUOTE;
+	_ttype = DQUOTE;
 	int _saveIndex;
 	
 	match('"');
+#line 314 "TerrainLibrary.g"
+	{ text.erase(_begin); text += ""; };
+#line 336 "TerrainLibraryLexer.cpp"
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void TerrainLibraryLexer::mSQUOTE(bool _createToken) {
+	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	_ttype = SQUOTE;
+	int _saveIndex;
+	
+	match('\'');
+#line 315 "TerrainLibrary.g"
+	{ text.erase(_begin); text += ""; };
+#line 353 "TerrainLibraryLexer.cpp"
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void TerrainLibraryLexer::mSPACE(bool _createToken) {
+	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	_ttype = SPACE;
+	int _saveIndex;
+	
+	match(' ');
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -336,9 +379,9 @@ void TerrainLibraryLexer::mEOL(bool _createToken) {
 	int _saveIndex;
 	
 	mEOL_CHAR(false);
-#line 299 "TerrainLibrary.g"
+#line 319 "TerrainLibrary.g"
 	newline();
-#line 341 "TerrainLibraryLexer.cpp"
+#line 384 "TerrainLibraryLexer.cpp"
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -361,16 +404,16 @@ void TerrainLibraryLexer::mCOMMENT(bool _createToken) {
 			}
 		}
 		else {
-			goto _loop47;
+			goto _loop49;
 		}
 		
 	}
-	_loop47:;
+	_loop49:;
 	} // ( ... )*
 	mEOL_CHAR(false);
-#line 301 "TerrainLibrary.g"
+#line 321 "TerrainLibrary.g"
 	_ttype = EOL;
-#line 373 "TerrainLibraryLexer.cpp"
+#line 416 "TerrainLibraryLexer.cpp"
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -385,22 +428,22 @@ void TerrainLibraryLexer::mWS(bool _createToken) {
 	int _saveIndex;
 	
 	{ // ( ... )+
-	int _cnt50=0;
+	int _cnt52=0;
 	for (;;) {
 		if ((LA(1) == 0x9 /* '\t' */  || LA(1) == 0x20 /* ' ' */ )) {
 			mWS_CHAR(false);
 		}
 		else {
-			if ( _cnt50>=1 ) { goto _loop50; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+			if ( _cnt52>=1 ) { goto _loop52; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
 		}
 		
-		_cnt50++;
+		_cnt52++;
 	}
-	_loop50:;
+	_loop52:;
 	}  // ( ... )+
-#line 302 "TerrainLibrary.g"
+#line 322 "TerrainLibrary.g"
 	_ttype = antlr::Token::SKIP;
-#line 403 "TerrainLibraryLexer.cpp"
+#line 446 "TerrainLibraryLexer.cpp"
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -563,24 +606,38 @@ void TerrainLibraryLexer::mFORESLASH(bool _createToken) {
 	_saveIndex=0;
 }
 
+void TerrainLibraryLexer::mNBSP(bool _createToken) {
+	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	_ttype = NBSP;
+	int _saveIndex;
+	
+	match("\ ");
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
 void TerrainLibraryLexer::mNUMBER(bool _createToken) {
 	int _ttype; antlr::RefToken _token; int _begin=text.length();
 	_ttype = NUMBER;
 	int _saveIndex;
 	
 	{ // ( ... )+
-	int _cnt64=0;
+	int _cnt67=0;
 	for (;;) {
 		if (((LA(1) >= 0x30 /* '0' */  && LA(1) <= 0x39 /* '9' */ ))) {
 			mDIGIT(false);
 		}
 		else {
-			if ( _cnt64>=1 ) { goto _loop64; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+			if ( _cnt67>=1 ) { goto _loop67; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
 		}
 		
-		_cnt64++;
+		_cnt67++;
 	}
-	_loop64:;
+	_loop67:;
 	}  // ( ... )+
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
@@ -723,11 +780,11 @@ void TerrainLibraryLexer::mNAME(bool _createToken) {
 		}
 		default:
 		{
-			goto _loop70;
+			goto _loop73;
 		}
 		}
 	}
-	_loop70:;
+	_loop73:;
 	} // ( ... )*
 	_ttype = testLiteralsTable(_ttype);
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -738,13 +795,80 @@ void TerrainLibraryLexer::mNAME(bool _createToken) {
 	_saveIndex=0;
 }
 
+void TerrainLibraryLexer::mQUOTED_STRING(bool _createToken) {
+	int _ttype; antlr::RefToken _token; int _begin=text.length();
+	_ttype = QUOTED_STRING;
+	int _saveIndex;
+	
+	switch ( LA(1)) {
+	case 0x22 /* '"' */ :
+	{
+		{
+		mDQUOTE(false);
+		{ // ( ... )*
+		for (;;) {
+			if ((_tokenSet_1.member(LA(1)))) {
+				matchNot('"');
+			}
+			else {
+				goto _loop77;
+			}
+			
+		}
+		_loop77:;
+		} // ( ... )*
+		mDQUOTE(false);
+		}
+		break;
+	}
+	case 0x27 /* '\'' */ :
+	{
+		{
+		mSQUOTE(false);
+		{ // ( ... )*
+		for (;;) {
+			if ((_tokenSet_2.member(LA(1)))) {
+				matchNot('\'');
+			}
+			else {
+				goto _loop80;
+			}
+			
+		}
+		_loop80:;
+		} // ( ... )*
+		mSQUOTE(false);
+		}
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+	}
+	}
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
 
 const unsigned long TerrainLibraryLexer::_tokenSet_0_data_[] = { 4294958072UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
-// NULL_TREE_LOOKAHEAD OPEN_SBRACKET "terraintype" COLON NAME CLOSE_SBRACKET 
-// EOL AND "color" "sample" "number" "of" "chromosomes" "smoothness" "mutation" 
-// "ratio" "crossover" "selection" "aspect" SIGN DOT OPEN_ABRACKET COMMA 
-// CLOSE_ABRACKET BACKSLASH FORESLASH SPACE DIGIT LETTER WS_CHAR EOL_CHAR 
-// DOUBLE_QUOTE COMMENT WS 
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xb 0xc 0xe 0xf 0x10 0x11 0x12 0x13 0x14 
+// 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! " # $ % & 
+// \' ( ) 
 const antlr::BitSet TerrainLibraryLexer::_tokenSet_0(_tokenSet_0_data_,16);
+const unsigned long TerrainLibraryLexer::_tokenSet_1_data_[] = { 4294967288UL, 4294967291UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10 0x11 0x12 0x13 
+// 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! # $ 
+// % & \' ( ) 
+const antlr::BitSet TerrainLibraryLexer::_tokenSet_1(_tokenSet_1_data_,16);
+const unsigned long TerrainLibraryLexer::_tokenSet_2_data_[] = { 4294967288UL, 4294967167UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10 0x11 0x12 0x13 
+// 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! " # 
+// $ % & ( ) 
+const antlr::BitSet TerrainLibraryLexer::_tokenSet_2(_tokenSet_2_data_,16);
 
 ANTLR_END_NAMESPACE

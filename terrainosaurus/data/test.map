@@ -19,5 +19,5 @@ v -1.5 -1.5
 # Map regions (faces)
 tt Grass
 f 1 2 3 4
-tt Desert
+tt Snow
 f 1 5 6 7

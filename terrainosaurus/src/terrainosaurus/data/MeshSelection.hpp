@@ -26,7 +26,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class MeshSelection;
-    
+
     // Pointer typedefs
     typedef shared_ptr<MeshSelection>       MeshSelectionPtr;
     typedef shared_ptr<MeshSelection const> MeshSelectionConstPtr;
@@ -85,9 +85,6 @@ public:
 
     // Same as above, but based on template parameter
     template <class type> void setElementType();
-    template <> void setElementType<Map::Vertex>() { setElementType(Vertices); }
-    template <> void setElementType<Map::Face>() { setElementType(Faces); }
-    template <> void setElementType<Map::Edge>() { setElementType(Edges); }
 
 protected:
     ElementType type;       // The type of elements that this we're selecting
@@ -145,18 +142,23 @@ public:
 // ostream writer for MeshSelection::ElementType
 namespace terrainosaurus {
     inline std::ostream & operator<<(std::ostream &os,
-                                     terrainosaurus::MeshSelection::ElementType t) {
+                                     MeshSelection::ElementType t) {
         switch (t) {
-            case terrainosaurus::MeshSelection::Vertices:
+            case MeshSelection::Vertices:
                 return os << "Vert(ex/ices)";
-            case terrainosaurus::MeshSelection::Faces:
+            case MeshSelection::Faces:
                 return os << "Face(s)";
-            case terrainosaurus::MeshSelection::Edges:
+            case MeshSelection::Edges:
                 return os << "Edge(s)";
             default:
                 return os << "INVALID MeshSelection::ElementType " << int(t);
         }
     }
+
+    // This ought to be done inline in the class, but g++ doesn't accept it
+    template <> inline void MeshSelection::setElementType<Map::Vertex>() { setElementType(Vertices); }
+    template <> inline void MeshSelection::setElementType<Map::Face>() { setElementType(Faces); }
+    template <> inline void MeshSelection::setElementType<Map::Edge>() { setElementType(Edges); }
 };
 
 #endif

@@ -22,7 +22,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class TerrainosaurusComponent;
-    
+
     // Pointer typedefs
     typedef shared_ptr<TerrainosaurusComponent>       TerrainosaurusComponentPtr;
     typedef shared_ptr<TerrainosaurusComponent const> TerrainosaurusComponentConstPtr;

@@ -19,7 +19,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class ModifyPropertyWidget;
-    
+
     // Pointer typedefs
     typedef shared_ptr<ModifyPropertyWidget>       ModifyPropertyWidgetPtr;
     typedef shared_ptr<ModifyPropertyWidget const> ModifyPropertyWidgetConstPtr;
@@ -40,7 +40,7 @@ public:
 
     // Widget event-handler functions
     void keyPressed(KeyCode key, Pixel p);
-    
+
 protected:
     // High-level functions (called from event-handlers)
     void refineSelectedEdges(bool refined);
@@ -50,3 +50,4 @@ protected:
 };
 
 #endif
+

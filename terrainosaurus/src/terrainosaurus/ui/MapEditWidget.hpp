@@ -19,7 +19,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class MapEditWidget;
-    
+
     // Pointer typedefs
     typedef shared_ptr<MapEditWidget>       MapEditWidgetPtr;
     typedef shared_ptr<MapEditWidget const> MapEditWidgetConstPtr;
@@ -61,7 +61,7 @@ public:
         ClickSelect,        // We're selecting by clicking a single point
         LassoSelect,        // We're selecting using a rectangular lasso
     };
-    
+
     // Possible ways that additional selections can combine with the old one
     enum SelectionOperation {
         Replace,            // Replace the old selection with the new

@@ -77,10 +77,6 @@ class terrainosaurus::DEMInterpreter {
 private:
     typedef DEMInterpreter ThisType;
 public:
-    // Template typedefs
-    typedef inca::raster::MultiArrayRaster<float, 2> Raster;
-//    typedef VImage Raster;
-
     static const int OUT_OF_BOUNDS = -32767;
     static const int VOID = -32768;
 
@@ -89,7 +85,7 @@ public:
  *---------------------------------------------------------------------------*/
 public:
     // Constructor
-    DEMInterpreter(Raster &r);
+    DEMInterpreter(Heightfield & hf);
 
     // Destructor
     ~DEMInterpreter();
@@ -100,9 +96,9 @@ public:
     // Parse the file
     void parse();
 
-protected:
+//protected:
     // This is where the stuff goes
-    Raster & raster;
+    Heightfield & raster;
 
     // These return the # of CHUNK_SIZE blocks consumed by the parsed record
     void parseRecordTypeA();
@@ -116,6 +112,8 @@ protected:
  | Retained fields from the DEM file
  *---------------------------------------------------------------------------*/
 //protected:
+    int horizontalUnits;
+    int verticalUnits;
     double deviationAngle;  // How far this grid deviates from horizontal
     double resolution[3];   // The X, Y, Z resolutions (world units per cell)
     double extents[2][2];   // The lower left and upper right corners of the

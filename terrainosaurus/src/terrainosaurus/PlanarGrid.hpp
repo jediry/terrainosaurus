@@ -36,10 +36,10 @@ private:
  *---------------------------------------------------------------------------*/
 public:
     // Import geometric type definitions from the namespace
-    typedef scalar_t        scalar_t;
-    typedef scalar_arg_t    scalar_arg_t;
-    typedef Point2D         Point;
-    typedef Vector2D        Vector;
+    typedef ::terrainosaurus::scalar_t     scalar_t;
+    typedef ::terrainosaurus::scalar_arg_t scalar_arg_t;
+    typedef Point2D                        Point;
+    typedef Vector2D                       Vector;
 
 
 /*---------------------------------------------------------------------------*

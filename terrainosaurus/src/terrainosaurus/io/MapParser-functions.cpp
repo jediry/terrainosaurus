@@ -25,12 +25,12 @@ using namespace inca::io;
 
 
 void MapParser::createVertex(scalar_t x, scalar_t y, RefToken pos) {
-    cerr << "Vertex: " << x << ' ' << y << ' ' << pos->getLine() << endl;
+//    cerr << "Vertex: " << x << ' ' << y << ' ' << pos->getLine() << endl;
     map->createVertex(Point2D(x, y));
 }
 
 void MapParser::setTerrainType(const string &tt, RefToken pos) {
-    cerr << "Terrain: " << tt << endl;
+//    cerr << "Terrain: " << tt << endl;
     TerrainTypePtr ttp = map->terrainLibrary->terrainType(tt);
     if (ttp == NULL) {
         FileFormatException e(getFilename(), pos->getLine(), pos->getColumn());
@@ -43,7 +43,7 @@ void MapParser::setTerrainType(const string &tt, RefToken pos) {
 }
 
 void MapParser::beginFace(RefToken pos) {
-    cerr << "Face: ";
+//    cerr << "Face: ";
     if (currentTT == NULL) {    // Ensure that a TT has been set
         FileFormatException e(getFilename(), pos->getLine(), pos->getColumn());
         e << "A TerrainType must be selected before faces may be created";
@@ -53,7 +53,7 @@ void MapParser::beginFace(RefToken pos) {
 }
 
 void MapParser::addVertex(IDType id, RefToken pos) {
-    cerr << id << ' ';
+//    cerr << id << ' ';
     // Look up the Vertex with that ID (remember file starts at 1, vector at 0)
     Map::VertexPtr v = map->vertex(id - 1);
     if (v == NULL) {                    // Ensure that the Vertex does exist
@@ -66,6 +66,6 @@ void MapParser::addVertex(IDType id, RefToken pos) {
 
 void MapParser::endFace() {
     // Make a face using the current TT
-    cerr << endl;
+//    cerr << endl;
     map->createFace(vertices.begin(), vertices.end(), currentTT);
 }

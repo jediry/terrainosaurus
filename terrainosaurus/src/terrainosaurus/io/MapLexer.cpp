@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.3: "Map.g" -> "MapLexer.cpp"$ */
+/* $ANTLR 2.7.4: "Map.g" -> "MapLexer.cpp"$ */
 #include "MapLexer.hpp"
 #include <antlr/CharBuffer.hpp>
 #include <antlr/TokenStreamException.hpp>
@@ -475,7 +475,7 @@ void MapLexer::mNAME(bool _createToken) {
 
 
 const unsigned long MapLexer::_tokenSet_0_data_[] = { 4294958072UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
-// NULL_TREE_LOOKAHEAD "v" EOL "f" "tt" NAME SIGN DOT DIGIT COMMENT WS 
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xb 0xc 0xe 0xf 
 const antlr::BitSet MapLexer::_tokenSet_0(_tokenSet_0_data_,16);
 
 ANTLR_END_NAMESPACE

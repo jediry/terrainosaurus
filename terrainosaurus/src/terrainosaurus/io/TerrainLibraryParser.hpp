@@ -12,15 +12,31 @@
         class TerrainLibraryParser;
     };
 
-    // Import TerrainLibrary and related object definitions 
+    // Import TerrainLibrary and related object definitions
     #include "../data/TerrainLibrary.hpp"
-    
+
     // Import container definitions
     #include <inca/util/hash_container>
 
-#line 22 "TerrainLibraryParser.hpp"
+    // Import augmented enumeration mechanism
+//    #include <inca/util/Enumeration.hpp>
+
+    // This enumerates all the properties that we can check/set. The
+    // functions that check/set them implicitly work on the "current"
+    // TerrainType or TerrainSeam.
+/*    ENUMV ( TTLPropertyType,
+          ( ( TTColor,             1 ),
+          ( ( TSNumChromosomes,    2 ),
+          ( ( TSSmoothness,        4 ),
+          ( ( TSMutationRatio,     8 ),
+          ( ( TSCrossoverRatio,    16 ),
+          ( ( TSSelectionRatio,    32 ),
+          ( ( TSAspectRatio,       64 ),
+              BOOST_PP_NIL ))))))));*/
+
+#line 38 "TerrainLibraryParser.hpp"
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.3: "TerrainLibrary.g" -> "TerrainLibraryParser.hpp"$ */
+/* $ANTLR 2.7.4: "TerrainLibrary.g" -> "TerrainLibraryParser.hpp"$ */
 #include <antlr/TokenStream.hpp>
 #include <antlr/TokenBuffer.hpp>
 #include "TerrainLibraryTokenTypes.hpp"
@@ -32,7 +48,7 @@ ANTLR_BEGIN_NAMESPACE(terrainosaurus)
  */
 class CUSTOM_API TerrainLibraryParser : public antlr::LLkParser, public TerrainLibraryTokenTypes
 {
-#line 58 "TerrainLibrary.g"
+#line 74 "TerrainLibrary.g"
 
 /*---------------------------------------------------------------------------*
  | Type definitions
@@ -50,6 +66,7 @@ public:
         TSSelectionRatio    = 0x0020,
         TSAspectRatio       = 0x0040,
     };
+
 
 
 /*---------------------------------------------------------------------------*
@@ -77,7 +94,7 @@ protected:
     TerrainSeamPtr currentTS;
     stl_ext::hash_map<TerrainSeamPtr, bool> initializedTSs;
     unsigned int setProperties;
-#line 36 "TerrainLibraryParser.hpp"
+#line 52 "TerrainLibraryParser.hpp"
 public:
 	void initializeASTFactory( antlr::ASTFactory& factory );
 protected:
@@ -135,10 +152,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 39;
+	static const int NUM_TOKENS = 42;
 #else
 	enum {
-		NUM_TOKENS = 39
+		NUM_TOKENS = 42
 	};
 #endif
 	

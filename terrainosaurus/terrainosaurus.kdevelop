@@ -9,19 +9,19 @@
     <ignoreparts/>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <description></description>
+    <description/>
     <secondaryLanguages/>
   </general>
   <kdevautoproject>
     <general>
-      <activetarget>src/terrainosaurus</activetarget>
-      <useconfiguration>debug</useconfiguration>
+      <activetarget>src/map_explorer</activetarget>
+      <useconfiguration>optimized</useconfiguration>
     </general>
     <run>
-      <mainprogram>src/terrainosaurus</mainprogram>
-      <directoryradio>executable</directoryradio>
+      <mainprogram/>
+      <directoryradio>build</directoryradio>
       <customdirectory>/</customdirectory>
-      <programargs></programargs>
+      <programargs>../../data/test.ttl ../../data/test.map</programargs>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
       <envvars/>
@@ -33,15 +33,16 @@
         <cxxcompiler>kdevgppoptions</cxxcompiler>
         <f77compiler>kdevpgf77options</f77compiler>
         <cxxflags>-O2 -g0</cxxflags>
-        <configargs></configargs>
-        <topsourcedir></topsourcedir>
-        <cppflags>-I../libinca/src</cppflags>
-        <ldflags></ldflags>
-        <ccompilerbinary></ccompilerbinary>
-        <cxxcompilerbinary></cxxcompilerbinary>
-        <f77compilerbinary></f77compilerbinary>
-        <cflags></cflags>
-        <f77flags></f77flags>
+        <configargs/>
+        <topsourcedir/>
+        <cppflags>-I/usr/local/include</cppflags>
+        <ldflags>-L/usr/local/lib -L/home/jediry/Documents/Development/Media/libinca/build/optimized/src</ldflags>
+        <ccompilerbinary/>
+        <cxxcompilerbinary/>
+        <f77compilerbinary/>
+        <cflags/>
+        <f77flags/>
+        <envvars/>
       </optimized>
       <debug>
         <configargs>--enable-debug=full</configargs>
@@ -50,14 +51,15 @@
         <cxxcompiler>kdevgppoptions</cxxcompiler>
         <f77compiler>kdevpgf77options</f77compiler>
         <cxxflags>-O0 -g3</cxxflags>
-        <topsourcedir></topsourcedir>
-        <cppflags>-I../libinca/src</cppflags>
-        <ldflags></ldflags>
-        <ccompilerbinary></ccompilerbinary>
-        <cxxcompilerbinary></cxxcompilerbinary>
-        <f77compilerbinary></f77compilerbinary>
-        <cflags></cflags>
-        <f77flags></f77flags>
+        <topsourcedir/>
+        <cppflags>-I/usr/local/include -DDEBUG=1</cppflags>
+        <ldflags>-L/usr/local/lib -L/home/jediry/Documents/Development/Media/libinca/build/debug/src</ldflags>
+        <ccompilerbinary/>
+        <cxxcompilerbinary/>
+        <f77compilerbinary/>
+        <cflags/>
+        <f77flags/>
+        <envvars/>
       </debug>
     </configurations>
     <make>
@@ -68,17 +70,17 @@
       <abortonerror>false</abortonerror>
       <numberofjobs>1</numberofjobs>
       <dontact>false</dontact>
-      <makebin></makebin>
+      <makebin/>
     </make>
   </kdevautoproject>
   <kdevdebugger>
     <general>
-      <dbgshell>libtool</dbgshell>
-      <programargs></programargs>
-      <gdbpath></gdbpath>
-      <configGdbScript></configGdbScript>
-      <runShellScript></runShellScript>
-      <runGdbScript></runGdbScript>
+      <dbgshell/>
+      <programargs/>
+      <gdbpath/>
+      <configGdbScript/>
+      <runShellScript/>
+      <runGdbScript/>
       <breakonloadinglibs>true</breakonloadinglibs>
       <separatetty>false</separatetty>
       <floatingtoolbar>false</floatingtoolbar>
@@ -86,6 +88,7 @@
     <display>
       <staticmembers>false</staticmembers>
       <demanglenames>true</demanglenames>
+      <outputradix>10</outputradix>
     </display>
   </kdevdebugger>
   <kdevdoctreeview>
@@ -161,8 +164,16 @@
       <argumentsHintDelay>400</argumentsHintDelay>
       <headerCompletionDelay>250</headerCompletionDelay>
     </codecompletion>
+    <references/>
   </kdevcppsupport>
   <kdevfileview>
-    <groups/>
+    <groups>
+      <hidenonprojectfiles>false</hidenonprojectfiles>
+      <hidenonlocation>false</hidenonlocation>
+    </groups>
+    <tree>
+      <hidepatterns>*.o,*.lo,CVS</hidepatterns>
+      <hidenonprojectfiles>false</hidenonprojectfiles>
+    </tree>
   </kdevfileview>
 </kdevelop>

@@ -14,7 +14,7 @@
  */
 
 // Import class definition
-#include "TerrainLibraryLexer.hpp"
+//#include "TerrainLibraryLexer.hpp"
 #include "TerrainLibraryParser.hpp"
 using namespace terrainosaurus;
 using namespace antlr;
@@ -100,7 +100,8 @@ void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
     }
 
     // Look up the TS from its TTs
-    TerrainSeamPtr ts = library->terrainSeam(tt1p->id(), tt2p->id());
+    TerrainSeamPtr ts = library->terrainSeam(tt1p->terrainTypeID(),
+                                             tt2p->terrainTypeID());
 
     // Make sure we've not already initialized this TerrainSeam
     if (initializedTSs[ts]) {
@@ -125,7 +126,7 @@ void TerrainLibraryParser::createTerrainSeam(RefToken tt1, RefToken tt2) {
 void TerrainLibraryParser::endRecord(RefToken t) {
     if (currentTT) {
         // Make sure it had at least one TerrainSample
-        if (currentTT->samples.size() == 0) {
+        if (currentTT->size() == 0) {
             FileFormatException e(getFilename(), t->getLine(), 0);
             e << "TerrainType \"" << currentTT->name()
               << "\" does not have any data samples";
@@ -141,9 +142,9 @@ void TerrainLibraryParser::endRecord(RefToken t) {
 // Adds a new terrain sample to the current terrain type. There can be any
 // (non-zero) number of terrain samples for a single terrain type.
 void TerrainLibraryParser::addTerrainSample(const string & path, int line) {
-    currentTT->samples.add_item(TerrainSamplePtr(new TerrainSample(path, currentTT)));
+    currentTT->addTerrainSample(TerrainSamplePtr(new TerrainSample(path)));
     cerr << "\tsample = "
-         << currentTT->samples[currentTT->samples.size() - 1]->filename()
+         << currentTT->terrainSample(currentTT->size() - 1)->filename()
          << endl;
 }
 
@@ -161,7 +162,7 @@ void TerrainLibraryParser::setColorProperty(PropertyType p, const Color &c, int 
     // Set it and record that we did so
     switch (p) {
     case TTColor:
-        currentTT->color = c;
+        currentTT->setColor(c);
         break;
     default:
         cerr << "Internal parser error: unhandled color property "

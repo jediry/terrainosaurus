@@ -29,7 +29,7 @@ PlanarGrid::Point PlanarGrid::snapToGrid(Point p) const {
     // Figure out which point 'p' is closer to along each axis
     Point snapped;
     for (IndexType i = 0; i < 2; ++i)
-        snapped[i] = abs(minBound[i] - p[i]) < abs(maxBound[i] - p[i])
+        snapped[i] = std::abs(minBound[i] - p[i]) < std::abs(maxBound[i] - p[i])
                         ? minBound[i]
                         : maxBound[i];
     return snapped;

@@ -1,4 +1,4 @@
-// $ANTLR 2.7.3: Map.g -> MapTokenTypes.txt$
+// $ANTLR 2.7.4: Map.g -> MapTokenTypes.txt$
 Map    // output token vocab name
 VERTEX="v"=4
 EOL("end of line")=5

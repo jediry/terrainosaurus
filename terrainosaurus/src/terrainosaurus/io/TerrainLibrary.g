@@ -1,6 +1,6 @@
 /*
  * File: TerrainLibrary.g
- * 
+ *
  * Author: Ryan L. Saunders
  *
  * Copyright 2004, Ryan L. Saunders. Permission is granted to use and
@@ -27,11 +27,27 @@ header "pre_include_hpp" {
         class TerrainLibraryParser;
     };
 
-    // Import TerrainLibrary and related object definitions 
+    // Import TerrainLibrary and related object definitions
     #include "../data/TerrainLibrary.hpp"
-    
+
     // Import container definitions
     #include <inca/util/hash_container>
+
+    // Import augmented enumeration mechanism
+//    #include <inca/util/Enumeration.hpp>
+
+    // This enumerates all the properties that we can check/set. The
+    // functions that check/set them implicitly work on the "current"
+    // TerrainType or TerrainSeam.
+/*    ENUMV ( TTLPropertyType,
+          ( ( TTColor,             1 ),
+          ( ( TSNumChromosomes,    2 ),
+          ( ( TSSmoothness,        4 ),
+          ( ( TSMutationRatio,     8 ),
+          ( ( TSCrossoverRatio,    16 ),
+          ( ( TSSelectionRatio,    32 ),
+          ( ( TSAspectRatio,       64 ),
+              BOOST_PP_NIL ))))))));*/
 }
 
 // Global options section
@@ -72,6 +88,7 @@ public:
         TSSelectionRatio    = 0x0020,
         TSAspectRatio       = 0x0040,
     };
+
 
 
 /*---------------------------------------------------------------------------*
@@ -243,12 +260,13 @@ integer returns [int value]: n:NUMBER { value = atoi(n->getText().c_str()); } ;
 
 // A file path
 filename returns [string path]:
-    ( n:NAME                    { path += n->getText(); }
+    ( q:QUOTED_STRING           { path += q->getText(); }
+    | n:NAME                    { path += n->getText(); }
     | i:NUMBER                  { path += i->getText(); }
     | c:COLON                   { path += c->getText(); }
     | d:DOT                     { path += d->getText(); }
-    | ( BACKSLASH | FORESLASH ) { path += "\\"; }
-    | SPACE                     { path += " "; }
+    | ( BACKSLASH | FORESLASH ) { path += "/"; }
+    | NBSP                      { path += " "; }
     )+ ;
 
 
@@ -263,7 +281,7 @@ options {
     caseSensitive = false;          // We're not picky...
     caseSensitiveLiterals = false;  // ...about identifiers either
     charVocabulary = '\3'..'\377';  // Stick to ASCII, please
-    k = 2;
+    k = 30;
 }
 
 // Keywords
@@ -293,7 +311,9 @@ protected DIGIT     : ( '0'..'9' ) ;
 protected LETTER    : ( 'a'..'z' ) ;
 protected WS_CHAR   : ( ' ' | '\t' ) ;
 protected EOL_CHAR  : ( "\r\n" | '\r' | '\n' ) ;
-protected DOUBLE_QUOTE : '"' ;
+protected DQUOTE    : '"'   { $setText(""); } ;
+protected SQUOTE    : '\''  { $setText(""); } ;
+protected SPACE     : ' ' ;
 
 // Comments and whitespace
 EOL options { paraphrase = "end of line"; } : EOL_CHAR  { newline(); } ;
@@ -313,7 +333,7 @@ AND             : "&" ;
 DOT             : "." ;
 BACKSLASH       : '\\' ;
 FORESLASH       : '/' ;
-//SPACE           : "\\ " ;
+NBSP            : "\\ " ;
 
 // An unsigned integral number
 NUMBER  options { paraphrase = "number"; } : (DIGIT)+ ;
@@ -324,3 +344,10 @@ SIGN  : ( '+' | '-' ) ;
 // An identifier
 NAME    options { paraphrase = "name"; testLiterals = true; } :
             ( LETTER | '_' ) ( LETTER | DIGIT | '_' )* ;
+
+// A string in quotes
+QUOTED_STRING options { paraphrase = "quoted string"; } :
+          ( DQUOTE (~'"')* DQUOTE )
+        | ( SQUOTE (~'\'')* SQUOTE ) ;
+//          ( DQUOTE s:(~S)* DQUOTE ) { $setText(s->getText()); }
+//        | ( SQUOTE t:(.)* SQUOTE ) { $setText(t->getText()); } ;

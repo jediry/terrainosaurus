@@ -32,6 +32,7 @@
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
+    class TerrainFitnessMeasure;
     class TerrainChromosome;
 };
 
@@ -41,169 +42,270 @@ namespace terrainosaurus {
 #include <inca/util/MultiArray>
 
 // Import terrain data structures
+#include <terrainosaurus/data/TerrainLibrary.hpp>
 #include <terrainosaurus/data/TerrainType.hpp>
 #include <terrainosaurus/data/TerrainSample.hpp>
-#include <terrainosaurus/rendering/MapRasterization.hpp>
+#include <terrainosaurus/data/MapRasterization.hpp>
 
 
-// Prototype for function that must be 'friend'
-// XXX there ought to be a more graceful way...
-namespace terrainosaurus {
-    void initializeChromosome(TerrainChromosome & c, IndexType lod,
-                              TerrainSampleConstPtr pattern,
-                              const MapRasterization & raster);
+// The multivariate fitness measure for a TerrainChromosome
+class terrainosaurus::TerrainFitnessMeasure : public inca::Array<scalar_t, 5> {
+public:
+    // Base class
+    typedef inca::Array<scalar_t, 5>    Superclass;
+
+    // Default constructor
+    TerrainFitnessMeasure() : Superclass(scalar_t(0)) { }
+
+    // If this is used in a scalar context, we return the overall fitness. E.g.:
+    //      scalar_t overallFitness = fitnessMeasure;
+    operator scalar_t() const { return overall(); }
+    operator scalar_t &()     { return overall(); }
+
+    // This macro makes it easy to create named accessor functions
+    #define NAMED_ACCESSOR(NAME, INDEX)                                     \
+        scalar_t & NAME()       { return (*this)[INDEX]; }                  \
+        scalar_t   NAME() const { return (*this)[INDEX]; }
+
+    // Aggregate fitness accessors
+    NAMED_ACCESSOR(overall,               0);
+    NAMED_ACCESSOR(normalized,            1);
+
+    // Component fitness accessors
+    NAMED_ACCESSOR(elevationRMS,          2);
+    NAMED_ACCESSOR(gradientMagnitudeRMS,  3);
+    NAMED_ACCESSOR(gradientAngleRMS,      4);
+
+    #undef NAMED_ACCESSOR
 };
 
-// The chromosome for the terrain-construction algorithm
+
+/*****************************************************************************
+ * The chromosome for the terrain-construction algorithm
+ *****************************************************************************/
 class terrainosaurus::TerrainChromosome {
 /*---------------------------------------------------------------------------*
  | Type definitions
  *---------------------------------------------------------------------------*/
 public:
-    // Forward declaration of corresponding "Gene" inner class,
-    // representing a small patch of terrain
+    // Forward declaration of the "Gene" inner class, which represents a
+    // small patch of terrain.
     class Gene;
 
+    // Multivariate fitness measure
+    typedef TerrainFitnessMeasure       FitnessMeasure;
+
     // Two dimensional grid of Genes
-    typedef inca::MultiArray<Gene, 2> GeneGrid;
+    typedef inca::MultiArray<Gene, 2>   GeneGrid;
+    typedef GeneGrid::SizeArray         SizeArray;
 
 
 /*---------------------------------------------------------------------------*
- | Static query functions
- *---------------------------------------------------------------------------*/
-public:
-    static void initializeStatic();
-    static scalar_t         geneRadius(IndexType lod);
-    static scalar_t         geneOverlapFactor(IndexType lod);
-    static SizeType         geneSpacing(IndexType lod);
-    static GrayscaleImage * geneMask(IndexType lod);
-
-private:
-    static bool staticInitialized;
-    static std::vector<scalar_t>        geneRadii;
-    static std::vector<GrayscaleImage>  geneMasks;
-
-
-/*---------------------------------------------------------------------------*
- | Constructors
+ | Constructors & initialization functions
  *---------------------------------------------------------------------------*/
 public:
     // Constructor
     TerrainChromosome();
-    TerrainChromosome(const TerrainChromosome &tc);
+    TerrainChromosome(const TerrainChromosome & tc);
+
+    // We're friends with the "random initialization" function
+    //friend void initializeChromosome(TerrainChromosome & c, IndexType lod,
+    //                                 const TerrainSample::LOD & pattern,
+    //                                 const MapRasterization::LOD & map);
+
+protected:
+    void claimGenes();
+
+
+/*---------------------------------------------------------------------------*
+ | Gene grid accessor & mutator functions
+ *---------------------------------------------------------------------------*/
+public:
+    // Direct access to the GeneGrid object
+          GeneGrid & genes()       { return _genes; }
+    const GeneGrid & genes() const { return _genes; }
+
+    // Access to individual genes, using the function call operator (...)
+          Gene & operator()(IndexType i, IndexType j)       { return gene(i, j); }
+    const Gene & operator()(IndexType i, IndexType j) const { return gene(i, j); }
+    template <class IndexList>
+    Gene & operator()(const IndexList & idx) { return gene(idx); }
+    template <class IndexList>
+    const Gene & operator()(const IndexList & idx) const { return gene(idx); }
+
+    // Access to individual genes, using the gene(...) function
+          Gene & gene(IndexType i, IndexType j)       { return _genes(i, j); }
+    const Gene & gene(IndexType i, IndexType j) const { return _genes(i, j); }
+    template <class IndexList>
+    Gene & gene(const IndexList & idx) {
+        return _genes(idx);
+    }
+    template <class IndexList>
+    const Gene & gene(const IndexList & idx) const {
+        return _genes(idx);
+    }
+
+    // Size accessors
+    SizeType size() const { return _genes.size(); }
+    SizeType size(IndexType d) const { return _genes.size(d); }
+    const SizeArray & sizes() const { return _genes.sizes(); }
 
     // Resize the grid of genes, specifying whether or not to preserve the
     // current contents. If preservation is requested, then any indices which
     // are valid in both the old and new dimensions will be preserved. Genes
     // that are created as a result of the resize are left uninitialized.
     void resize(const Dimension &sz, bool preserveContents = false);
-    void resize(SizeType sx, SizeType sy, bool preserveContents = false);
+    void resize(SizeType si, SizeType sj, bool preserveContents = false);
     template <class Collection>
         void resize(const Collection &sz, bool preserveContents = false) {
             Dimension d(sz);
             resize(d, preserveContents);
         }
 
-    // We're friends with the "random initialization" function
-    friend void initializeChromosome(TerrainChromosome & c, IndexType lod,
-                                     TerrainSampleConstPtr pattern,
-                                     const MapRasterization & raster);
 
 /*---------------------------------------------------------------------------*
  | Accessor functions
  *---------------------------------------------------------------------------*/
 public:
-    // Gene grid accessors
-    SizeType size() const { return _genes.size(); }
-    SizeType size(IndexType d) const { return _genes.size(d); }
-    const GeneGrid::SizeArray & sizes() const { return _genes.sizes(); }
-          GeneGrid & genes()       { return _genes; }
-    const GeneGrid & genes() const { return _genes; }
-          Gene & gene(int x, int y)       { return _genes(x, y); }
-    const Gene & gene(int x, int y) const { return _genes(x, y); }
-    template <class IndexList>       Gene & gene(const IndexList &idx)       { return _genes(idx); }
-    template <class IndexList> const Gene & gene(const IndexList &idx) const { return _genes(idx); }
+    // Fitness measurement accessors
+          FitnessMeasure & fitness();
+    const FitnessMeasure & fitness() const;
+
+    // What level of detail are we?
+    TerrainLOD levelOfDetail() const;
+    void setLevelOfDetail(TerrainLOD lod);
 
     // Heightfield property accessors
-    TerrainSampleConstPtr pattern() const { return _pattern; }
-    IndexType levelOfDetail() const { return _levelOfDetail; }
-    const Heightfield::SizeArray & heightfieldSizes() const {
-        return pattern()->sizes(levelOfDetail());
-    }
+    const Heightfield::SizeArray & heightfieldSizes() const;
+
+    // Access to the pattern and rasterized map
+    const TerrainSample::LOD & pattern() const;
+    void setPattern(const TerrainSample::LOD & p);
+    const MapRasterization::LOD & map() const;
+    void setMap(const MapRasterization::LOD & m);
+
+    // Is this chromosome "alive" (part of the active population)?
+    bool isAlive() const;
+    void setAlive(bool alive);
 
 protected:
     // The contents of this Chromosome
-    GeneGrid  _genes;               // The genes making up this chromosome
-    IndexType _levelOfDetail;       // What LOD are we working on?
-    TerrainSampleConstPtr _pattern; // What we're trying to match
+    TerrainSample::LOD const *      _pattern;   // What we're trying to match
+    MapRasterization::LOD const *   _map;       // How the terrain is laid out
+    GeneGrid        _genes;     // The genes making up this chromosome
+    TerrainLOD      _lod;       // What level of detail are we?
+    FitnessMeasure  _fitness;   // How fit is it?
+    bool            _alive;     // Is it allowed to go to the next cycle?
 };
 
 
-// The gene for the terrain-construction algorithm
+/*****************************************************************************
+ * The gene for the terrain-construction algorithm
+ *****************************************************************************/
 class terrainosaurus::TerrainChromosome::Gene {
 /*---------------------------------------------------------------------------*
- | Connections to chromosome
+ | Connections to TerrainChromosome
  *---------------------------------------------------------------------------*/
+public:
+    // Chromosome relationship accessors
+          TerrainChromosome & parent();
+    const TerrainChromosome & parent() const;
+    const Pixel & indices() const;
+
 protected:
     // We give our parent class permission to call the following function
-    friend TerrainChromosome;
+    friend class TerrainChromosome;
 
     // This function is called by the parent TerrainChromosome to claim
     // ownership and to inform it of its X,Y coordinates within the grid
-    void claim(TerrainChromosome * p, const Pixel & idx);
+    void claim(TerrainChromosome * p, TerrainLOD lod, const Pixel & idx);
 
-public:
-    // Chromosome relationship accessors
-    TerrainChromosome & parent() const { return *_parent; }
-    const Pixel & indices() const { return _indices; }
-
-//    IndexType levelOfDetail() const { return parent().levelOfDetail(); }
-
-protected:
     // Link to the parent Chromosome, and position within parent
     TerrainChromosome *     _parent;        // Daddy!
     Pixel                   _indices;       // My genetic coordinates
-    float                   _compatibility; // How compatible am I with my slot?
 
 
 /*---------------------------------------------------------------------------*
- | Data fields & assignment operator
+ | Source heightfield & terrain-type data
+ *---------------------------------------------------------------------------*/
+public:
+    // What LOD are we working with?
+    TerrainLOD levelOfDetail() const;
+
+    // What TerrainType and TerrainSample do we represent?
+    const TerrainType::LOD   & terrainType() const;
+    const TerrainSample::LOD & terrainSample() const;
+    void setTerrainSample(const TerrainSample::LOD & ts);
+
+protected:
+    TerrainLOD                  _levelOfDetail;
+    TerrainSample::LOD const *  _terrainSample;
+
+//    float                   _compatibility; // How compatible am I with my slot?
+
+
+/*---------------------------------------------------------------------------*
+ | Data fields
  *---------------------------------------------------------------------------*/
 public:
     // Assignment operator (preserves parent pointer and indices, but
     // copies data fields)
     Gene & operator=(const Gene &g);
 
+    // The pixel blending mask we're using to splat this gene.
+    const GrayscaleImage & mask() const;
 
-    // Source data
-    TerrainTypeConstPtr   terrainType;      // What sort of terrain is this?
-    TerrainSampleConstPtr sourceSample;     // Where do we get our data from?
-    Pixel               sourceCoordinates;  // Source X,Y center coordinates
-    IndexType           levelOfDetail;      // What LOD is this?
+    // The pixel indices (within the source sample) of the center of our data
+    const Pixel & sourceCenter() const;
+    void setSourceCenter(const Pixel & p);
 
+    // The pixel indices (within the resulting, generated heightfield) where
+    // this Gene will center its data. This field cannot be set directly, but
+    // is derived from the gene's indices() and jitter().
+    const Pixel & targetCenter() const;
+
+    // A scalar amount, in radians, by which to rotate the elevation data.
+    scalar_t rotation() const;
+    void setRotation(scalar_arg_t r);
+
+    // A scalar factor by which to scale the elevation data around its local
+    // mean. In other words, the mean will remain the same, but the range will
+    // increase or decrease.
+    scalar_t scale() const;
+    void setScale(scalar_arg_t s);
+
+    // A scalar amount by which to offset the elevation data from its local
+    // mean. The elevation range is not changed by this.
+    scalar_t offset() const;
+    void setOffset(scalar_arg_t o);
+
+    // An amount in pixels by which to jitter the gene's target center-point.
+    const Pixel & jitter() const;
+    void setJitter(const Pixel & j);
+
+protected:
     // Transformation to apply to source data
-    scalar_t            rotation;           // Horizontal rotation in radians
-    scalar_t            scale;              // Vertical scale factor
-    scalar_t            offset;             // Vertical offset amount
-
-    // Output alpha mask (trimming shape & blending)
-    GrayscaleImage *    mask;               // Alpha mask to trim with
-
-    // Target (destination) data
-    Pixel               targetJitter;       // How much to offset from the
-                                            // target coordinates
-    Pixel               targetCoordinates;  // Where does it go?
+    Pixel               _sourceCenter;  // Source X,Y center coordinates
+    Pixel               _targetCenter;  // Where does it go? (This is derived
+                                        // from jitter and indices)
+    scalar_t            _rotation;      // Horizontal rotation in radians
+    scalar_t            _scale;         // Vertical scale factor
+    scalar_t            _offset;        // Vertical offset amount
+    Pixel               _jitter;        // How much to adjust the
+                                        // target center
 };
 
-#if 0
-// XXX Hack -- these should be folded into MultiArray in a more general form
+
+/*****************************************************************************
+ * Free gene query functions
+ *****************************************************************************/
 namespace terrainosaurus {
-    typedef TerrainChromosome::GeneGrid::Iterator GeneIterator;
-    void copy(GeneIterator srcStart, GeneIterator srcEnd,
-              GeneIterator dstStart, GeneIterator dstEnd) {
-        bool srcHoriz, dstHoriz;
-        if (srcStart
+    int geneSpacing(TerrainLOD lod);
+    scalar_t geneRadius(TerrainLOD lod);
+    scalar_t geneOverlapFactor(TerrainLOD lod);
+
+    // Function to swap two genes
+    void swap(TerrainChromosome::Gene & g1, TerrainChromosome::Gene & g2);
 }
-#endif
 
 #endif

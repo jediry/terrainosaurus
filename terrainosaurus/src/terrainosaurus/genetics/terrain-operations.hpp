@@ -1,7 +1,7 @@
 /*
  * File: terrain-operations.hpp
  *
- * Author: Ryan L. Saunders & Mike Ong
+ * Author: Ryan L. Saunders
  *
  * Copyright 2004, Ryan L. Saunders. Permission is granted to use and
  *      distribute this file freely for educational purposes.
@@ -46,7 +46,6 @@
 
 // Import Map, TerrainLibrary, and terrain GA data structures
 #include <terrainosaurus/data/Map.hpp>
-#include <terrainosaurus/rendering/MapRasterization.hpp>
 #include <terrainosaurus/data/TerrainLibrary.hpp>
 #include "TerrainChromosome.hpp"
 
@@ -55,45 +54,27 @@
 // via a 2D genetic algorithm
 namespace terrainosaurus {
 
-    // Generate a heightfield by repeatedly applying the GA at successively
-    // finer LODs and returning the best candidate as 'hf'.
-    void generateTerrain(Heightfield & hf, MapConstPtr m,
-                         const Block & bounds, IndexType levelOfDetail);
+    // Generate a heightfield corresponding to the rasterized chunk of map
+    // specified by 'map', by repeatedly scaling up low-resolution data and
+    // applying the GA to refine it, up to 'targetLOD'.
+    TerrainSamplePtr generateTerrain(MapRasterizationConstPtr map,
+                                     TerrainLOD startLOD,
+                                     TerrainLOD targetLOD);
 
 
-    // Fill a Chromosome by finding a set of Genes that are compatible with
-    // the data in pattern.
-    void initializeChromosome(TerrainChromosome & c, IndexType lod,
-                              TerrainSampleConstPtr pattern,
-                              const MapRasterization & raster);
+    // Create a heightfield corresponding to an LOD from the MapRasterization
+    // by picking chunks at random from the appropriate TerrainTypes and
+    // blending near the seams.
+    Heightfield naiveBlend(const MapRasterization::LOD & map,
+                           int borderWidth);
 
-    // Create a random Gene by chosing a random location within a terrain
-    // sample of the given terrain type and LOD
-    TerrainChromosome::Gene createRandomGene(TerrainTypeConstPtr terrainType,
-                                             IndexType levelOfDetail);
 
-    // Scale up a Chromosome to the next level of detail
-//    void incrementLevelOfDetail(TerrainChromosome & dst,
-//                                const TerrainChromosome & src);
-
-    // Render a singe gene to an image (note -- not especially efficient!)
-    Heightfield renderSoloGene(const TerrainChromosome::Gene & g);
-
-    // Generate a heightfield by splatting together the Gene data in c
+   // Generate a heightfield by splatting together the Gene data in c
     void renderChromosome(Heightfield & hf,
                           const TerrainChromosome & c);
     void renderGene(Heightfield & hf, Heightfield & sum,
                     const TerrainChromosome::Gene & g);
 
-
-    // Calculate a value in [0, 1] representing the fitness of a Chromosome
-    scalar_t evaluateFitness(const TerrainChromosome & c);
-
-    // Calculate a value in [0, 1] representing the compatibility of a Gene
-    // with a slot in a Chromosome
-    scalar_t evaluateCompatibility(const TerrainChromosome & c,
-                                   IndexType i, IndexType j,
-                                   const TerrainChromosome::Gene & g2);
 
     // Heightfield measurement operations for a particular slot in a Chromosome.
     // These operations return average values across the region of the pattern
@@ -103,6 +84,7 @@ namespace terrainosaurus {
     const Vector2D & elevationRange(const TerrainChromosome & c, IndexType i, IndexType j);
     const Vector2D & slopeRange(const TerrainChromosome & c, IndexType i, IndexType j);
 
+
     // Heightfield measurement operations for a Gene.
     // These operations return average values of the data represented by the
     // Gene, and take into account any transformation.
@@ -111,17 +93,7 @@ namespace terrainosaurus {
     Vector2D elevationRange(const TerrainChromosome::Gene & g);
     Vector2D slopeRange(const TerrainChromosome::Gene & g);
 
-/*---------------------------------------------------------------------------*
- | Mike's chromosome methods: crossover and mutation
- *---------------------------------------------------------------------------*/
-	  void Crossover(TerrainChromosome* l,TerrainChromosome* r,float ratio,IndexType lod,const Heightfield & pattern,const MapRasterization & raster);	
-		void Mutate(TerrainChromosome* c,float ratio, IndexType lod,const Heightfield & pattern,const MapRasterization & raster);        
-		void generateNewIndividuals(TerrainChromosome*** c,const MapConstPtr m, const MapRasterization raster,int start,int end);
-		float evaluateFitness_temporary(const TerrainChromosome & c);
-		void ComputeFitnessOfPopulation(TerrainChromosome** c, float* fitness_A,double& totalfitness);
-		void NormalizeFitnessValues(float* fitness_A, float* cumulativefitness_A, double totalfitness);		
-		float GetRandomFloat(float start,float end);
-		int GetRandomInt(int start,int end);
 };
 
 #endif
+
