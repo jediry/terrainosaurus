@@ -81,8 +81,20 @@ namespace terrainosaurus {
     // heightfield covered by the gene at (i, j).
     scalar_t elevationMean(const TerrainChromosome & c, IndexType i, IndexType j);
     const Vector2D & gradientMean(const TerrainChromosome & c, IndexType i, IndexType j);
-    const Vector2D & elevationRange(const TerrainChromosome & c, IndexType i, IndexType j);
-    const Vector2D & slopeRange(const TerrainChromosome & c, IndexType i, IndexType j);
+    const Vector2D & elevationLimits(const TerrainChromosome & c, IndexType i, IndexType j);
+    const Vector2D & slopeLimits(const TerrainChromosome & c, IndexType i, IndexType j);
+    scalar_t elevationRange(const TerrainChromosome & c, IndexType i, IndexType j);
+    scalar_t slopeRange(const TerrainChromosome & c, IndexType i, IndexType j);
+
+
+    // Heightfield measurement operations for a particular slot in a Chromosome.
+    // These are aliases for the previous set, but accept a Gene for convenience.
+    scalar_t patternElevationMean(const TerrainChromosome::Gene & g);
+    const Vector2D & patternGradientMean(const TerrainChromosome::Gene & g);
+    const Vector2D & patternElevationLimits(const TerrainChromosome::Gene & g);
+    const Vector2D & patternSlopeLimits(const TerrainChromosome::Gene & g);
+    scalar_t patternElevationRange(const TerrainChromosome::Gene & g);
+    scalar_t patternSlopeRange(const TerrainChromosome::Gene & g);
 
 
     // Heightfield measurement operations for a Gene.
@@ -90,9 +102,25 @@ namespace terrainosaurus {
     // Gene, and take into account any transformation.
     scalar_t elevationMean(const TerrainChromosome::Gene & g);
     Vector2D gradientMean(const TerrainChromosome::Gene & g);
-    Vector2D elevationRange(const TerrainChromosome::Gene & g);
-    Vector2D slopeRange(const TerrainChromosome::Gene & g);
+    Vector2D elevationLimits(const TerrainChromosome::Gene & g);
+    Vector2D slopeLimits(const TerrainChromosome::Gene & g);
+    scalar_t elevationRange(const TerrainChromosome::Gene & g);
+    scalar_t slopeRange(const TerrainChromosome::Gene & g);
 
+
+    // Heightfield measurement operations for the TerrainType belonging to a gene.
+    scalar_t terrainTypeElevationMean(const TerrainChromosome::Gene & g);
+    scalar_t terrainTypeSlopeMean(const TerrainChromosome::Gene & g);
+    Vector2D terrainTypeElevationLimits(const TerrainChromosome::Gene & g);
+    Vector2D terrainTypeSlopeLimits(const TerrainChromosome::Gene & g);
+    scalar_t terrainTypeElevationRange(const TerrainChromosome::Gene & g);
+    scalar_t terrainTypeSlopeRange(const TerrainChromosome::Gene & g);
+
+
+    // Hacked in variances
+    scalar_t terrainTypeElevationVariance(const TerrainChromosome::Gene & g);
+    scalar_t terrainTypeSlopeVariance(const TerrainChromosome::Gene & g);
+    scalar_t terrainTypeAngleVariance(const TerrainChromosome::Gene & g);
 };
 
 #endif

@@ -317,6 +317,7 @@ protected:
 };
 
 
+// XXX OBSOLETE
 // Listener interface for observing the progress of the GA
 class terrainosaurus::GAListener {
 public:
@@ -380,7 +381,7 @@ protected:
 public:
     // Assignment operator (preserves parent pointer and indices, but
     // copies data fields)
-    Gene & operator=(const Gene &g);
+    Gene & operator=(const Gene & g);
 
     // The pixel blending mask we're using to splat this gene.
     const GrayscaleImage & mask() const;

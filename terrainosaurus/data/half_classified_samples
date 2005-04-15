@@ -27,11 +27,11 @@ fi
     "log/30096g3 - Kurten, TX (30m).log"                                  \
     "log/30096h2 - Canary, TX (30m).log"                                  \
     "log/30096h3 - Edge, TX (30m).log" --                                 \
-    "log/34092e4 - Bryant, AR (30).log"                                   \
+    "log/34092e4 - Bryant, AR (30m).log"                                  \
     "log/34101f1 - Willow Arroyo, TX (30m).log"                           \
     "log/34101f2 - Hardscrabble Creek, TX (30m).log"                      \
     "log/34101g1 - Tate Arroyo, TX (30m).log"                             \
-    "log/43116e2 - Boise South, ID (30).log"                              \
+    "log/43116e2 - Boise South, ID (30m).log"                             \
     "log/34101h1 - Buffalo Arroyo, TX (30m).log" --                       \
     "log/39110d1 - Chandler Falls, UT (30m).log"                          \
     "log/39111e2 - Candland Mountain, UT (30m).log"                       \

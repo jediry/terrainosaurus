@@ -31,7 +31,7 @@ namespace terrainosaurus {
 
 // Import window and data object definitions
 #include <terrainosaurus/ui/MapEditorWindow.hpp>
-#include <terrainosaurus/ui/GeneticsWindow.hpp>
+#include <terrainosaurus/ui/HeightfieldWindow.hpp>
 #include <terrainosaurus/data/TerrainLibrary.hpp>
 #include <terrainosaurus/data/Map.hpp>
 #include <terrainosaurus/data/MapRasterization.hpp>
@@ -73,14 +73,16 @@ protected:
  | Window management functions
  *---------------------------------------------------------------------------*/
 public:
-    MapEditorWindowPtr createMapEditorWindow(const std::string & filename);
-    MapEditorWindowPtr createMapEditorWindow(MapPtr map);
-    GeneticsWindowPtr  createGeneticsWindow(MapRasterizationPtr mr);
+    MapEditorWindowPtr   createMapEditorWindow(const std::string & filename);
+    MapEditorWindowPtr   createMapEditorWindow(MapPtr map);
+    HeightfieldWindowPtr createHeightfieldWindow(const std::string & filename);
+    HeightfieldWindowPtr createHeightfieldWindow(MapRasterizationPtr mr);
+    HeightfieldWindowPtr createHeightfieldWindow(TerrainSamplePtr ts);
 
 protected:
     // Existing windows
-    std::vector<MapEditorWindowPtr> _mapEditorWindows;
-    std::vector<GeneticsWindowPtr>  _geneticsWindows;
+    std::vector<MapEditorWindowPtr>     _mapEditorWindows;
+    std::vector<HeightfieldWindowPtr>   _heightfieldWindows;
 
 
 /*---------------------------------------------------------------------------*

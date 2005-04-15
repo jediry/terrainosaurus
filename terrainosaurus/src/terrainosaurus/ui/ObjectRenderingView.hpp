@@ -35,9 +35,11 @@ public:
     typedef shared_ptr<T const> ObjectConstPtr;
 
     // Constructor
-    ObjectRenderingView() { }
-    ObjectRenderingView(Object * ptr)  : _object(ptr) { }
-    ObjectRenderingView(ObjectPtr ptr) : _object(ptr) { }
+    ObjectRenderingView(const std::string & nm = "") { name = nm; }
+    ObjectRenderingView(Object * ptr, const std::string & nm = "")
+        : _object(ptr) { name = nm; }
+    ObjectRenderingView(ObjectPtr ptr, const std::string & nm = "")
+        : _object(ptr) { name = nm; }
 
     ObjectPtr      object()       { return _object; }
     ObjectConstPtr object() const { return _object; }

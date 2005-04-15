@@ -1,12 +1,12 @@
 # This section sets the parameters of the heightfield generation GA
 [Global]
-population size         = 5     # How many chromosomes in our GA?
-evolution cycles        = 5     # How many iterations do we run?
+population size         = 15    # How many chromosomes in our GA?
+evolution cycles        = 15    # How many iterations do we run?
 selection ratio         = 0.75  # What percent survive to the next round?
 elite ratio             = 0.2   # What percent "best" survive to the next round?
-mutation probability    = 0.1   # What are the odds of mutating a chromosome?
+mutation probability    = 0.8   # What are the odds of mutating a chromosome?
 mutation ratio          = 0.5   # What percent of the genes get mutated?
-crossover probability   = 0.2   # What are the odds of crossing a chromosome?
+crossover probability   = 0.5   # What are the odds of crossing a chromosome?
 crossover ratio         = 0.5   # What percentage of the genes get crossed?
 
 max crossover width     = 4     # How wide/long a chunk (measured in genes) can we crossover?
@@ -17,7 +17,7 @@ max jitter pixels       = 0     # How much can we jitter the gene locations?
 # These sections define the different, logical "terrain types"
 [TerrainType: California_Coast_Hills]
 color = <0.6, 0.6, 0.3, 1.0>
-sample = "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/dem/35120e8 - Cypress Mountain, CA (30m).dem"
-sample = "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/dem/35120f8 - Lime Mountain, CA (30m).dem"
-sample = "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/dem/35121f1 - Pebblestone Shut-in, CA (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/35120e8 - Cypress Mountain, CA (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/35120f8 - Lime Mountain, CA (30m).dem"
+sample = "/mnt/data/scratch/gis/dem/35121f1 - Pebblestone Shut-in, CA (30m).dem"
 

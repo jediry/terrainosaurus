@@ -60,8 +60,8 @@ void TerrainosaurusApplication::setup(int & argc, char ** argv) {
 //    if (_mapFilenames.size() == 0)
 //        _mapFilenames.push_back("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.map");
     if (_libraryFilenames.size() == 0)
-        _libraryFilenames.push_back("C:\\Documents and Settings\\Dave\\My Documents\\Ry's Stuff\\Media\\terrainosaurus\\data\\test.ttl");
-//        _libraryFilenames.push_back("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.ttl");
+//        _libraryFilenames.push_back("C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/terrainosaurus/data/test.ttl");
+        _libraryFilenames.push_back("/home/jediry/Documents/Development/Media/terrainosaurus/data/test.ttl");
 }
 
 // Put together our user interface
@@ -89,18 +89,20 @@ void TerrainosaurusApplication::constructInterface() {
     // Create windows for each terrain on the command-line
     for (IndexType i = 0; i < IndexType(_terrainFilenames.size()); ++i)
         try {
-//            createMapEditorWindow(_terrainFilenames[i]);
+            createHeightfieldWindow(_terrainFilenames[i]);
             ++windowCount;
         } catch (inca::StreamException & e) {
             INCA_ERROR("[" << _terrainFilenames[i] << "]: " << e)
         }
 
     // XXX
-    MapRasterization::LOD::IDMap idx(inca::Array<int, 2>(300, 300));
-    fill(idx, 1);
-    MapRasterizationPtr mr(new MapRasterization(idx, LOD_30m, _lastTerrainLibrary));
-    createGeneticsWindow(mr);
-    ++windowCount;
+    if (windowCount == 0) {
+        MapRasterization::LOD::IDMap idx(inca::Array<int, 2>(300, 300));
+        fill(idx, 1);
+        MapRasterizationPtr mr(new MapRasterization(idx, LOD_30m, _lastTerrainLibrary));
+        createHeightfieldWindow(mr);
+        ++windowCount;
+    }
 
     // Make sure we did something with all this effort
     if (windowCount == 0)
@@ -124,9 +126,20 @@ TerrainosaurusApplication::createMapEditorWindow(MapPtr map) {
 }
 
 
-GeneticsWindowPtr
-TerrainosaurusApplication::createGeneticsWindow(MapRasterizationPtr mr) {
-    GeneticsWindowPtr win(new GeneticsWindow(mr));
+HeightfieldWindowPtr
+TerrainosaurusApplication::createHeightfieldWindow(const std::string & filename) {
+    TerrainSamplePtr ts(new TerrainSample(filename));
+    return createHeightfieldWindow(ts);
+}
+HeightfieldWindowPtr
+TerrainosaurusApplication::createHeightfieldWindow(MapRasterizationPtr mr) {
+    HeightfieldWindowPtr win(new HeightfieldWindow(mr));
+    registerWindow(win);
+    return win;
+}
+HeightfieldWindowPtr
+TerrainosaurusApplication::createHeightfieldWindow(TerrainSamplePtr ts) {
+    HeightfieldWindowPtr win(new HeightfieldWindow(ts));
     registerWindow(win);
     return win;
 }

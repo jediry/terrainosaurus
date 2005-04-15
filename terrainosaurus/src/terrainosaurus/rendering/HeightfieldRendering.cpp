@@ -46,15 +46,15 @@ void HeightfieldRendering::load(const TerrainSample::LOD & ts,
                                 const MapRasterization::LOD & map) {
     // Make sure this is the right size
     this->resize(ts.sizes());
-    
+
     // Figure out the mean height and the horizontal resolution
     Heightfield::ElementType meanHeight, horizontalScale;
     horizontalScale = metersPerSampleForLOD(ts.levelOfDetail());
     if (ts.analyzed())  meanHeight = ts.globalElevationStatistics().mean();
     else                meanHeight = mean(ts.elevations());
 
-    VectorMap grad = gradient(ts.elevations(), horizontalScale);
-   
+    VectorMap grad = gradient(ts.elevations(), Vector3D(horizontalScale));
+
     Pixel px;
     int nanCount = 0, goodCount = 0;
     for (px[1] = ts.base(1); px[1] <= ts.extent(1); ++px[1])
@@ -70,6 +70,7 @@ void HeightfieldRendering::load(const TerrainSample::LOD & ts,
                                  ts.elevation(px) - meanHeight);
             Vector2D gradient2D = grad(px);
             p.normal() = normalize(Vector3D(gradient2D[0], gradient2D[1], scalar_t(1)));
+//            p.normal() = Vector3D(scalar_t(0), scalar_t(0), scalar_t(1));
             p.color() = map.terrainType(px).color();
         }
     INCA_DEBUG(nanCount << " NaNs and " << goodCount << " good values")
@@ -90,7 +91,7 @@ bool HeightfieldRendering::toggle(const std::string & feature) {
     else
         index = -1;
     _features.at(index) = ! _features.at(index);
-    INCA_DEBUG(feature << (_features.at(index) ? " on" : " off"))
+    INCA_INFO(feature << (_features.at(index) ? " on" : " off"))
     return _features.at(index);
 }
 
@@ -98,16 +99,25 @@ bool HeightfieldRendering::toggle(const std::string & feature) {
 // Rendering functor
 void HeightfieldRendering::operator()(HeightfieldRendering::Renderer & renderer) const {
     Renderer::Rasterizer & rasterizer = renderer.rasterizer();
-    INCA_DEBUG("Rendering HF")
 
     if (_features[AS_POLYGONS]) {
         if (_features[WITH_LIGHTING]) {
+            // Enable lighting and shading
+//            Renderer::LightingUnit & light0 = renderer.lightingUnit(0);
+//            light0.setPosition(Point3D(0.0f, 0.0f, 200.0f));
+//            light0.setDiffuseColor(Color(0.6f, 0.6f, 0.6f, 1.0f));
+//            light0.setEnabled(true);
+
+//            Renderer::LightingUnit & light1 = renderer.lightingUnit(1);
+//            light1.setPosition(Point3D(1000.0f, 0.0f, 1000.0f));
+//            light1.setDiffuseColor(Color(0.2f, 0.2f, 0.2f, 1.0f));
+//            light1.setEnabled(true);
+
             rasterizer.setLightingEnabled(true);
             GL::glEnable(GL_COLOR_MATERIAL);
         } else {
             rasterizer.setLightingEnabled(false);
         }
-        INCA_DEBUG("Rendering polygons: " << this->size() << " vertices")
 
         GL::glEnable(GL_POLYGON_OFFSET_FILL);
         rasterizer.setPolygonOffset(1.5f);

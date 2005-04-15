@@ -146,8 +146,6 @@ bool ChromosomeRendering::toggle(const std::string & feature) {
 
 // Rendering functor
 void ChromosomeRendering::operator()(ChromosomeRendering::Renderer & renderer) const {
-    INCA_DEBUG("Rendering C: " << this->_chromosome)
-
     if (! this->_chromosome)    // Nothing to do...
         return;
 

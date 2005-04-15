@@ -36,7 +36,7 @@ public:
         GrayscaleImage tmp = img;
 
         typedef typename GrayscaleImage::ElementType Scalar;
-        cerr << "Setting plain image: (" << img.sizes() << ")\n";
+        INCA_INFO("Setting plain image: (" << img.sizes() << ")")
         plainImage = linear_map(tmp, inca::Array<Scalar, 2>(Scalar(0), Scalar(1)));
 //        image = img;
         Window::setSize(plainImage.size(0), plainImage.size(1));
@@ -49,7 +49,7 @@ public:
             ENABLE_FUNCTION_IF( EQUAL( INT(ImageType::dimensionality), INT(3)))) {
         typedef typename ImageType::ElementType Scalar;
 
-        cerr << "Setting scale-space image: (" << img.sizes() << ")\n";
+        INCA_INFO("Setting scale-space image: (" << img.sizes() << ")")
         scaleImage = linear_map(img, inca::Array<Scalar, 2>(Scalar(0), Scalar(1)));
 //        scaleImage = img;
         Window::setSize(scaleImage.size(0), scaleImage.size(1));
@@ -97,7 +97,7 @@ public:
                     ++layer;
                 if (button == GLUT_RIGHT_BUTTON && layer > 0)
                     --layer;
-                cerr << "Displaying scale layer " << layer << endl;
+                INCA_INFO("Displaying scale layer " << layer)
                 break;
             }
             requestRedisplay();

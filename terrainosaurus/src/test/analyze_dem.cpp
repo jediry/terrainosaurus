@@ -54,18 +54,22 @@ public:
         // Defaults
         targetLOD = TerrainLOD_Underflow;
         filename  = "";
+        study = false;
 
         // Parse command-line arguments
         for (int i = 0; i < argc; ++i) {
-            string arg(argv[i]);
+            std::string arg(argv[i]);
             if (arg == "-l") {      // It's a LOD specification
-                string arg2(argv[i+1]);
+                std::string arg2(argv[i+1]);
                 if (arg2 == "10")       targetLOD = LOD_10m;
                 else if (arg2 == "30")  targetLOD = LOD_30m;
                 else if (arg2 == "90")  targetLOD = LOD_90m;
                 else if (arg2 == "270") targetLOD = LOD_270m;
                 else if (arg2 == "810") targetLOD = LOD_810m;
                 else                    exit(1, "Unrecognized LOD " + arg2);
+
+            } else if (arg == "-s") {   // It's a request to also study the thing
+                study = true;
 
             } else {                // It's a DEM filename
                 filename = arg;
@@ -83,16 +87,25 @@ public:
             targetLOD = sample->nearestLoadedLODBelow(TerrainLOD_Overflow);
         sample->ensureAnalyzed(targetLOD);
 
-        // Write out the field descriptions
-        header(std::cout);
+        // If we were asked to study it, just do that
+        if (study) {
+            INCA_INFO("Studying terrains")
+            sample->ensureStudied(TerrainLOD::minimum(), targetLOD);
 
-        // Analyze the full heightfield
-        dump(std::cout, (*sample)[targetLOD]);
-//        histogram(std::cout, (*sample)[lod]);
+        // Otherwise, dump analysis of it
+        } else {
+            INCA_INFO("Analysing terrain chunks")
+            // Write out the field descriptions
+            header(std::cout);
 
-        // Analyze progressively smaller chunks
-        dumpSubdivisions(targetLOD, 0.5f);
-        dumpSubdivisions(targetLOD, 0.25f);
+            // Analyze the full heightfield
+            dump(std::cout, (*sample)[targetLOD]);
+    //        histogram(std::cout, (*sample)[lod]);
+
+            // Analyze progressively smaller chunks
+            dumpSubdivisions(targetLOD, 0.5f);
+            dumpSubdivisions(targetLOD, 0.25f);
+        }
 
         ::exit(0);
     }
@@ -152,7 +165,7 @@ public:
         if (size[0] % 2 != 0)   size[0]--;
         if (size[1] % 2 != 0)   size[1]--;
 
-        std::cerr << "Dumping " << (cells * cells) << " subsets of " << lod << endl;
+        INCA_INFO("Dumping " << (cells * cells) << " subsets of " << lod)
 
         TerrainSamplePtr chunk;
         for (int x = 0; x < cells; x++)
@@ -178,6 +191,7 @@ protected:
     TerrainSampleConstPtr   sample;
     TerrainLOD              targetLOD;
     std::string             filename;
+    bool                    study;
 };
 
 

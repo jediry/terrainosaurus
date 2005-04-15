@@ -105,8 +105,9 @@ public:
     void analyze();
 
     // Lazy loading & analysis mechanism
-    void ensureLoaded() const;
+    void ensureLoaded()   const;
     void ensureAnalyzed() const;
+    void ensureStudied()  const;
 
 
 /*---------------------------------------------------------------------------*

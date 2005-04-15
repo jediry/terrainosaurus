@@ -68,6 +68,13 @@ void TerrainType::LOD::ensureAnalyzed() const {
         _analyzed = true;
     }
 }
+void TerrainType::LOD::ensureStudied() const {
+    if (! studied()) {
+        for (IndexType i = 0; i < size(); ++i)
+            terrainSample(i).ensureStudied();
+        _studied = true;
+    }
+}
 
 
 /*---------------------------------------------------------------------------*

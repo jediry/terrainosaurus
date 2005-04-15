@@ -48,7 +48,8 @@ typedef TerrainSample::LOD::VectorStatistics    VectorStatistics;
 
 
 #define TRIM 30     // How many pixels to trim from each side
-#define CACHE_DIR   "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/cache"
+//#define CACHE_DIR   "C:/Documents and Settings/Dave/My Documents/Ry's Stuff/Media/cache"
+#define CACHE_DIR   "/mnt/data/scratch/gis/cache"
 
 // Timer!
 #include <inca/util/Timer>
@@ -272,11 +273,11 @@ void read(std::istream & is, CurveTracker & c) {
  *****************************************************************************/
  // Default constructor
 TerrainSample::LOD::LOD()
-    : LODBase<TerrainSample>(), _studied(false) { }
+    : LODBase<TerrainSample>() { }
 
 // Constructor linking back to TerrainSample
 TerrainSample::LOD::LOD(TerrainSamplePtr ts, TerrainLOD lod)
-    : LODBase<TerrainSample>(ts, lod), _studied(false) { }
+    : LODBase<TerrainSample>(ts, lod) { }
 
 
 // Access to related LOD objects
@@ -296,8 +297,8 @@ void TerrainSample::LOD::createFromRaster(const Heightfield & hf) {
     _studied  = false;
 }
 void TerrainSample::LOD::loadFromFile(const std::string & filename) {
-    std::cerr << "Loading TerrainSample<" << name() << "> from \""
-              << filename << '"' << std::endl;
+    INCA_INFO("Loading TerrainSample<" << name() << "> from \""
+              << filename << '"')
 
     // The file should scream bloody murder if something goes wrong
     std::ifstream file;
@@ -311,8 +312,8 @@ void TerrainSample::LOD::loadFromFile(const std::string & filename) {
         char header[15];
         file.get(header, 15);
         if (std::string("Terrainosaurus") != header)
-            std::cerr << filename << " does not have a correct magic header. "
-                         "Are you sure this is a cache file?\n";
+            INCA_WARNING(filename << " does not have a correct magic header. "
+                         "Are you sure this is a cache file?")
 
         // Read the LOD and dimensions
         TerrainLOD lod;
@@ -320,16 +321,16 @@ void TerrainSample::LOD::loadFromFile(const std::string & filename) {
 
         // Warn if this doesn't seem like the right LOD
         if (lod != levelOfDetail())
-            std::cerr << "Uh oh...\"" << filename << "\" contains " << lod
-                      << ", not expected " << levelOfDetail() << std::endl;
+            INCA_WARNING("Uh oh...\"" << filename << "\" contains " << lod
+                         << ", not expected " << levelOfDetail())
 
         // Read in each of the rasters
         read(file, _elevations);
         read(file, _gradients);
         read(file, _localElevationMeans);
         read(file, _localGradientMeans);
-        read(file, _localElevationRanges);
-        read(file, _localSlopeRanges);
+        read(file, _localElevationLimits);
+        read(file, _localSlopeLimits);
 
         // Write out each of the non-raster measurements
         read(file, _frequencySpectrum);
@@ -342,7 +343,7 @@ void TerrainSample::LOD::loadFromFile(const std::string & filename) {
         read(file, _ridges);
 
         // We should now be at the end of the file
-        std::cerr << "Stream pointer is " << file.tellg() << std::endl;
+        INCA_DEBUG("Stream pointer is " << file.tellg())
 
         // Close the file
         file.close();
@@ -351,7 +352,6 @@ void TerrainSample::LOD::loadFromFile(const std::string & filename) {
         _loaded = true;
         _analyzed = true;
         _studied = true;
-        std::cerr << "Am I studied?? " << this->studied() << std::endl;
 
     } catch (std::exception & e) {
         INCA_ERROR("Error reading \"" << filename << "\": " << e.what())
@@ -362,8 +362,8 @@ void TerrainSample::LOD::storeToFile(const std::string & filename) const {
     // Make sure we have stuff to store first
     ensureStudied();
 
-    std::cerr << "Storing TerrainSample<" << name() << "> to \""
-              << filename << '"' << std::endl;
+    INCA_INFO("Storing TerrainSample<" << name() << "> to \""
+              << filename << '"')
 
     // The file should scream bloody murder if something goes wrong
     std::ofstream file;
@@ -384,8 +384,8 @@ void TerrainSample::LOD::storeToFile(const std::string & filename) const {
         write(file, _gradients);
         write(file, _localElevationMeans);
         write(file, _localGradientMeans);
-        write(file, _localElevationRanges);
-        write(file, _localSlopeRanges);
+        write(file, _localElevationLimits);
+        write(file, _localSlopeLimits);
 
         // Write out each of the non-raster measurements
         write(file, _frequencySpectrum);
@@ -397,7 +397,7 @@ void TerrainSample::LOD::storeToFile(const std::string & filename) const {
         write(file, _edges);
         write(file, _ridges);
 
-        std::cerr << "Stream pointer is " << file.tellp() << std::endl;
+        INCA_DEBUG("Stream pointer is " << file.tellp())
 
         // Close the file, now that we're done with it
         file.close();
@@ -460,7 +460,7 @@ void TerrainSample::LOD::analyze() {
 //    phase.reset(); phase.start();
 //    _globalGradientStatistics = apply(VectorStatistics(), _gradients);
 //    _globalGradientStatistics.done();
-//    _globalGradientStatistics = apply(_globalGradientStatistics[lod], _gradients);
+//    _globalGradientStatistics = apply(_globalGradientStatistics, _gradients);
 //    _globalGradientStatistics.done();
 //    phase.stop();
 //    report << phase() << "seconds\n";
@@ -571,7 +571,7 @@ void TerrainSample::LOD::ensureLoaded() const {
 
         // If we got here...then I sure hope we have data somewhere we can resample
         } else {
-            std::cerr << name() << ": No data files available" << std::cerr;
+            INCA_INFO(name() << ": No data files available")
         }
 
 
@@ -592,17 +592,17 @@ void TerrainSample::LOD::ensureLoaded() const {
 
             // If we got it, resample from our neighbor
             if (ref != TerrainLOD_Underflow) {
-                std::cerr << "TS<" << name() << ":" << index() << ">"
-                             "::ensureLoaded(" << levelOfDetail()
-                          << "): Resampling from " << ref << std::endl;
+                INCA_INFO("TS<" << name() << ":" << index() << ">"
+                          "::ensureLoaded(" << levelOfDetail() << "): "
+                          "Resampling from " << ref)
                 const_cast<TerrainSample::LOD *>(this)->resampleFromLOD(ref);
 
             // If that STILL didn't work...I don't know what to tell you
             } else {
-                std::cerr << "TS<" << name() << ":" << index() << ">"
-                             "::ensureLoaded(" << levelOfDetail()
-                          << "): Unable to load LOD -- no other LODs exist and "
-                             "no filename was specified...giving up" << std::endl;
+                INCA_INFO("TS<" << name() << ":" << index() << ">"
+                          "::ensureLoaded(" << levelOfDetail() << "): "
+                          "Unable to load LOD -- no other LODs exist and "
+                          "no filename was specified...giving up")
             }
         }
     }
@@ -612,8 +612,6 @@ void TerrainSample::LOD::ensureAnalyzed() const {
     if (! analyzed())
         const_cast<TerrainSample::LOD *>(this)->analyze();
 }
-
-bool TerrainSample::LOD::studied() const { return _studied; }
 void TerrainSample::LOD::ensureStudied() const {
     ensureAnalyzed();
     if (! studied())
@@ -621,7 +619,7 @@ void TerrainSample::LOD::ensureStudied() const {
 }
 
 void TerrainSample::LOD::study() {
-    std::cerr << "Studying TerrainSample<" << name() << "> (" << sizes() << ')' << std::endl;
+    INCA_INFO("Studying TerrainSample<" << name() << "> (" << sizes() << ')')
     Timer<float, false> total, phase;
     total.start();
 
@@ -660,11 +658,11 @@ void TerrainSample::LOD::study() {
 
     report << "\tCalculating local elevation ranges...";
     phase.reset(); phase.start();
-    _localElevationRanges.setSizes(sizes());
+    _localElevationLimits.setSizes(sizes());
     for (px[0] = 0; px[0] < size(0); ++px[0])
         for (px[1] = 0; px[1] < size(1); ++px[1]) {
             start = Pixel(px[0] - halfWin, px[1] - halfWin);
-            _localElevationRanges(px) = Vector2D(range(selectBS(_elevations, start, windowSizes)));
+            _localElevationLimits(px) = Vector2D(range(selectBS(_elevations, start, windowSizes)));
         }
     phase.stop();
     report << phase() << " seconds\n";
@@ -677,11 +675,11 @@ void TerrainSample::LOD::study() {
 
     report << "\tCalculating local slope ranges...";
     phase.reset(); phase.start();
-    _localSlopeRanges.setSizes(sizes());
+    _localSlopeLimits.setSizes(sizes());
     for (px[0] = 0; px[0] < size(0); ++px[0])
         for (px[1] = 0; px[1] < size(1); ++px[1]) {
             start = Pixel(px[0] - halfWin, px[1] - halfWin);
-            _localSlopeRanges(px)   = Vector2D(range(selectBS(gradientMag, start, windowSizes)));
+            _localSlopeLimits(px)   = Vector2D(range(selectBS(gradientMag, start, windowSizes)));
         }
     phase.stop();
     report << phase() << " seconds\n";
@@ -747,8 +745,8 @@ void TerrainSample::LOD::setSizes(const SizeArray & sz) {
     _gradients.setSizes(sz);
     _localElevationMeans.setSizes(sz);
     _localGradientMeans.setSizes(sz);
-    _localElevationRanges.setSizes(sz);
-    _localSlopeRanges.setSizes(sz);
+    _localElevationLimits.setSizes(sz);
+    _localSlopeLimits.setSizes(sz);
 }
 
 // Per-cell sample data accessors
@@ -768,13 +766,13 @@ const VectorMap & TerrainSample::LOD::localGradientMeans() const {
     ensureStudied();
     return _localGradientMeans;
 }
-const VectorMap & TerrainSample::LOD::localElevationRanges() const {
+const VectorMap & TerrainSample::LOD::localElevationLimitss() const {
     ensureStudied();
-    return _localElevationRanges;
+    return _localElevationLimits;
 }
-const VectorMap & TerrainSample::LOD::localSlopeRanges() const {
+const VectorMap & TerrainSample::LOD::localSlopeLimitss() const {
     ensureStudied();
-    return _localSlopeRanges;
+    return _localSlopeLimits;
 }
 
 
@@ -925,7 +923,7 @@ void TerrainSample::loadFromFile(const std::string & filename) {
 bool TerrainSample::fileLoaded() const { return _fileLoaded; }
 void TerrainSample::ensureFileLoaded() const {
     if (! fileLoaded() && filename() != "") {
-        cerr << "ensureFileLoaded(): Loading DEM file " << filename() << endl;
+        INCA_INFO("ensureFileLoaded(): Loading DEM file " << filename())
         const_cast<TerrainSample*>(this)->loadFromFile(filename());
         const_cast<TerrainSample*>(this)->_fileLoaded = true;
     }

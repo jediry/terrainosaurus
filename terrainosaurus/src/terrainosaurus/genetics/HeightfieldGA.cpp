@@ -20,14 +20,20 @@ using namespace inca::math;
 
 namespace terrainosaurus {
     // Forward declarations of operator classes
-    class CreateRandomChromosomeOperator;
-    class CrossRectangularRegionsOperator;
-    class MutateResetTransformationOperator;
-    class MutateVerticalOffsetOperator;
-    class MutateVerticalScaleOperator;
-    class MutateVerticalRotationOperator;
-    class MutateHorizontalTranslationOperator;
-    class MutateHorizontalJitterOperator;
+    class RandomSourceDataInitializationOperator;
+
+    class RectangularRegionCrossoverOperator;
+
+    class ResetTransformMutationOperator;
+    class VerticalOffsetMutationOperator;
+    class VerticalScaleMutationOperator;
+    class VerticalRotationMutationOperator;
+    class HorizontalTranslationMutationOperator;
+    class HorizontalJitterMutationOperator;
+    class ConformMutationOperator;
+
+    class GeneCompatibilityFitnessOperator;
+    class RegionCharacteristicsFitnessOperator;
 }
 
 // HACK-age
@@ -63,15 +69,16 @@ scalar_t terrainosaurus::MAX_OFFSET_AMOUNT      = 50.0f;
 #define MAX_OFFSET_AMOUNT      50.0f
 #endif
 
+
 #include <terrainosaurus/genetics/terrain-operations.hpp>
 
 
 /**
- * The CreateRandomChromosomeOperator implements a simple initialization
- * operator that populates the chromosome with random data from the
- * TerrainLibrary.
+ * The RandomSourceDataInitializationOperator implements a simple
+ * initialization operator that populates the chromosome with random data from
+ * the TerrainLibrary.
  */
-class terrainosaurus::CreateRandomChromosomeOperator
+class terrainosaurus::RandomSourceDataInitializationOperator
         : public HeightfieldGA::InitializationOperator {
 public:
     void operator()(Chromosome & c) {
@@ -102,8 +109,8 @@ public:
 
                 // Figure out what TerrainType this should be and pick some sample data
                 const TerrainType::LOD & tt = mr.terrainType(g.targetCenter());
-//                g.setTerrainSample(tt.randomTerrainSample());
-                g.setTerrainSample(tt.terrainSample(0));
+                g.setTerrainSample(tt.randomTerrainSample());
+//                g.setTerrainSample(tt.terrainSample(0));
 
                 // Reset the transformation parameters
                 g.reset();
@@ -113,6 +120,7 @@ public:
                 SizeType radius = SizeType(blendFalloffRadius(tt.levelOfDetail()));
                 Pixel center(randomInt(radius, sampleSizes[0] - radius),
                              randomInt(radius, sampleSizes[1] - radius));
+                g.setSourceCenter(center);
             }
 
         INCA_DEBUG("Initialized chromosome with "
@@ -125,7 +133,7 @@ protected:
 
 
 /**
- * The CrossRectangularRegionsOperator implements a simple crossover operator
+ * The RectangularRegionCrossoverOperator implements a simple crossover operator
  * that swaps small rectangular clusters of genes from one chromosome with the
  * matching genes (i.e., with the same indices) from the other chromosome.
  *
@@ -136,12 +144,12 @@ protected:
  * below 0.5 (e.g. 0.4 and 0.6 will both result in each chromosome having
  * 40% from one chromosome and 60% from the other).
  */
-class terrainosaurus::CrossRectangularRegionsOperator
+class terrainosaurus::RectangularRegionCrossoverOperator
         : public HeightfieldGA::CrossoverOperator {
 public:
     // Constructor
-    explicit CrossRectangularRegionsOperator(scalar_t r = CROSSOVER_RATIO,
-                                             int w = MAX_CROSSOVER_WIDTH)
+    explicit RectangularRegionCrossoverOperator(scalar_t r = CROSSOVER_RATIO,
+                                                int w = MAX_CROSSOVER_WIDTH)
         : _crossoverRatio(r), _regionWidth(w) { }
 
     // Properties
@@ -195,9 +203,9 @@ public:
                     ++crossed;
                 }
         }
-        INCA_DEBUG("Crossed " << crossed << " of " << size << " genes\n"
-                   "Target percentage: " << int(crossoverRatio() * 100) << "\n"
-                   "Actual percentage: " << int(crossed * 100.0f / size))
+//        INCA_DEBUG("Crossed " << crossed << " of " << size << " genes\n"
+//                   "Target percentage: " << int(crossoverRatio() * 100) << "\n"
+//                   "Actual percentage: " << int(crossed * 100.0f / size))
     }
 
 protected:
@@ -206,7 +214,7 @@ protected:
 };
 
 
-class terrainosaurus::MutateResetTransformationOperator
+class terrainosaurus::ResetTransformMutationOperator
         : public HeightfieldGA::MutationOperator {
 public:
     void operator()(Gene & g) {
@@ -215,46 +223,92 @@ public:
 };
 
 
-class terrainosaurus::MutateVerticalOffsetOperator
+class terrainosaurus::VerticalOffsetMutationOperator
         : public HeightfieldGA::MutationOperator {
 public:
+    explicit VerticalOffsetMutationOperator(Scalar maxP)
+        : _maxPercentChange(maxP) { }
+
     void operator()(Gene & g) {
-        Scalar min, max;
-        g.setOffset(g.offset() + randomScalar(min, max));
+        Scalar range = terrainTypeElevationRange(g);
+        Scalar mu    = patternElevationMean(g),
+               sigma = std::sqrt(terrainTypeElevationVariance(g)),
+               current = elevationMean(g),
+               maxChange = _maxPercentChange * range;
+        Scalar target = randomScalar(mu, sigma),
+               change = target - current;
+        if (std::abs(change) > maxChange)
+            if (target < current)   change = -maxChange;
+            else                    change = +maxChange;
+
+        g.setOffset(g.offset() + change);
     }
 
 protected:
-    RandomUniform<Scalar> randomScalar;
+    Scalar _maxPercentChange;
+    RandomGaussian<Scalar> randomScalar;
 };
 
 
-class terrainosaurus::MutateVerticalScaleOperator
+class terrainosaurus::VerticalScaleMutationOperator
         : public HeightfieldGA::MutationOperator {
 public:
+    explicit VerticalScaleMutationOperator(Scalar maxP)
+        : _maxPercentChange(maxP) { }
+
     void operator()(Gene & g) {
-        Scalar min, max;
-        g.setScale(g.scale() + randomScalar(min, max));
+        Scalar range = terrainTypeSlopeRange(g);
+        Vector2D targetGrad = patternGradientMean(g),
+                 currentGrad = gradientMean(g);
+        Scalar mu    = magnitude(targetGrad),
+               sigma = std::sqrt(terrainTypeSlopeVariance(g)),
+               current = magnitude(currentGrad),
+               maxChange = _maxPercentChange * range;
+        Scalar target = randomScalar(mu, sigma),
+               change = target - current;
+        if (std::abs(change) > maxChange)
+            if (target < current)   change = -maxChange;
+            else                    change = +maxChange;
+
+        g.setScale(g.scale() + change);
     }
 
 protected:
-    RandomUniform<Scalar> randomScalar;
+    Scalar _maxPercentChange;
+    RandomGaussian<Scalar> randomScalar;
 };
 
 
-class terrainosaurus::MutateVerticalRotationOperator
+class terrainosaurus::VerticalRotationMutationOperator
         : public HeightfieldGA::MutationOperator {
 public:
+    explicit VerticalRotationMutationOperator(Scalar maxP)
+        : _maxPercentChange(maxP) { }
+
     void operator()(Gene & g) {
-        Scalar min, max;
-        g.setRotation(g.rotation() + randomScalar(min, max));
+        Scalar range = terrainTypeSlopeRange(g);
+        Vector2D targetGrad = patternGradientMean(g),
+                 currentGrad = gradientMean(g);
+        Scalar mu    = 0,
+               sigma = std::sqrt(terrainTypeAngleVariance(g)),
+               current = signedAngle(currentGrad, targetGrad),
+               maxChange = _maxPercentChange * range;
+        Scalar target = randomScalar(mu, sigma),
+               change = target - current;
+        if (std::abs(change) > maxChange)
+            if (target < current)   change = -maxChange;
+            else                    change = +maxChange;
+
+        g.setRotation(g.rotation() + change);
     }
 
 protected:
-    RandomUniform<Scalar> randomScalar;
+    Scalar _maxPercentChange;
+    RandomGaussian<Scalar> randomScalar;
 };
 
 
-class terrainosaurus::MutateHorizontalTranslationOperator
+class terrainosaurus::HorizontalTranslationMutationOperator
         : public HeightfieldGA::MutationOperator {
 public:
     void operator()(Gene & g) {
@@ -269,7 +323,7 @@ protected:
 };
 
 
-class terrainosaurus::MutateHorizontalJitterOperator
+class terrainosaurus::HorizontalJitterMutationOperator
         : public HeightfieldGA::MutationOperator {
 public:
     void operator()(Gene & g) {
@@ -283,12 +337,133 @@ protected:
 };
 
 
-// HACK
-class One
+class terrainosaurus::ConformMutationOperator
+        : public HeightfieldGA::MutationOperator {
+public:
+    void operator()(Gene & g) {
+        scalar_t changeMean = patternElevationMean(g) - elevationMean(g);
+        scalar_t changeScale = patternElevationRange(g) / elevationRange(g);
+        scalar_t changeAngle = signedAngle(patternGradientMean(g),
+                                           gradientMean(g));
+        g.setOffset(g.offset() + changeMean);
+        if (! isnan(changeScale))
+            g.setScale(g.scale() * changeScale);
+        g.setRotation(g.rotation() + changeAngle);
+        g.setRotation(0.0f);
+    }
+};
+
+
+// HACK This should be given another home
+template <typename Scalar>
+Scalar gauss_project(Scalar m, Scalar v, Scalar x) {
+    Scalar diff = x - m;
+    return std::exp(-(diff * diff) / (2 * v));
+}
+
+
+/**
+ * The GeneCompatibilityFitnessOperator implements a fitness operator returning
+ * the unweighted average of the compatibility of each gene with its
+ * corresponding "chunk" of the pattern heightfield.
+ */
+class terrainosaurus::GeneCompatibilityFitnessOperator
         : public HeightfieldGA::FitnessOperator {
 public:
     Scalar operator()(Chromosome & c) {
-        return 1;
+        ConformMutationOperator conform;
+        Scalar compat = 0;
+        Pixel px;
+        for (px[0] = 0; px[0] < c.size(0); ++px[0])
+            for (px[1] = 0; px[1] < c.size(1); ++px[1]) {
+                Gene & g = c(px);
+
+                // XXX
+                conform(g);
+
+                Scalar targetElevation = patternElevationMean(g);
+                Vector2D targetGradient = patternGradientMean(g);
+                Scalar targetSlope = magnitude(targetGradient);
+                Scalar targetAngle = 0;
+
+                Scalar currentElevation = elevationMean(g);
+                Vector2D currentGradient = gradientMean(g);
+                Scalar currentSlope = magnitude(currentGradient);
+                Scalar currentAngle = signedAngle(currentGradient, targetGradient);
+
+                Scalar elevationVariance = terrainTypeElevationVariance(g);
+                Scalar slopeVariance     = terrainTypeSlopeVariance(g);
+                Scalar angleVariance     = terrainTypeAngleVariance(g);
+
+                g.compatibility().elevation() = gauss_project(targetElevation,
+                                                              elevationVariance,
+                                                              currentElevation);
+                g.compatibility().slope()     = gauss_project(targetSlope,
+                                                              slopeVariance,
+                                                              currentSlope);
+                g.compatibility().angle()     = gauss_project(targetAngle,
+                                                              angleVariance,
+                                                              currentAngle);
+                g.compatibility().overall() =
+                    ( g.compatibility().elevation()
+                    + g.compatibility().slope()
+                    + g.compatibility().angle() ) / 3;
+
+                if (isnan(g.compatibility())) {
+                    INCA_DEBUG("Compatibility for " << px)
+                    INCA_DEBUG("Gradient is " << targetGradient << "   " << currentGradient)
+                    INCA_DEBUG("E: <" << targetElevation << ", " << elevationVariance << "> "
+                            << currentElevation << "  : " << g.compatibility().elevation())
+                    INCA_DEBUG("S: <" << targetSlope << ", " << slopeVariance << "> "
+                            << currentSlope << "  : " << g.compatibility().slope())
+                    INCA_DEBUG("A: <" << targetAngle << ", " << angleVariance << "> "
+                            << currentAngle << "  : " << g.compatibility().angle())
+                    INCA_DEBUG("Overall: " << g.compatibility().overall())
+                    INCA_DEBUG("Scale: " << g.scale())
+                    INCA_DEBUG("Rotation: " << g.rotation())
+                    ::exit(1);
+                }
+
+                compat += g.compatibility().overall();
+            }
+        return compat / c.genes().size();
+    }
+};
+
+
+/**
+ * The RegionCharacteristicsFitnessOperator implements a fitness operator
+ * returning the area-weighted average of region fitnesses. The fitness of a
+ * region is determined by evaluating the terrain characteristics for the
+ * region and comparing them to those of its terrain type.
+ */
+class terrainosaurus::RegionCharacteristicsFitnessOperator
+        : public HeightfieldGA::FitnessOperator {
+public:
+    Scalar operator()(Chromosome & c) {
+        Heightfield hf;
+        renderChromosome(hf, c);
+        TerrainSamplePtr ts(new TerrainSample(hf, c.levelOfDetail()));
+        const MapRasterization::LOD & map = c.map();
+        const TerrainSample::LOD & candidate = (*ts)[c.levelOfDetail()];
+        const TerrainSample::LOD & reference = c(0, 0).terrainSample();
+
+        // Analyze the candidate HF, then compare values to the reference
+//        candidate.ensureAnalyzed();
+        Scalar fitness = 0;
+        for (IDType regionID = 0; regionID < map.regionCount(); ++regionID) {
+            Scalar regFit  = _regionFitness(regionID);
+            Scalar regArea = map.regionArea(regionID);
+            fitness += regFit / regArea;
+        }
+        return fitness;
+    }
+
+protected:
+    Scalar _regionFitness(IDType regionID) {
+        Scalar fitness = 0;
+
+        return fitness;
     }
 };
 
@@ -297,28 +472,29 @@ public:
 HeightfieldGA::HeightfieldGA(MapRasterizationPtr mr, TerrainSamplePtr ts ) {
     // Not doing anything yet...
     _running = false;
-    _currentLOD = TerrainLOD_Underflow;
+    _currentLOD = TerrainLOD::minimum();
 
     // Set up the MR and TS
     setMapRasterization(mr);
     setTerrainSample(ts);
 
     // Set up the initialization operators
-    addInitializationOperator(new CreateRandomChromosomeOperator());
+    addInitializationOperator(new RandomSourceDataInitializationOperator());
 
     // Set up the crossover operators
-    addCrossoverOperator(new CrossRectangularRegionsOperator());
+    addCrossoverOperator(new RectangularRegionCrossoverOperator());
 
     // Set up the mutation operators
-    addMutationOperator(new MutateResetTransformationOperator());
-//    addMutationOperator(new MutateVerticalOffsetOperator());
-//    addMutationOperator(new MutateVerticalScaleOperator());
-//    addMutationOperator(new MutateVerticalRotationOperator());
-//    addMutationOperator(new MutateHorizontalTranslationOperator());
- //   addMutationOperator(new MutateHorizontalJitterOperator());
+//    addMutationOperator(new ResetTransformMutationOperator());
+    addMutationOperator(new VerticalOffsetMutationOperator(1.5f));
+    addMutationOperator(new VerticalScaleMutationOperator(1.5f));
+    addMutationOperator(new VerticalRotationMutationOperator(1.5f));
+//    addMutationOperator(new HorizontalTranslationMutationOperator());
+//    addMutationOperator(new HorizontalJitterMutationOperator());
 
     // Set up the fitness calculation operators
-    addFitnessOperator(new One());
+    addFitnessOperator(new GeneCompatibilityFitnessOperator());
+    addFitnessOperator(new RegionCharacteristicsFitnessOperator(), 0);
 
     // Set up the initial parameters for the GA
     setPopulationSize(POPULATION_SIZE);
@@ -469,4 +645,12 @@ TerrainSamplePtr HeightfieldGA::run(TerrainLOD startLOD, TerrainLOD targetLOD) {
         _running = false;   // We're not running anymore...stuff blew up
         throw e;            // Re-throw for anyone who cares
     }
+}
+
+const HeightfieldGA::PMF & HeightfieldGA::mutationOperatorPMF(const Gene & g) const {
+
+//    _mutationOperatorPMF.element(0) = (1 - g.compatibility().elevation()) / 3;
+//    _mutationOperatorPMF.element(1) = (1 - g.compatibility().slope()) / 3;
+//    _mutationOperatorPMF.element(2) = (1 - g.compatibility().angle()) / 3;
+    return _mutationOperatorPMF;
 }

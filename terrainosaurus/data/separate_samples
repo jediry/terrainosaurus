@@ -18,8 +18,8 @@ fi
     "log/29082f4 - Gainesville West, FL (30m).log"           --           \
     "log/29082g4 - Alachua, FL (30m).log"                    --           \
     "log/29082h3 - Brooker, FL (30m).log"                    --           \
-    "log/29098d5 - San Antonio West, TX (30).log"            --           \
-    "log/30083d4 - Madison, FL (30).log"                     --           \
+    "log/29098d5 - San Antonio West, TX (30m).log"           --           \
+    "log/30083d4 - Madison, FL (30m).log"                    --           \
     "log/30096c3 - Independence, TX (30m).log"               --           \
     "log/30096d2 - Millican, TX (30m).log"                   --           \
     "log/30096d3 - Clay, TX (30m).log"                       --           \
@@ -32,9 +32,9 @@ fi
     "log/30096h3 - Edge, TX (30m).log"                       --           \
     "log/31112h4 - Chupan Mountain, AZ (30m).log"            --           \
     "log/32100e8 - Dunn, TX (30m).log"                       --           \
-    "log/33116b7 - Mesa Grande, CA (30).log"                 --           \
-    "log/34086f6 - Madison, AL (30).log"                     --           \
-    "log/34092e4 - Bryant, AR (30).log"                      --           \
+    "log/33116b7 - Mesa Grande, CA (30m).log"                --           \
+    "log/34086f6 - Madison, AL (30m).log"                    --           \
+    "log/34092e4 - Bryant, AR (30m).log"                     --           \
     "log/34101f1 - Willow Arroyo, TX (30m).log"              --           \
     "log/34101f2 - Hardscrabble Creek, TX (30m).log"         --           \
     "log/34101f3 - Big Betty Reservoir, TX (30m).log"        --           \
@@ -69,14 +69,14 @@ fi
     "log/39110g3 - Currant Canyon, UT (30m).log"             --           \
     "log/39111e2 - Candland Mountain, UT (30m).log"          --           \
     "log/39111g1 - Colton, UT (30m).log"                     --           \
-    "log/41087f1 - Dune Acres, IN (30).log"                  --           \
-    "log/43102c3 - Evergreen, SD (30).log"                   --           \
+    "log/41087f1 - Dune Acres, IN (30m).log"                 --           \
+    "log/43102c3 - Evergreen, SD (30m).log"                  --           \
     "log/43102h6 - Creston, SD (30m).log"                    --           \
-    "log/43116e2 - Boise South, ID (30).log"                 --           \
+    "log/43116e2 - Boise South, ID (30m).log"                --           \
     "log/44068f4 - Beech Hill Pond, ME (30m).log"            --           \
     "log/44068g3 - Amherst, ME (30m).log"                    --           \
     "log/44068h2 - Alligator Lake, ME (30m).log"             --           \
-    "log/44097e4 - Bryant, SD (30).log"                      --           \
+    "log/44097e4 - Bryant, SD (30m).log"                     --           \
     "log/44104d5 - The Rocks, WY (30m).log"                  --           \
     "log/44104d6 - Wonder View, WY (30m).log"                --           \
     "log/44104d7 - Carlile, WY (30m).log"                    --           \

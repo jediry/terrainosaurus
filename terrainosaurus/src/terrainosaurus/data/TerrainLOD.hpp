@@ -113,12 +113,12 @@ namespace terrainosaurus {
         // Default (no-init) constructor
         explicit LODBase()
             : _object(), _levelOfDetail(),
-              _loaded(false), _analyzed(false) { }
+              _loaded(false), _analyzed(false), _studied(false) { }
 
         // Normal constructor
         explicit LODBase(ObjectPtr obj, TerrainLOD lod)
             : _object(obj), _levelOfDetail(lod),
-              _loaded(false), _analyzed(false) { }
+              _loaded(false), _analyzed(false), _studied(false) { }
 
         // Parent object accessors
               ObjectType & object()       { return *_object; }
@@ -134,13 +134,15 @@ namespace terrainosaurus {
         // Lazy loading/analysis flags
         bool loaded()   const { return _loaded; }
         bool analyzed() const { return _analyzed; }
+        bool studied()  const { return _studied; }
         virtual void ensureLoaded()   const = 0;
         virtual void ensureAnalyzed() const = 0;
+        virtual void ensureStudied()  const = 0;
 
     protected:
         TerrainLOD  _levelOfDetail;
         ObjectPtr   _object;
-        mutable bool _loaded, _analyzed;
+        mutable bool _loaded, _analyzed, _studied;
     };
 
     // The actual LOD template, which must be specialized for different object
@@ -204,6 +206,9 @@ namespace terrainosaurus {
         void ensureAnalyzed() const {
             ensureAnalyzed(TerrainLOD::minimum(), TerrainLOD::maximum());
         }
+        void ensureStudied() const {
+            ensureStudied(TerrainLOD::minimum(), TerrainLOD::maximum());
+        }
         void ensureLoaded(TerrainLOD min, TerrainLOD max) const {
             for (TerrainLOD lod = min; lod <= max; ++lod)
                 ensureLoaded(lod);
@@ -212,8 +217,13 @@ namespace terrainosaurus {
             for (TerrainLOD lod = min; lod <= max; ++lod)
                 ensureAnalyzed(lod);
         }
+        void ensureStudied(TerrainLOD min, TerrainLOD max) const {
+            for (TerrainLOD lod = min; lod <= max; ++lod)
+                ensureStudied(lod);
+        }
         void ensureLoaded(TerrainLOD lod)   const { (*this)[lod].ensureLoaded(); }
         void ensureAnalyzed(TerrainLOD lod) const { (*this)[lod].ensureAnalyzed(); }
+        void ensureStudied(TerrainLOD lod)  const { (*this)[lod].ensureStudied(); }
 
     protected:
         void initialize() {

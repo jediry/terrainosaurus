@@ -21,7 +21,7 @@
 namespace terrainosaurus {
     // Forward declarations
     class HeightfieldGA;
-    
+
     // GA global parameters, which may be set from the TTL file
     extern int      POPULATION_SIZE;
     extern int      EVOLUTION_CYCLES;
@@ -87,6 +87,9 @@ public:
     TerrainSamplePtr run(MapRasterizationPtr mr,
                          TerrainLOD startLOD, TerrainLOD targetLOD);
     TerrainSamplePtr run(TerrainLOD startLOD, TerrainLOD targetLOD);
+
+    // Change the PMF based on gene compatibility
+    const PMF & mutationOperatorPMF(const Gene & g) const;
 
 protected:
     MapRasterizationPtr _mapRasterization;

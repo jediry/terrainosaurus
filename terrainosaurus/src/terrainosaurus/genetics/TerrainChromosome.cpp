@@ -217,7 +217,7 @@ TerrainChromosome::Gene::compatibility() const {
  *---------------------------------------------------------------------------*/
 // Assignment operator (only copies data fields)
 TerrainChromosome::Gene &
-TerrainChromosome::Gene::operator=(const TerrainChromosome::Gene &g) {
+TerrainChromosome::Gene::operator=(const TerrainChromosome::Gene & g) {
     // Source data
     setTerrainSample(g.terrainSample());
 
@@ -227,6 +227,9 @@ TerrainChromosome::Gene::operator=(const TerrainChromosome::Gene &g) {
     setScale(g.scale());
     setOffset(g.offset());
     setJitter(g.jitter());
+
+    // Evaluation data
+    compatibility() = g.compatibility();
 
     return *this;
 }

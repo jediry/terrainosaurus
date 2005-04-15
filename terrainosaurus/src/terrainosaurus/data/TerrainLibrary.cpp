@@ -84,6 +84,13 @@ void TerrainLibrary::LOD::ensureAnalyzed() const {
         _analyzed = true;
     }
 }
+void TerrainLibrary::LOD::ensureStudied() const {
+    if (! studied()) {
+        for (IndexType i = 0; i < size(); ++i)
+            terrainType(i).ensureStudied();
+        _studied = true;
+    }
+}
 
 
 /*---------------------------------------------------------------------------*

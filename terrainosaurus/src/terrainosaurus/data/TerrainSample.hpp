@@ -162,14 +162,11 @@ public:
     void storeToFile(const std::string & filename) const;
     void resampleFromLOD(TerrainLOD lod);
     void analyze();
+    void study();
 
     // Lazy loading & analysis mechanism
     void ensureLoaded() const;
     void ensureAnalyzed() const;
-
-    // Lazy, extra-thorough study mechanism
-    bool studied() const;
-    void study();
     void ensureStudied() const;
 
     // Cache filename
@@ -179,7 +176,6 @@ public:
 protected:
     // Filename for caching analysis results
     std::string _cacheFilename;
-    bool _studied;
 
 
 /*---------------------------------------------------------------------------*
@@ -204,8 +200,8 @@ public:
     RASTER_PROPERTY_ACCESSORS(VectorMap,   gradient)
     RASTER_PROPERTY_ACCESSORS(Heightfield, localElevationMean)
     RASTER_PROPERTY_ACCESSORS(VectorMap,   localGradientMean)
-    RASTER_PROPERTY_ACCESSORS(VectorMap,   localElevationRange)
-    RASTER_PROPERTY_ACCESSORS(VectorMap,   localSlopeRange)
+    RASTER_PROPERTY_ACCESSORS(VectorMap,   localElevationLimits)
+    RASTER_PROPERTY_ACCESSORS(VectorMap,   localSlopeLimits)
 
     // Global sample data accessors
     const FrequencySpectrum & frequencyContent() const;
@@ -221,7 +217,7 @@ protected:
     // Per-cell sample data
     Heightfield _elevations, _localElevationMeans;
     VectorMap   _gradients, _localGradientMeans,
-                _localElevationRanges, _localSlopeRanges;
+                _localElevationLimits, _localSlopeLimits;
 
     // Global sample data
     FrequencySpectrum   _frequencySpectrum;

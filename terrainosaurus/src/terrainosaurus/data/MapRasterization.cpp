@@ -326,6 +326,9 @@ void MapRasterization::LOD::ensureAnalyzed() const {
     if (! analyzed())
         const_cast<MapRasterization::LOD *>(this)->analyze();
 }
+void MapRasterization::LOD::ensureStudied() const {
+    _studied = true;
+}
 
 
 /*---------------------------------------------------------------------------*

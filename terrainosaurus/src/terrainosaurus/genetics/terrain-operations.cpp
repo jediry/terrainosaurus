@@ -233,15 +233,50 @@ const Vector2D & terrainosaurus::gradientMean(const TerrainChromosome & c,
 }
 
 // The elevation range (min, max) across a slot (i, j) in a Chromosome
-const Vector2D & terrainosaurus::elevationRange(const TerrainChromosome & c,
+const Vector2D & terrainosaurus::elevationLimits(const TerrainChromosome & c,
                                                 IndexType i, IndexType j) {
-    return c.pattern().localElevationRange(c(i, j).targetCenter());
+    return c.pattern().localElevationLimits(c(i, j).targetCenter());
 }
 
 // The slope range (min, max) across a slot (i, j) in a Chromosome
-const Vector2D & terrainosaurus::slopeRange(const TerrainChromosome & c,
+const Vector2D & terrainosaurus::slopeLimits(const TerrainChromosome & c,
                                             IndexType i, IndexType j) {
-    return c.pattern().localSlopeRange(c(i, j).targetCenter());
+    return c.pattern().localSlopeLimits(c(i, j).targetCenter());
+}
+
+// The elevation range across a slot (i, j) in a Chromosome
+scalar_t terrainosaurus::elevationRange(const TerrainChromosome & c,
+                                        IndexType i, IndexType j) {
+    const Vector2D & limits = elevationLimits(c, i, j);
+    return limits[1] - limits[0];
+}
+
+// The slope range across a slot (i, j) in a Chromosome
+scalar_t terrainosaurus::slopeRange(const TerrainChromosome & c,
+                                    IndexType i, IndexType j) {
+    const Vector2D & limits = slopeLimits(c, i, j);
+    return limits[1] - limits[0];
+}
+
+scalar_t terrainosaurus::patternElevationMean(const TerrainChromosome::Gene & g) {
+    return g.parent().pattern().localElevationMean(g.targetCenter());
+}
+const Vector2D & terrainosaurus::patternGradientMean(const TerrainChromosome::Gene & g) {
+    return g.parent().pattern().localGradientMean(g.targetCenter());
+}
+const Vector2D & terrainosaurus::patternElevationLimits(const TerrainChromosome::Gene & g) {
+    return g.parent().pattern().localElevationLimits(g.targetCenter());
+}
+const Vector2D & terrainosaurus::patternSlopeLimits(const TerrainChromosome::Gene & g) {
+    return g.parent().pattern().localSlopeLimits(g.targetCenter());
+}
+scalar_t terrainosaurus::patternElevationRange(const TerrainChromosome::Gene & g) {
+    const Vector2D & limits = patternElevationLimits(g);
+    return limits[1] - limits[0];
+}
+scalar_t terrainosaurus::patternSlopeRange(const TerrainChromosome::Gene & g) {
+    const Vector2D & limits = patternSlopeLimits(g);
+    return limits[1] - limits[0];
 }
 
 
@@ -258,14 +293,59 @@ Vector2D terrainosaurus::gradientMean(const TerrainChromosome::Gene & g) {
 }
 
 // The elevation range [min, max] across the gene (including transformations)
-Vector2D terrainosaurus::elevationRange(const TerrainChromosome::Gene & g) {
-    Vector2D range = g.terrainSample().localElevationRange(g.sourceCenter());
+Vector2D terrainosaurus::elevationLimits(const TerrainChromosome::Gene & g) {
+    Vector2D range = g.terrainSample().localElevationLimits(g.sourceCenter());
     scalar_t mean = g.terrainSample().localElevationMean(g.sourceCenter());
     return range * g.scale() + Vector2D(g.offset() + mean * (1 - g.scale()));
 }
 
 // The slope range [min, max] across the gene (including transformations)
-Vector2D terrainosaurus::slopeRange(const TerrainChromosome::Gene & g) {
-    Vector2D result = g.terrainSample().localSlopeRange(g.sourceCenter());
+Vector2D terrainosaurus::slopeLimits(const TerrainChromosome::Gene & g) {
+    Vector2D result = g.terrainSample().localSlopeLimits(g.sourceCenter());
     return result * g.scale();
+}
+
+scalar_t terrainosaurus::elevationRange(const TerrainChromosome::Gene & g) {
+    Vector2D limits = elevationLimits(g);
+    return limits[1] - limits[0];
+}
+scalar_t terrainosaurus::slopeRange(const TerrainChromosome::Gene & g) {
+    Vector2D limits = slopeLimits(g);
+    return limits[1] - limits[0];
+}
+
+
+scalar_t terrainosaurus::terrainTypeElevationMean(const TerrainChromosome::Gene & g) {
+    return g.terrainSample().globalElevationStatistics().mean();
+}
+scalar_t terrainosaurus::terrainTypeSlopeMean(const TerrainChromosome::Gene & g) {
+    return g.terrainSample().globalSlopeStatistics().mean();
+}
+Vector2D terrainosaurus::terrainTypeElevationLimits(const TerrainChromosome::Gene & g) {
+    return Vector2D(g.terrainSample().globalElevationStatistics().min(),
+                    g.terrainSample().globalElevationStatistics().max());
+}
+Vector2D terrainosaurus::terrainTypeSlopeLimits(const TerrainChromosome::Gene & g) {
+    return Vector2D(g.terrainSample().globalSlopeStatistics().min(),
+                    g.terrainSample().globalSlopeStatistics().max());
+}
+scalar_t terrainosaurus::terrainTypeElevationRange(const TerrainChromosome::Gene & g) {
+    Vector2D limits = terrainTypeElevationLimits(g);
+    return limits[1] - limits[0];
+}
+scalar_t terrainosaurus::terrainTypeSlopeRange(const TerrainChromosome::Gene & g) {
+    Vector2D limits = terrainTypeSlopeLimits(g);
+    return limits[1] - limits[0];
+}
+
+
+scalar_t terrainosaurus::terrainTypeElevationVariance(const TerrainChromosome::Gene & g) {
+    scalar_t range = g.terrainSample().globalElevationStatistics().range();
+    return range * range / 8;
+}
+scalar_t terrainosaurus::terrainTypeSlopeVariance(const TerrainChromosome::Gene & g) {
+    return g.terrainSample().globalSlopeStatistics().range() / 4;
+}
+scalar_t terrainosaurus::terrainTypeAngleVariance(const TerrainChromosome::Gene & g) {
+    return inca::math::PI<scalar_t>() / 4;
 }

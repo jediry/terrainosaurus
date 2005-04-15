@@ -477,37 +477,37 @@ scalar_t terrainosaurus::evaluateCompatibility(const TerrainChromosome & c,
                                                const TerrainChromosome::Gene & g) {
     Vector2D gGrad = gradientMean(g),
              cGrad = gradientMean(c, i, j);
-    Vector2D gSRange = slopeRange(g),
-             cSRange = slopeRange(c, i, j);
+    Vector2D gSLimits = slopeLimits(g),
+             cSLimits = slopeLimits(c, i, j);
     scalar_t diffMag   = abs(magnitude(gGrad) - magnitude(cGrad)),
              diffAngle = angle(gGrad, cGrad),
              diffMean  = abs(elevationMean(g) - elevationMean(c, i, j));
-    Vector2D diffRange = abs(elevationRange(g) - elevationRange(c, i, j));
-    scalar_t diffSlope = ( gSRange[0] < cSRange[0]
-                            ? cSRange[0] - gSRange[0] : scalar_t(0) )
-                       + ( gSRange[1] > cSRange[1]
-                            ? gSRange[1] - cSRange[1] : scalar_t(0) );
+    Vector2D diffLimits = abs(elevationLimits(g) - elevationLimits(c, i, j));
+    scalar_t diffSlope = ( gSLimits[0] < cSLimits[0]
+                            ? cSLimits[0] - gSLimits[0] : scalar_t(0) )
+                       + ( gSLimits[1] > cSLimits[1]
+                            ? gSLimits[1] - cSLimits[1] : scalar_t(0) );
     scalar_t maxMag = magnitude(c.pattern().globalGradientStatistics().mean()) * 20,
              maxAngle = PI<scalar_t>(),
              maxElevation = c.pattern().globalElevationStatistics().max(),
-             slopeRange = cSRange[1] - cSRange[0];
+             slopeLimits = cSLimits[1] - cSLimits[0];
     scalar_t compatibility =  scalar_t(1) - (diffMag / maxMag
                                            + diffAngle / maxAngle
                                            + diffMean / maxElevation
-                                           + diffRange[0] / maxElevation
-                                           + diffRange[1] / maxElevation,
-                                           + diffSlope / slopeRange) / 6;
+                                           + diffLimits[0] / maxElevation
+                                           + diffLimits[1] / maxElevation,
+                                           + diffSlope / slopeLimits) / 6;
 #if 0
     std::cerr << "Differences:\n"
               << "\tgradient magnitude: " << diffMag << "\n"
               << "\tgradient angle:     " << diffAngle << "\n"
               << "\tmean elevation:     " << diffMean << "\n"
-              << "\televation range:    " << diffRange << "\n"
+              << "\televation range:    " << diffLimits << "\n"
               << "\tslope range:        " << diffSlope << "\n";
     std::cerr << "Reference maxima:\n"
               << "\tgradient magnitude: " << maxMag << "\n"
               << "\tgradient angle:     " << maxAngle << "\n"
-              << "\tslope range:        " << slopeRange << "\n"
+              << "\tslope range:        " << slopeLimits << "\n"
               << "\televation:          " << maxElevation << "\n";
     std::cerr << "Aggregate compatibility: " << compatibility << endl;
 #endif
