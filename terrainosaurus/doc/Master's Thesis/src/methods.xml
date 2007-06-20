@@ -1,0 +1,2081 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<chapter id="Methods">
+  <title>Methods</title>
+  <para>
+    In this chapter, I discuss the <citetitle>Terrainosaurus</citetitle> 
+    algorithm at a conceptual level, including its overall strategy and major 
+    steps, explaining the rationale for important design decisions. The gritty 
+    details of implementing the algorithm are glossed over here, and presented 
+    in detail in the chapter on implementation (<xref 
+    linkend="Implementation"/>). These topics will be covered in the following 
+    order:
+  </para>
+  <itemizedlist spacing="compact">
+    <listitem>
+      prerequisites&em;design strategy and basic tools
+    </listitem>
+    <listitem>
+      how the algorithm works from the user's perspective
+    </listitem>
+    <listitem>
+      how the algorithm works from the computer's perspective
+    </listitem>
+  </itemizedlist>
+
+  <section>
+    <title>Prerequisites</title>
+    <para>
+      Before delving into the details of the algorithm, there are several 
+      things that must be nailed down first, outlining the basic strategies 
+      underlying <citetitle>Terrainosaurus</citetitle>:
+    </para>
+    <itemizedlist spacing="compact">
+      <listitem>
+        how ease of use will be ensured
+      </listitem>
+      <listitem>
+        how the terrain generation problem will be attacked
+      </listitem>
+      <listitem>
+        what data structure will be used to represent the terrain
+      </listitem>
+      <listitem>
+        how level of detail will be addressed
+      </listitem>
+    </itemizedlist>
+
+    <section>
+      <title>Usability Considerations</title>
+      <para>
+        Since one of our major stated objectives is to create something easy to 
+        use, this aspect deserves specific consideration. While a full-scale 
+        user study would be helpful in this respect, this is outside the scope 
+        of this thesis. Nevertheless, there are basic user-interaction decisions 
+        we can make that will, <foreignphrase>prima facie</foreignphrase>, 
+        promote usability.
+      </para>
+      <para>
+        The crucial observation to make, in this regard, is that not all 
+        possible parameters and constraints for a terrain generation algorithm 
+        are of the same nature. For our purposes, it will suffice to 
+        distinguish between three types:
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>
+          those that are essentially <firstterm>free</firstterm>, meaning that 
+          the user can manipulate them for artistic purposes (within limits, of 
+          course), without damaging the apparent realism of the 
+          terrain&em;examples of these include the size of a mountain range, 
+          and the placement of lakes and mountain peaks
+        </listitem>
+        <listitem>
+          those that are critical for maintaining the apparent realism of the 
+          terrain&em;examples of these include the characteristic fine-scale 
+          detail of different terrain types, and the smoothness of transitions 
+          between different terrain types
+        </listitem>
+        <listitem>
+          everything else&em;the miscellaneous parameters that influence things 
+          like algorithm running time, memory usage and quality of results
+        </listitem>
+      </itemizedlist>
+      <para>
+        In everything, our goal is for <citetitle>Terrainosaurus</citetitle> to 
+        be thoroughly intuitive. For each of these three types of 
+        parameters/constraints, a different method of user interaction is most 
+        appropriate.
+      </para>
+
+      <section>
+        <title>Visual Authoring</title>
+        <para>
+          Those aspects of the terrain that can be freely manipulated for 
+          artistic effect without impacting the realism of the terrain belong 
+          under the control of the user. Since most of these are spatial and/or 
+          visual, a visual authoring environment is the obvious choice, allowing 
+          the author to interact with a visual representation of his work, and 
+          to refine it incrementally until it reaches his satisfaction. Human 
+          beings process visually-presented information quite efficiently, and 
+          we would expect this to be especially true of information that is 
+          already spatial in nature, such as terrain.  Furthermore, the digital 
+          art community works almost exclusively with 2D and 3D visual authoring 
+          tools (e.g., <citetitle>Photoshop</citetitle>, <citetitle>3D 
+            Studio</citetitle>, <citetitle>Maya</citetitle>), and will be much 
+          more likely to adopt a tool that allows them to work in this fashion.
+        </para>
+      </section>
+
+      <section>
+        <title>Example-based Design</title>
+        <para>
+          In contrast to the previous section, those aspects of the terrain that 
+          are crucial for maintaining its realism are not especially suitable 
+          candidates for user authoring. These are likely to be more highly 
+          constrained, and possibly in ways that are not well understood or 
+          would be tedious or impossible to replicate by hand (e.g., satisfying 
+          a certain statistical distribution). Such things are perhaps better 
+          left for the computer to solve, freeing the user to do what the 
+          computer cannot: imagine and create.
+        </para>
+        <para>
+          Still, the user needs to be able to control the characteristics of 
+          the generated terrain in <emphasis>some</emphasis> way.  A 
+          <firstterm>design by example</firstterm> approach is a graceful 
+          method of specifying these characteristics: rather than requiring the 
+          user to comprehend the complexities that give a particular flavor of 
+          terrain its identity, we simply ask him to provide one or more 
+          examples that exhibit the characteristics he would like to see 
+          replicated in his terrain. In this way, the burden of 
+          reverse-engineering terrain is transferred off of the user and on to 
+          the software, and the algorithm becomes a true "black box" from the 
+          user's perspective, requiring almost no domain knowledge to be used.
+        </para>
+        <para>
+          Two additional benefits come from taking such an approach. First, the 
+          algorithm is easily extensible, since the user can simply add new 
+          examples of terrain to achieve new effects. Second, the algorithm can 
+          be "upgraded" completely transparently to the user&em;because of the 
+          simplicity of the interface, improvements can be made to the algorithm 
+          without the user having to learn to use new parameters, or even 
+          needing to know that anything has changed.
+        </para>
+      </section>
+
+      <section>
+        <title>Miscellaneous Controls</title>
+        <para>
+          Naturally, there are other parameters and constraints that do not fit 
+          well into either of the above categories.  If these values cannot be 
+          determined automatically, then other methods of presenting them to 
+          the user will be required, such as standard GUI controls (sliders, 
+          buttons, etc.).
+        </para>
+        <para>
+          Having additional, non-visual parameters for the user to set is not, 
+          in itself, a problem.  The important thing is not for all parameters 
+          to be expressible visually, but for all parameters to be 
+          <emphasis>intuitive</emphasis>: the meaning of the parameter should 
+          be easily understood by a user who has no comprehension of the inner 
+          workings of the algorithm. As a result, the user should have a fair 
+          idea of what the effect of changing each parameter will be, even 
+          before the change is made.
+        </para>
+        <para>
+          One example of a non-visual parameter that is nonetheless intuitive 
+          is a "quality" parameter that adjusts a tradeoff between the amount 
+          of processing time spent and the realism of the result produced. Even 
+          though this tradeoff does not have an obvious visual meaning, humans 
+          already understand the concept of spending additional time working on 
+          a task to achieve a better result.
+        </para>
+        <para>
+          As an example of the sort of parameters that we want to 
+          <emphasis>avoid</emphasis> presenting to the user, consider the 
+          well-known Perlin Noise <biblioref linkend="Perlin Noise"/> function.  
+          While the usefulness of Perlin Noise is indisputable&em;it has been 
+          used to great effect for creating believable imitations of a wide 
+          variety of natural phenomena&em;it has a significant drawback: it 
+          requires a non-trivial amount of domain knowledge (or else brute 
+          force, trial-and-error experimentation) to achieve a desired result.  
+          To a novice user, the parameters (e.g., <property>octaves</property>, 
+          <property>turbulence</property>, <property>persistence</property>) are 
+          "magic": it is difficult to gain an intuition for the effects of 
+          tweaking one of them without first understanding how Perlin Noise 
+          works.
+        </para>
+      </section>
+    </section>
+
+    <section>
+      <title>Terrain Generation Strategy</title>
+      <para>
+        Obviously, there is no unique "correct" answer to the problem of 
+        generating terrain; instead, there are infinitely many "good" answers, 
+        infinitely many more "bad" answers, and everything in between. Thus, 
+        the quest to make believable terrain can be viewed as a search over an 
+        infinitely large solution space, in which some solutions are 
+        quantitatively better than others.
+      </para>
+      <para>
+        A number of methods exist for finding good approximate solutions to 
+        problems for which an exhaustive search is infeasible or (as in the 
+        case of terrain generation) impossible. These methods vary in 
+        performance and generality. In <citetitle>Terrainosaurus</citetitle>, 
+        we have chosen to use a genetic algorithm for this purpose (<xref 
+          linkend="Genetic Algorithms"/>). The major benefits of GAs (for our 
+        purposes) are:
+        <itemizedlist spacing="compact">
+          <listitem>
+            they are randomized, rather than deterministic; as a result, they 
+            are capable of some degree of innovation and can produce an 
+            effectively unlimited number of unique terrain models.  
+            Additionally, this randomness can enable a properly-tuned GA to 
+            escape from locally "best" solutions in order to find other, better 
+            solutions.
+          </listitem>
+          <listitem>
+            they are extremely general: a GA treats its problem as a "black 
+            box", and need not understand the complex effects of the changes it 
+            makes, only caring about the results of the fitness evaluation.  
+            Because of this, a GA can unite a diversity of orthogonal or 
+            competing constraints: anything that can be incorporated into the 
+            fitness evaluation. This makes a GA an attractive development tool, 
+            as it leaves open a straightforward means of adding new constraints 
+            as they become necessary.
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section>
+      <title>Choice of Data Structure</title>
+      <para>
+        The terrain data structure used in 
+        <citetitle>Terrainosaurus</citetitle> is the height field
+        <footnote>
+          <para>
+            Throughout the remainder of this thesis, the terms <firstterm>height 
+            field</firstterm> and <firstterm>terrain</firstterm> will be used 
+            synonymously, unless otherwise noted.
+          </para>
+        </footnote>
+        (<xref linkend="Height Fields"/>). This decision makes sense in light of 
+        two facts:
+      </para>
+      <orderedlist spacing="compact">
+        <listitem>
+          most current, real-time applications of terrain use height fields
+        </listitem>
+        <listitem>
+          GIS elevation data is most widely available in this form; as a result, 
+          the data has <emphasis>already</emphasis> been sampled to a finite 
+          resolution and has lost its ability to resolve features like overhangs 
+          and caves. Thus, there is no further penalty for using height fields, 
+          and no additional benefit to using other representations that do not 
+          share these restrictions
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section>
+      <title>Level of Detail Strategy</title>
+      <para>
+        From an LOD perspective, the terrain generation problem can be 
+        understood as the problem of constructing a height field having the 
+        following characteristics:
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>
+          at each LOD, appropriate, characteristic features are present in the 
+          terrain, in correct proportions
+        </listitem>
+        <listitem>
+          the entire set of LODs is <firstterm>coherent</firstterm>, meaning 
+          that features present in coarse LODs continue to exist at the same 
+          locations in the finer LODs
+        </listitem>
+      </itemizedlist>
+      <para>
+        As was stated in <xref linkend="Progressive Refinement Methods"/>, 
+        <citetitle>Terrainosaurus</citetitle> approaches terrain construction as 
+        a multi-LOD, progressive refinement process. As was also mentioned 
+        earlier (<xref linkend="Fractals and Not"/>), one of the more 
+        significant goals of <citetitle>Terrainosaurus</citetitle> is to offer a 
+        not-necessarily-fractal answer to the question of what the terrain ought 
+        to look like at any given LOD.
+      </para>
+    </section>
+    
+  </section>
+
+  <section>
+    <title>The User's Perspective (What It Does)</title>
+    <para>
+      Since ease-of-use is one of the primary objectives of our approach, it is 
+      worth taking some time to walk through how our approach looks from the 
+      perspective of a user. This will also serve to create the context for the 
+      more technical discussion to follow. Consider a hypothetical user, a set 
+      designer for a large computer animation studio. Among this user's routine 
+      tasks is the construction of outdoor, virtual worlds for the commercials, 
+      feature films, and video game content that his company develops.
+    </para>
+    <para>
+      From the user's perspective, terrain generation with       
+      <citetitle>Terrainosaurus</citetitle> involves three discrete phases:
+    </para>
+    <itemizedlist spacing="compact">
+      <listitem>
+        assembling a terrain library
+      </listitem>
+      <listitem>
+        authoring a terrain map
+      </listitem>
+      <listitem>
+        generating a height field
+      </listitem>
+    </itemizedlist>
+
+    <section id="Terrain Library Assembly">
+      <title>Terrain Library Assembly</title>
+      <para>
+        The user's first step is to assemble a <firstterm>terrain 
+          library</firstterm>, the "palette" with which he will later "paint" 
+        his terrain models. His task in this phase is to define the taxonomy of 
+        <firstterm>terrain types</firstterm> he wants to use.  Terrain types are  
+        logical abstractions, semantic classes of terrain, as a human would 
+        think of them (things like "steep mountains", "sandy beach", "rocky 
+        desert", "plains", etc.) and are created by providing one or more 
+        <firstterm>terrain samples</firstterm>, example height fields 
+        representative of these classes. These examples will normally come from 
+        providers of real-world GIS data (e.g., <biblioref 
+          linkend="GeoCommunity"/>), though they could potentially come from 
+        other sources as well. Once the user has populated his library with 
+        example terrains, <citetitle>Terrainosaurus</citetitle> analyzes the 
+        library (see <xref linkend="Terrain Library Analysis"/>) in order to 
+        identify unifying characteristics for each terrain type, measurable 
+        quantities that are similar across all of the example terrains within a 
+        single terrain type (and thus, which are likely to contribute to the 
+        user's perception of those terrains as being related). These example 
+        terrains will also serve as the raw material for constructing new height 
+        fields in the third phase (see <xref linkend="Height Field GA"/>).
+      </para>
+      <para>
+        Because terrain types are correlative to human mental categories, they 
+        are effectively unlimited in number, and will vary according to the 
+        user.  No matter how many terrain types are identified, there will 
+        always be someone who wants something just a bit different. At the same 
+        time, the choice of terrain types is not wholly arbitrary&em;it is 
+        important that example terrains for the same terrain type 
+        <emphasis>are</emphasis> truly similar in some way, or else the terrain 
+        analysis process will be hindered, because 
+        <citetitle>Terrainosaurus</citetitle> will be unable to identify 
+        meaningful unifying characteristics for that terrain type.
+      </para>
+      <para>
+        The user's terrain libraries can be as coarse- or as fine-grained as he 
+        wishes, depending on his needs, and he might have separate libraries for 
+        different purposes. For example, he might define many variations of 
+        "mountains" in order to finely control the kinds of features that appear 
+        throughout a mountainous terrain model, or he might have only a few, 
+        highly different, general-purpose terrain types for building more 
+        heterogeneous worlds.
+      </para>
+      <para>
+        While the construction of the terrain library is likely to be a bit 
+        tedious, it is something that will be done only infrequently, as once a 
+        terrain library has been assembled, it can be reused indefinitely, and 
+        extended incrementally as additional terrain types are needed. <xref 
+          linkend="Computer-aided Classification"/> discusses potential avenues 
+        for future research that might help alleviate this burden on the user.
+      </para>
+    </section>
+
+    <section>
+      <title>Map Design</title>
+      <para>
+        The user's primary design task when using 
+        <citetitle>Terrainosaurus</citetitle> is to create the layout of his 
+        terrain. He does this visually, creating a 2D, vector-drawn map of the 
+        terrain using a CAD-style interface (<xref linkend="Map Editor 
+          Interface"/>).  By representing the map as a vector drawing rather 
+        than a raster image, we avoid committing to a particular resolution for 
+        the map, enabling the user to defer the decision of what LOD to generate 
+        until he actually generates it, allowing him to produce multiple LODs 
+        from a single map.  The map is made up of one or more polygonal regions 
+        of terrain, which may be of arbitrary sizes and shapes. Each region is 
+        assigned one of the terrain types from the library. Through sketching 
+        out such regions and tweaking their shapes, the user can express the 
+        approximate layout he desires for his terrain, using a modeling paradigm 
+        that is well-established and intuitive.
+      </para>
+      <figure id="Map Editor Interface">
+        <title>The Map Authoring Interface</title>
+        <mediaobject>
+          <caption>
+            The user describes his desired terrain layout by authoring a 2D map, 
+            which specifies the location, size, and shape of regions of terrain, 
+            each of which may have its own terrain type.  A CAD-style interface 
+            allows the user to accomplish this using a familiar and intuitive 
+            design paradigm.
+          </caption>
+          <imageobject>
+            <imagedata scalefit="1" width="4in"
+                       fileref="Map Authoring Interface.jpeg"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <section>
+        <title>Boundary Refinement</title>
+        <para>
+          The use of polygons to represent regions in the terrain type map has 
+          the advantage of simplicity: operations on polygons are well-defined 
+          and well-understood, and provide a straightforward way for a user to 
+          work with the map.  However, while linear shapes are useful tools for 
+          modeling, their linearity is also a drawback: since polygons are 
+          restricted to having straight edges, curved or irregular shapes may 
+          require large numbers of small segments to be adequately approximated.  
+          If the approximation is not fine enough for the particular 
+          application, the unrealistically straight edges will be visible. In 
+          our case, this means that if the length of a linear region boundary is 
+          large compared to the resolution of the generated height field, this 
+          boundary may be reflected visibly in the generated terrain as an 
+          unnaturally straight transition between two terrain  types; the longer 
+          the boundary, the more noticeable this is likely to be.  If the height 
+          field is colored or texture-mapped according to terrain type, this 
+          effect is greatly magnified (<xref linkend="Boundary Artifacts"/>).  
+          Therefore it is important that the boundaries between regions be of 
+          sufficiently fine scale.
+        </para>
+        <figure id="Boundary Artifacts">
+          <title>Artifacts Resulting from Linear Region Boundaries</title>
+          <mediaobject>
+            <caption>
+              Seams between adjacent regions can appear as unnatural-looking 
+              artifacts in the generated height field if the region boundaries 
+              are long and linear. This effect is made all the more obvious by 
+              coloring or texture-mapping the regions.
+            </caption>
+            <imageobject>
+              <imagedata scalefit="1" width="4in"
+                         fileref="Height Field With Boundary Artifacts.jpeg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          Creating such fine-scale boundaries by hand would be quite tedious, 
+          and it is much to be preferred, from a user-experience standpoint, 
+          that this task be automated. We do this by providing a 
+          <firstterm>boundary refinement</firstterm> operation, which 
+          non-destructively replaces a straight boundary from the user's 
+          polygonal map with a new boundary that follows the same approximate 
+          path as the original, but with a meandering, irregular shape made up 
+          of many short segments (<xref linkend="Boundary Refinement"/>). The 
+          user influences the shape of this boundary by adjusting a 
+          <firstterm>smoothness</firstterm> parameter. The resulting 
+          <firstterm>refined boundary</firstterm> will be used instead of the 
+          original linear boundary when the height field is constructed, 
+          producing a more believable, irregular transition between the regions 
+          (<xref linkend="Artifact-free Boundary"/>). The gory details of this 
+          operation are described later, in <xref linkend="Boundary GA"/>.  
+          Using this operation, the user is enabled to sketch his map using 
+          rough, simple shapes, and then to fill in fine-scale boundary detail 
+          automatically.  With this paradigm, even an inexperienced user should 
+          be able to create a simple but believable map in just a few minutes.
+        </para>
+        <figure id="Boundary Refinement">
+          <title>The Boundary Refinement Operation</title>
+          <mediaobject>
+            <caption>
+              The boundary refinement operation replaces a long, linear segment 
+              of a region boundary with a string of short segments connecting 
+              the same endpoints.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Boundary Refinement.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <figure id="Artifact-free Boundary">
+          <title>A Refined Boundary Avoids Unnatural-looking Artifacts</title>
+          <mediaobject>
+            <caption>
+              With long, linear boundaries replaced by irregular, meandering 
+              boundaries, such boundary artifacts are no longer evident in the 
+              generated height field.
+            </caption>
+            <imageobject>
+              <imagedata scalefit="1" width="4in"
+                         fileref="Height Field Without Boundary Artifacts.jpeg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+    </section>
+
+    <section>
+      <title>Height Field Construction</title>
+      <para>
+        Once satisfied with the map he has created, the user selects a 
+        rectangular chunk of the map, chooses the desired level of detail, and 
+        launches the height field generation algorithm. This third phase of the 
+        process is computationally expensive (and therefore, slow), but is also 
+        entirely automated: once started, no further input from the user is 
+        needed, and he can go on to other tasks.
+      </para>
+      <para>
+        In this phase, <citetitle>Terrainosaurus</citetitle> generates a height 
+        field at multiple LODs, beginning from the coarsest possible LOD and 
+        continuing up to the target LOD requested by the user.  At each LOD, the 
+        height field is built such that the features present in each region 
+        resemble those of the corresponding terrain types at that LOD.
+      </para>
+      <para>
+        A secondary, optional by-product of generating each LOD is a rasterized 
+        version  of the user's map, an image file with the same raster 
+        dimensions as the generated height field, in which each pixel represents 
+        the terrain type of the corresponding grid cell in the height field.  
+        This information could be loaded and used by another program to do 
+        terrain-type-based postprocessing, such as generating a texture map for 
+        the height field, or simulating erosion of the terrain surface using 
+        terrain-type-specific soil characteristics.
+      </para>
+    </section>
+  </section>
+
+  <section id="The Computer's Perspective">
+    <title>The Computer's Perspective (How It Works)</title>
+    <para>
+      Having covered the fundamental concepts in 
+      <citetitle>Terrainosaurus</citetitle> and outlined the general steps of 
+      the algorithm, all that remains to be done is to peer inside of the "black 
+      boxes" in the above outline, and fill in the details.  In this section, I 
+      discuss the following aspects:
+      <itemizedlist spacing="compact">
+        <listitem>
+          the boundary refinement algorithm
+        </listitem>
+        <listitem>
+          height field analysis &amp; comparison
+        </listitem>
+        <listitem>
+          the height field generation algorithm
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <section id="Boundary GA">
+      <title>Boundary Refinement</title>
+      <para>
+        The boundary refinement operation is the first algorithmic aspect of 
+        <citetitle>Terrainosaurus</citetitle> that I discuss, and also the first 
+        problem that we solve using a genetic algorithm.
+      </para>
+
+      <section id="Boundary GA Overview">
+        <title>Overview</title>
+        <para>
+          The boundary refinement operation is essentially a randomized 
+          subdivision operation. It takes as input a single line segment of 
+          arbitrary length and produces a piecewise-linear curve with the same 
+          starting and ending points as the original segment, but made up of 
+          <inlineequation><xi:include href="resources/N.mml"/></inlineequation> 
+          segments (connecting <inlineequation><xi:include 
+          href="resources/N+1.mml"/></inlineequation> points), where
+          <inlineequation><xi:include href="resources/N.mml"/></inlineequation> is 
+          proportional to the length of the original segment. This curve is then 
+          translated, rotated and scaled as needed to line it up with the 
+          original boundary's end points. Since we will ultimately be 
+          transforming the entire curve anyway, we can, without loss of 
+          generality, think of the original boundary as lying along the positive 
+          <inlineequation><xi:include href="resources/x.mml"/></inlineequation> 
+          axis, starting from the origin. All of the diagrams in this section 
+          reflect this convention.
+        </para>
+        <para>
+          A useful result of applying this operation to each boundary in the 
+          map is that the segment length throughout the entire map is roughly 
+          uniform (recall that <inlineequation><xi:include 
+              href="resources/N.mml"/></inlineequation>, the number of segments, 
+          was said to be proportional to the length of the original boundary).  
+          If this length is chosen to be small enough, relative to the 
+          resolution of the height field that will be generated, no straight 
+          boundaries between terrain types will be evident in the generated 
+          height field, nor in any texture maps applied to the height field.
+        </para>
+        <para>
+          The segment length (and thus, the number of segments) may be 
+          calculated from the resolution of the target height field, according 
+          to the spatial version of the Nyquist limit: considering the height 
+          field as sampling the boundary, we know that the height field cannot 
+          resolve boundary details finer than half its spatial resolution 
+          (<xref linkend="Nyquist Equation"/>).
+        </para>
+        <equation id="Nyquist Equation">
+          <title>The Maximum Segment Length, Set According to the Nyquist 
+          Limit</title>
+          <xi:include href="resources/Boundary GA - Nyquist Equation.mml"/>
+        </equation>
+        <para>
+          However, since the generated boundary may need to be scaled somewhat 
+          to match the endpoints of the original boundary, we incorporate a 
+          "slop factor" of two, resulting in <xref linkend="Boundary Segment 
+            Length Equation"/>.
+        </para>
+        <equation id="Boundary Segment Length Equation">
+          <title>Maximum Boundary Segment Length</title>
+          <xi:include href="resources/Boundary GA - Segment Length Equation.mml"/>
+        </equation>
+        <para>
+          The shape of the generated boundary is subject to the constraints 
+          imposed by the user. The user can control how sharp the angles between 
+          successive segments are allowed to be by adjusting the 
+          <firstterm>smoothness</firstterm> parameter,
+          <inlineequation><xi:include href="resources/S.mml"/></inlineequation>, which can 
+          vary from 0.0 (very rough) to 1.0 (very smooth).
+        </para>
+      </section>
+
+      <section id="Boundary GA Encoding">
+        <title>Genetic Encoding</title>
+        <para>
+          The first step in casting the boundary refinement problem as a 
+          genetic algorithm is to define a suitable genetic encoding for a 
+          boundary. In the encoding we selected, a chromosome has
+          <inlineequation><xi:include href="resources/N.mml"/></inlineequation>
+          genes, one for each segment in the resulting boundary, and each gene 
+          contains a real-valued angle in the range <inlineequation><xi:include 
+          href="resources/%5B-pi,pi%5D.mml"/></inlineequation> indicating the 
+          <emphasis>relative</emphasis> change in direction of the corresponding 
+          segment with respect to the one preceding it (<xref linkend="Boundary 
+          GA Encoding Illustration"/>). A positive angle indicates a turn to the 
+          counter-clockwise direction, while a negative angle indicates a turn 
+          to the clockwise direction.  A differential angle of zero indicates 
+          that the segment is traveling in the same direction as the previous 
+          segment. The angle of the first segment is defined with respect to the 
+          <inlineequation><xi:include href="resources/x.mml"/></inlineequation> 
+          axis, since it has no preceding segment.
+        </para>
+        <figure id="Boundary GA Encoding Illustration">
+          <title>The Encoding of a Gene in the Boundary GA</title>
+          <mediaobject>
+            <caption>
+              A boundary's genetic encoding is the sequence of relative angles 
+              between successive segments. An angle of zero indicates no change 
+              in direction.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Boundary GA - Gene Angle Encoding Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          An encoding such as this is advantageous in that it represents the 
+          shape of the boundary in terms of a <emphasis>local</emphasis> 
+          property of the curve (the differential angle). This is a convenient 
+          representation, since the property that we are trying to optimize 
+          (the curve smoothness) is itself a local property. Furthermore, the 
+          curve smoothness can be calculated using only the angles, without the 
+          need to convert to Cartesian coordinates, with the result that the 
+          fitness evaluation can be done quite cheaply, in terms of processing 
+          time.
+        </para>
+        <para>
+          Another important consequence of this encoding is that the 
+          relationship between the gene angle values and the 2D Cartesian 
+          points to which they are decoded depends <emphasis>on the entire 
+            chromosome</emphasis>: since each angle encoded in a gene is 
+          specified relative to the preceding line segment, a change in the 
+          angle of one gene will affect the location of not just the next 
+          point, but of <emphasis>every</emphasis> subsequent point. As a 
+          result, the end point of the boundary cannot easily be held fixed, 
+          since mutations earlier in the sequence will tend to move it. This is 
+          one reason that we must transform the curve at the end of the 
+          algorithm, rather than simply constructing the curve "in place".
+        </para>
+        <para>
+          A downside to this encoding is that it is possible for the boundary 
+          to double back on itself, which causes several problems. We prevent 
+          this by requiring that the <emphasis>absolute</emphasis> angle (i.e., 
+          the angle with respect to the <inlineequation><xi:include 
+          href="resources/x.mml"/></inlineequation> axis) cannot exceed a 
+          certain maximum angle at any point on the boundary (<xref 
+          linkend="Boundary GA Angle Limit Illustration"/>).  This is discussed 
+          in more detail in <xref linkend="Boundary GA Discussion"/>.
+        </para>
+        <figure id="Boundary GA Angle Limit Illustration">
+          <title>The Absolute Angle Limit</title>
+          <mediaobject>
+            <caption>
+              A constraint is placed on the maximum absolute angle that a 
+              segment can have with respect to the reference axis, in order to 
+              prevent the boundary from doubling back and intersecting with 
+              itself.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Boundary GA - Angle Limit Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+          
+      <section id="Boundary GA Operators">
+        <title>Genetic Operators</title>
+        <para>
+          To mutate and cross-breed the chromosomes, we use the standard GA 
+          crossover and mutation operators. Mutating a gene corresponds to 
+          changing the degree of "bend" between two consecutive segments (<xref 
+            linkend="Boundary GA Mutation Illustration"/>).
+        </para>
+        <figure id="Boundary GA Mutation Illustration">
+          <title>The Boundary GA Mutation Operator</title>
+          <mediaobject>
+            <caption>
+              Mutation of a boundary segment's gene changes the amount of "bend" 
+              between that segment and its predecessor.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Boundary GA - Mutation Operator Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          Crossing two chromosomes is the equivalent of cutting each boundary 
+          in the middle of one of the segments and exchanging the pieces (<xref 
+            linkend="Boundary GA Crossover Illustration"/>).
+        </para>
+        <figure id="Boundary GA Crossover Illustration">
+          <title>The Boundary GA Crossover Operator</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Boundary GA - Crossover Operator Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="Boundary GA Fitness">
+        <title>Fitness Evaluation</title>
+        <para>
+          A chromosome is "fit" if the boundary curve it represents satisfies 
+          the smoothness constraint placed on it. The smoothness of a single 
+          gene is calculated according to <xref linkend="Boundary GA Gene 
+          Smoothness Equation"/>. When <inlineequation><xi:include 
+          href="resources/S.mml"/></inlineequation> is near 1, this equation is 
+          linear, favoring angles near zero and penalizing sharper angles. For 
+          lower values of <inlineequation><xi:include 
+          href="resources/S.mml"/></inlineequation>, the equation becomes more 
+          sinusoidal, favoring sharper angles (<xref linkend="Boundary GA Gene 
+          Smoothness Graph"/>). The constant 1.1 in this equation controls the 
+          horizontal offset of the sinusoid's peak, and is somewhat arbitrary.
+        </para>
+        <equation id="Boundary GA Gene Smoothness Equation">
+          <title>Boundary GA Gene Smoothness Equation</title>
+          <xi:include href="resources/Boundary GA - Smoothness Equation.mml"/>
+        </equation>
+        <figure id="Boundary GA Gene Smoothness Graph">
+          <title>The Smoothness Fitness Function for Several Values of 
+          S</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Boundary GA - Smoothness Graph.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The fitness of the entire chromosome is then calculated as the mean 
+          fitness across all of the genes.
+        </para>
+        <!--
+          The smoothness of the curve at several levels of detail, and average 
+          the results to get the overall smoothness value, in order to ensure 
+          that the curve is well-behaved.
+        </para>
+        <para>
+          Calculating the fitness XXX
+          The fitness at coarser LODs is calculated similarly, but rather than 
+          using the angles in the genes directly, we average two or more 
+          consecutive
+        </para-->
+      </section>
+
+      <section id="Boundary GA Decoding">
+        <title>Decoding the Result</title>
+        <para>
+          Once the GA has completed, we have a "best" boundary, encoded as a 
+          series of floating-point, relative angle values. The final step in 
+          this operation is to decode this chromosome into a series of 2D 
+          points (<inlineequation><xi:include href="resources/P_0.mml"/></inlineequation> 
+          to <inlineequation><xi:include href="resources/P_N.mml"/></inlineequation>) 
+          connecting the end points of the original boundary. This is done in a 
+          relatively straightforward manner:
+        </para>
+        <procedure>
+          <step>
+            The initial point <inlineequation><xi:include 
+            href="resources/P_0.mml"/></inlineequation> is placed at the origin.
+          </step>
+          <step>
+            Subsequent points <inlineequation><xi:include 
+            href="resources/P_1.mml"/></inlineequation> to 
+            <inlineequation><xi:include 
+            href="resources/P_N.mml"/></inlineequation> are calculated from the 
+            previous point, using the recurrence relation <xref 
+            linkend="Boundary GA Point Decoding Equation"/>.
+            <equation id="Boundary GA Point Decoding Equation">
+              <title>Point Decoding Equation</title>
+              <xi:include href="resources/Boundary GA - Point Decoding Equation.mml"/>
+            </equation>
+          </step>
+          <step>
+            The end points of the generated curve will not, in general, line up 
+            with the end points of the original boundary. Therefore, we 
+            construct an affine transformation matrix that translates, rotates 
+            and scales the points such that the first and last points line up 
+            exactly with the start and end points, respectively, of the original 
+            boundary.  This transform is constructed in the following way:
+            <substeps>
+              <step>
+                Let <inlineequation><xi:include 
+                    href="resources/V_o.mml"/></inlineequation> be the vector 
+                connecting the start and end points of the original boundary, 
+                and <inlineequation><xi:include 
+                    href="resources/V_r.mml"/></inlineequation> be similarly 
+                defined for the refined boundary.
+              </step>
+              <step>
+                The transform is the matrix
+                <inlineequation>
+                  <xi:include href="resources/Boundary GA - Transform Equation.mml"/>
+                </inlineequation>, with:
+                <variablelist>
+                  <varlistentry>
+                    <term>
+                      <inlineequation>
+                        <xi:include href="resources/T Matrix.mml"/>
+                      </inlineequation>
+                    </term>
+                    <listitem>
+                      the 2D translation along the vector from the origin to the 
+                      start point of the original boundary
+                    </listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <inlineequation>
+                        <xi:include href="resources/R Matrix.mml"/>
+                      </inlineequation>
+                    </term>
+                    <listitem>
+                      the 2D rotation by the angle between 
+                      <inlineequation><xi:include 
+                      href="resources/V_o.mml"/></inlineequation> and 
+                      <inlineequation><xi:include 
+                      href="resources/V_r.mml"/></inlineequation>
+                    </listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <inlineequation>
+                        <xi:include href="resources/S Matrix.mml"/>
+                      </inlineequation>
+                    </term>
+                    <listitem>
+                      the 2D scaling by the ratio <inlineequation><xi:include 
+                      href="resources/Ratio V_o to V_r.mml"/></inlineequation>                  
+                      </listitem>
+                  </varlistentry>
+                </variablelist>
+              </step>
+            </substeps>
+          </step>
+        </procedure>
+        <para>
+          At this point, the original boundary has been replaced with a 
+          suitable, refined version, and the operation is complete.
+        </para>
+      </section>
+
+    </section>
+
+    <section id="Terrain Library Analysis">
+      <title>Terrain Analysis &amp; Comparison</title>
+      <para>
+        The second algorithmic aspect I discuss is the way in which 
+        <citetitle>Terrainosaurus</citetitle> analyzes and compares height 
+        fields. The ability to recognize geometric and statistical similarities 
+        between height fields is central to 
+        <citetitle>Terrainosaurus</citetitle>'s design-by-example paradigm, 
+        allowing much of the labor of the terrain construction process to be 
+        transferred off of the user and onto the computer.
+      </para>
+
+      <section>
+        <title>Analyzing a Single Height Field</title>
+        <para>
+          The ultimate goal of <citetitle>Terrainosaurus</citetitle> is the 
+          creation of terrain models that, to a human viewer, are recognizable, 
+          plausible reproductions of the kinds of terrain that the user supplied 
+          as inputs. Therefore, the central question that must be asked is this: 
+          what gives a "kind" of terrain its identity in the mind of the viewer?  
+          A comprehensive answer to this question would involve aspects of a 
+          number of disciplines, including geology, ecology, linguistics, and 
+          human cognition, and is certainly outside of the scope of this 
+          research. Nevertheless, for our purposes, we must arrive at a partial 
+          answer to this question, one that can be quantified in terms of height 
+          field geometry.
+        </para>
+        <para>
+          Intuitively, several ways of characterizing the geometry of a height 
+          field seem to be reasonable candidates for terrain type analysis.  
+          First, there are the elevations and slopes in the height field (i.e., 
+          the zeroth and first derivatives of the height field surface).  
+          Everyday experience tells us that different kinds of terrain often 
+          have very different elevation ranges and steepnesses; desert terrain, 
+          for example, is generally rather flat, while mountainous terrain can 
+          be extremely steep, even completely vertical in places.  Furthermore, 
+          some kinds of terrain occur at characteristically different altitudes 
+          (it would be unusual indeed to find a sandy beach at 10,000 feet of 
+          elevation!). Empirical investigation of a number of example terrains 
+          indicated that the statistical distributions of elevation and slope 
+          tended to be similar between height fields of the same terrain type 
+          (<xref linkend="Empirical Analysis"/>).
+        </para>
+        <para>
+          Another way of quantitatively characterizing a height field is by the 
+          presence and size of certain identifiable "features": things like 
+          peaks, ridges, cliffs, rivers and gorges. Again, experience teaches us 
+          to expect mountain ranges to have more pronounced peaks and ridges 
+          than most other kinds of terrain, and that plains areas contain 
+          primarily smooth, relatively flat ground.  Empirical investigation 
+          also indicated that edge statistics tended to be similar within the 
+          same terrain type.
+        </para>
+        <para>
+          This list of height field characteristics is by no means exhaustive: a 
+          number of other measures seem worthy of future investigation as 
+          potential ways of terrain characterization and may ultimately turn out 
+          to be more effective for comparing terrains (several possibilities are 
+          discussed in <xref linkend="Enhanced Similarity Function"/>).  Even 
+          so, the characteristics already mentioned are sufficient starting 
+          material for a similarity function.
+        </para>
+      </section>
+
+      <section>
+        <title>Comparing a Height Field to a Reference Terrain Type</title>
+        <para>
+          Having observed that real-world examples of the same terrain types 
+          appear to exhibit similarities in their statistical behavior, we need 
+          a way of quantifying this similarity. Conventional statistical 
+          hypothesis tests, such as <inlineequation><xi:include 
+          href="resources/chi^2.mml"/></inlineequation>, the KS test, and the t 
+          test were considered, but ultimately rejected as not adaptable enough.  
+          First of all, it is not enough just to test whether the means of two 
+          distributions come from the same population: the mean is an ambiguous 
+          indicator of terrain type (Gill remarks that the same is true when 
+          distinguishing between ice and sea water in SAR imagery <biblioref 
+            linkend="Ice Cover Discrimination"/>), and also tells us nothing 
+          about the shape or roughness of the terrain.  Second, we need to be 
+          able to accommodate <emphasis>multiple</emphasis> reference terrain 
+          samples; it is not clear how to adapt a KS test, for example, to use 
+          multiple reference distributions. Thus, a new kind of test is needed.
+        </para>
+        <para>
+          Towards this end, we introduce the concept of <firstterm>Gaussian 
+          curve projection</firstterm>, a technique for comparing unbounded 
+          scalar values to determine the <firstterm>similarity</firstterm> of a 
+          <firstterm>test value</firstterm> to one or more scalar 
+          <firstterm>reference values</firstterm>.  With this as a building 
+          block, we define a <firstterm>statistical distribution similarity 
+          measure</firstterm> for comparing a test distribution (e.g., of 
+          elevation values) to one or more reference distributions.  Finally, we 
+          define an <firstterm>aggregate similarity measure</firstterm> 
+          combining the distribution similarities to form an estimate of the 
+          overall similarity between a height field and one or more reference 
+          height fields (i.e., the height fields composing a terrain type).
+        </para>
+
+        <section id="Gaussian Curve Projection">
+          <title>Gaussian Curve Projection</title>
+          <para>
+            Gaussian curve projection is a simple means of transforming an 
+            arbitrary scalar <firstterm>test value</firstterm> into a bounded 
+            <firstterm>similarity measure</firstterm>, given one or more scalar 
+            <firstterm>reference values</firstterm> against which to compare the 
+            test value.  The test and reference values may be either bounded or 
+            unbounded, but the resulting similarity measure is guaranteed to 
+            fall in the range <inlineequation><xi:include 
+            href="resources/%5B0,1%5D.mml"/></inlineequation>, with values near 
+            one indicating "very similar" and values near zero indicating "very 
+            dissimilar".
+          </para>
+          <figure id="Gaussian Curve Projection Overview Diagram">
+            <title>Gaussian Curve Projection</title>
+            <mediaobject>
+              <caption>
+                Gaussian curve projection is a flexible technique for 
+                transforming bounded or unbounded values into the 
+                <inlineequation><xi:include 
+                href="resources/%5B0,1%5D.mml"/></inlineequation> range, by 
+                evaluating a Gaussian function (with a suitable mean and 
+                standard deviation) at those values.
+              </caption>
+              <imageobject>
+                <imagedata fileref="Terrain Comparison - GCP Overview Diagram.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+          <para>
+            This is accomplished by constructing a Gaussian curve based on the 
+            reference values, and then finding the projection of the test value 
+            onto that curve (<xref linkend="Gaussian Curve Projection Overview 
+            Diagram"/>).  The curve has a height of one unit at its peak, has a 
+            center value <inlineequation><xi:include 
+            href="resources/mu_G.mml"/></inlineequation> equal to the mean of 
+            the reference values, and has a standard deviation 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> chosen 
+            "appropriately" (how <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> should be determined 
+            is discussed later).  The resulting function (<xref 
+            linkend="Gaussian Curve Projection Equation"/>) is capable of 
+            handling any scalar value, positive or negative, yields a value of 
+            one when evaluated at <inlineequation>
+            <xi:include href="resources/x mu_G.mml"/></inlineequation>, and 
+            yields values asymptotically approaching zero as 
+            <inlineequation><xi:include 
+            href="resources/x.mml"/></inlineequation> diverges from 
+            <inlineequation><xi:include 
+            href="resources/mu_G.mml"/></inlineequation>, with the rate of 
+            falloff governed by the value of <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation>.
+          </para>
+          <equation id="Gaussian Curve Projection Equation">
+            <title>Gaussian Curve Projection Equation</title>
+            <xi:include href="resources/Terrain Comparison - Gaussian Curve Projection Equation.mml"/>
+          </equation>
+          <para>
+            The only missing piece in the above formulation is the determination 
+            of <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation>, which I have saved 
+            for last because it deserves a slightly longer discussion.  This 
+            value behaves as a sort of tolerance, controlling how wide a range 
+            of values around <inlineequation><xi:include 
+            href="resources/mu_G.mml"/></inlineequation> is considered  
+            acceptable.  There is no "one size fits all" formula for setting 
+            this parameter; instead, the parameter must be set in a manner 
+            appropriate to the context in which Gaussian curve projection is 
+            being used. Here are some suggestions for determining 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation>:
+          </para>
+          <itemizedlist spacing="compact">
+            <listitem>
+              If the values being compared are bounded, 
+              <inlineequation><xi:include 
+              href="resources/sigma_G.mml"/></inlineequation> may be chosen as 
+              some fraction of the total possible range of values.
+            </listitem>
+            <listitem>
+              If the number of reference values is sufficiently large, then
+              <inlineequation><xi:include 
+              href="resources/sigma_G.mml"/></inlineequation> can be chosen to 
+              be the sample standard deviation of the reference values.  This 
+              has the drawback that the resulting function will report some of 
+              the reference values themselves as having low similarity.  This is 
+              likely not what is desired, leading to the next suggestion.
+            </listitem>
+            <listitem>
+              If the number of reference values is sufficiently large, then 
+              <inlineequation><xi:include                   
+              href="resources/sigma_G.mml"/></inlineequation> can be chosen such 
+              that all reference values evaluate to a similarity value greater 
+              than or equal to some <firstterm>baseline similarity 
+              value</firstterm>, <inlineequation><xi:include 
+              href="resources/G_B.mml"/></inlineequation> (<xref 
+              linkend="Baseline Similarity Sigma Diagram"/>).  Given a choice of 
+              <inlineequation><xi:include 
+              href="resources/G_B.mml"/></inlineequation>, 
+              <inlineequation><xi:include 
+              href="resources/sigma_G.mml"/></inlineequation> may be determined  
+              according to <xref linkend="Baseline Similarity Sigma Equation"/>, 
+              which is obtained by rearranging <xref linkend="Gaussian Curve 
+              Projection Equation"/>. This guarantees that all reference values 
+              will be reported as having high similarity, and results in a 
+              larger value of <inlineequation><xi:include 
+              href="resources/sigma_G.mml"/></inlineequation> than would be 
+              produced by the previous formulation.
+            </listitem>
+            <listitem>
+              If the number of reference values is too small to derive a 
+              meaninful value of <inlineequation><xi:include 
+                  href="resources/sigma_G.mml"/></inlineequation>, but there are 
+              other, similar sets of reference values for which 
+              <inlineequation><xi:include 
+                  href="resources/sigma_G.mml"/></inlineequation> has already 
+              been determined, it may be possible to arrive at an acceptable 
+              <inlineequation><xi:include 
+                  href="resources/sigma_G.mml"/></inlineequation> by deriving it 
+              from the other <inlineequation><xi:include 
+              href="resources/sigma_G.mml"/></inlineequation>'s (e.g., by taking 
+              their mean).
+            </listitem>
+          </itemizedlist>
+          <para>
+            These last two suggestions are what 
+            <citetitle>Terrainosaurus</citetitle> employs: when a suitably large 
+            set of example height fields (more than one) are available for any 
+            given terrain type, <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> is calculated using 
+            <xref linkend="Baseline Similarity Sigma Equation"/>, with a 
+            <inlineequation><xi:include 
+            href="resources/G_B.mml"/></inlineequation> of 0.9; otherwise, 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> cannot be determined 
+            from the terrain type, and instead, the mean 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> of all the terrain 
+            types for which <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> 
+            <emphasis>could</emphasis> be determined is used as a fallback.
+          </para>
+          <equation id="Baseline Similarity Sigma Equation">
+            <title>Baseline Similarity Equation</title>
+            <xi:include href="resources/Terrain Comparison - Baseline Similarity Sigma Equation.mml"/>
+          </equation>
+          <figure id="Baseline Similarity Sigma Diagram">
+            <title>Determining Sigma G for Multiple 
+            Reference Values Using a Baseline Similarity</title>
+            <mediaobject>
+              <caption>
+                When sufficient reference values are available, 
+                <inlineequation><xi:include 
+                href="resources/sigma_G.mml"/></inlineequation> may be 
+                determined by choosing a baseline similarity value, 
+                <inlineequation><xi:include 
+                href="resources/G_B.mml"/></inlineequation> (in this 
+                example, 0.9), and selecting <inlineequation><xi:include 
+                href="resources/sigma_G.mml"/></inlineequation> such that 
+                all reference values project to a similarity value greater 
+                than or equal to this baseline value.
+              </caption>
+              <imageobject>
+                <imagedata fileref="Terrain Comparison - GCP Baseline Similarity Sigma Diagram.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+        </section>
+
+        <section id="Statistical Distribution Comparison">
+          <title>Comparing Statistical Distributions</title>
+          <para>
+            With this new tool in hand, we can now move on to comparing entire 
+            statistical distributions of things (elevations, slopes, etc.). To 
+            do this, we define an adaptive <firstterm>distribution similarity 
+            measure</firstterm> that compares a test distribution to the 
+            reference distributions on the basis of four statistical measures 
+            describing the distributions:
+            <itemizedlist spacing="compact">
+              <listitem>
+                the sample mean <inlineequation><xi:include 
+                    href="resources/mu.mml"/></inlineequation>
+              </listitem>
+              <listitem>
+                the sample standard deviation <inlineequation><xi:include 
+                    href="resources/sigma.mml"/></inlineequation>
+              </listitem>
+              <listitem>
+                the sample skewness <inlineequation><xi:include 
+                    href="resources/gamma_1.mml"/></inlineequation>
+              </listitem>
+              <listitem>
+                the sample kurtosis excess <inlineequation><xi:include 
+                    href="resources/gamma_2.mml"/></inlineequation>
+              </listitem>
+            </itemizedlist>
+            In each of these statistics, the similarity of the test distribution 
+            to the reference distribution(s) is calculated using Gaussian curve 
+            projection as defined above. The combined distribution similarity is 
+            the weighted average of the resulting four individual similarity 
+            measures (<xref linkend="Distribution Similarity Equation"/>).
+          </para>
+          <equation id="Distribution Similarity Equation">
+            <title>Distribution Similarity Equation</title>
+            <xi:include href="resources/Terrain Comparison - Distribution Similarity Equation.mml"/>
+          </equation>
+          <para>
+            The weights assigned to the four statistics (the 
+            <inlineequation><xi:include 
+            href="resources/w_i.mml"/></inlineequation>'s) must sum to 1.0, in 
+            order to ensure that the combined distribution similarity measure 
+            stays within the <inlineequation><xi:include 
+            href="resources/%5B0,1%5D.mml"/></inlineequation> range, but they 
+            are not, in general, equal. As I alluded to earlier, this 
+            distribution similarity measure (<inlineequation><xi:include 
+            href="resources/S_D.mml"/></inlineequation>) is 
+            <emphasis>adaptive</emphasis>, giving greater weight to individual 
+            statistics (the <inlineequation><xi:include 
+            href="resources/S_i.mml"/></inlineequation>'s) in which the 
+            reference distributions are more unified and, similarly, giving 
+            lesser weight to those in which the reference distributions diverge.  
+            To understand the necessity of this adaptability, consider the case 
+            where a "hills" terrain type is defined with four example height 
+            fields having nearly identical distributions of elevation values, 
+            except that each has a significantly different mean elevation from 
+            the others (<xref linkend="The Need For Adaptability"/>).
+          </para>
+          <figure id="The Need For Adaptability">
+            <title>The Need for Adaptability</title>
+            <mediaobject>
+              <caption>
+                Taking as an example the case where four distributions are 
+                identical, with the exception of their mean values, the need for 
+                an adaptive distribution similarity measure becomes apparent.
+              </caption>
+              <imageobject>
+                <imagedata fileref="Terrain Comparison - The Need for Adaptability.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+          <para>
+            In this case, the <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> for the standard 
+            deviation, skewness, and kurtosis are all extremely small, while 
+            that of the mean elevation is quite large. If, when combining the 
+            individual similarity measures to form the distribution similarity 
+            measure, we were to assign each measure a uniform weight of 0.25, 
+            this would have the undesirable consequence of giving undue merit
+            to height fields whose elevation distributions are completely unlike 
+            those of the reference height fields but happen to have a mean 
+            elevation within the range spanned by the examples. Because the 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> for the mean 
+            elevation is large, many height fields will have a mean elevation 
+            falling in the "good" zone, and would be rewarded for this with a 
+            minimum similarity score of approximately 0.25. As the divergence 
+            with respect to mean elevation increases, the 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> grows to embrace 
+            more and more of the range of possible values, and the mean becomes 
+            less and less of a differentiator (<xref linkend="A Useless 
+            Statistical Measure"/>).
+          </para>
+          <figure id="A Useless Statistical Measure">
+            <title>A Useless Statistical Measure</title>
+            <caption>
+              As the reference distributions diverge further and further from 
+              one another, with respect to any particular statistic, that 
+              statistic becomes progressively more worthless for judging the 
+              similarity of a height field to that terrain type, because the 
+              Gaussian function for the individual statistics's similarity grows 
+              too wide to have any significant ability to differentiate.
+              </caption>
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="Terrain Comparison - A Useless Statistical Measure.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+          <para>
+            Another way of stating this problem is to say that, as the 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> for a statistic 
+            grows in magnitude, that statistic becomes less and less meaningful 
+            for answering the question "what gives this terrain type its 
+            identity?".  In the extreme case of an enormous 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation>, the statistic is 
+            totally worthless (<xref linkend="A Useless Statistical Measure"/>).  
+            An obvious solution is to gradually ignore individual statistics as 
+            they become less useful: as the reference height fields disagree 
+            more strongly on a particular statistic, the 
+            <inlineequation><xi:include 
+            href="resources/sigma_G.mml"/></inlineequation> for that statistic 
+            increases, and the corresponding <inlineequation><xi:include 
+            href="resources/w_i.mml"/></inlineequation> for that statistic 
+            should decrease (with the others increasing proportionately to keep 
+            the sum of the <inlineequation><xi:include 
+            href="resources/w_i.mml"/></inlineequation>'s at 1.0). Thus, for the 
+            example above, the mean would be assigned a weight near 0, and the 
+            other three statistics would be assigned weights near 0.33.
+          </para>
+          <para>
+            In order to determine appropriate values for the weights, we 
+            introduce another measure, the <firstterm>agreement</firstterm>.  
+            The agreement describes how successfully a particular statistic 
+            unites the reference distributions. We define the agreement as 1 
+            minus the ratio of the curve variance to the variance of a Gaussian 
+            curve that spans the entire terrain library, or zero, if the 
+            variance of that statistic exceeds that of the library as a whole 
+            (<xref linkend="Agreement Equation"/>).
+          </para>
+          <equation id="Agreement Equation">
+            <title>Agreement Equation</title>
+            <xi:include href="resources/Terrain Comparison - Agreement Equation.mml"/>
+          </equation>
+          <figure id="Agreement Diagram">
+            <title>Agreement</title>
+            <caption>
+              The agreement of a terrain type, with respect to an individual 
+              statistical measure, is a function of the ratio of that 
+              statistic's similarity curve variance to that of a curve spanning 
+              the whole library. Statistics that tightly cluster the example 
+              height fields (<emphasis>tt1</emphasis>) are more useful and 
+              exhibit a higher agreement than those in which the example height 
+              fields diverge (<emphasis>tt2</emphasis>).
+            </caption>
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="Terrain Comparison - Agreement Diagram.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+          <para>
+            This measure (<xref linkend="Agreement Diagram"/>) gives an idea of 
+            how much confidence may be placed in the effectiveness of this 
+            statistic, and also gives us a way to set the 
+            <inlineequation><xi:include 
+            href="resources/w_i.mml"/></inlineequation>'s in <xref 
+            linkend="Distribution Similarity Equation"/>: weights are chosen in 
+            proportion to the agreement values, normalized such that they sum to 
+            1 (<xref linkend="Distribution Weights Equation"/>).
+          </para>
+          <equation id="Distribution Weights Equation">
+            <title>Distribution Weights Equation</title>
+            <xi:include href="resources/Terrain Comparison - Distribution Weights Equation.mml"/>
+          </equation>
+          <para>
+            Finally, we define the <firstterm>distribution agreement</firstterm> 
+            as the mean of the four individual agreement measures (<xref 
+            linkend="Distribution Agreement Equation"/>). This gives an estimate 
+            of the measure of significance that the distribution similarity has: 
+            if the example height fields are tightly clustered with respect to 
+            each of the four individual statistics, the distribution agreement 
+            will be very high.  Conversely, if all four statistics are 
+            worthless, this value will be near zero.
+          </para>
+          <equation id="Distribution Agreement Equation">
+            <title>Distribution Agreement Equation</title>
+            <xi:include href="resources/Terrain Comparison - Distribution Agreement Equation.mml"/>
+          </equation>
+        </section>
+
+        <section id="Terrain Similarity Evaluation">
+          <title>Terrain Similarity Evaluation</title>
+          <para>
+            Having defined a method of comparing the statistical distribution of  
+            a quantity between a single test height field and a set of reference 
+            height fields, only a small step further is required to be able to 
+            compare entire height fields on the basis of multiple such 
+            quantities. We define the <firstterm>terrain type 
+            similarity</firstterm> between a test height field and a set of 
+            reference height fields to be the weighted average of the 
+            distribution similarities for the following quantities (<xref 
+            linkend="Terrain Type Similarity Equation"/>):
+            <itemizedlist spacing="compact">
+              <listitem>elevation</listitem>
+              <listitem>slope</listitem>
+              <listitem>edge scale</listitem>
+              <listitem>edge length</listitem>
+              <listitem>edge strength (detector response)</listitem>
+            </itemizedlist>
+          </para>
+          <equation id="Terrain Type Similarity Equation">
+            <title>Terrain Type Similarity Equation</title>
+            <xi:include href="resources/Terrain Comparison - Terrain Type Similarity Equation.mml"/>
+          </equation>
+          <para>
+            As you might expect, the <inlineequation><xi:include 
+            href="resources/w_i.mml"/></inlineequation>'s are defined to be 
+            proportional to the respective distribution agreements, as defined 
+            in <xref linkend="Distribution Agreement Equation"/>, normalized 
+            such that the <inlineequation><xi:include 
+            href="resources/w_i.mml"/></inlineequation>'s sum to 1 (<xref 
+            linkend="Terrain Type Weights Equation"/>).
+          </para>
+          <equation id="Terrain Type Weights Equation">
+            <title>Terrain Type Weights Equation</title>
+            <xi:include href="resources/Terrain Comparison - Terrain Type Weights Equation.mml"/>
+          </equation>
+          <para>
+            Just as the individual statistical agreements were used to attenuate 
+            the effect  of a useless statistic, so also the distribution 
+            agreements diminish the effect of whole distributions that do not 
+            unify the reference height fields. For example, suppose that a 
+            terrain type composed of 5 example height fields displays a high 
+            degree of unanimity in the statistical distribution of slopes and 
+            elevations, but a lesser degree of correspondence in the 
+            distribution of edges.  Due to the difference in agreement measures, 
+            when evaluating the similarity of a generated height field to the 
+            reference terrain type, <citetitle>Terrainosaurus</citetitle> will 
+            demand a high degree of conformity with respect to elevation and 
+            slope in order to give a high score, but will pay less attention to 
+            how the height field matches with respect to the other measures. 
+            Thus, characteristics in which the examples for a particular terrain 
+            type are strongly united will contribute more to the overall terrain 
+            similarity than will characteristics in which they diverge.
+          </para>
+          <para>
+            One advantage to this means of comparing height fields is that it is 
+            relatively immune to differences in height field size and shape: 
+            because the comparison is made on the basis of statistic 
+            characteristics, the height fields may be of differing sizes and 
+            shapes...even non-rectangular shapes. For 
+            <citetitle>Terrainosaurus</citetitle>, this is crucial, as the 
+            terrain regions in the user's map are highly unlikely to be 
+            rectangular. However, very small or thin regions are likely to 
+            perform less well than larger regions, both because of the smaller 
+            sample sizes that they represent, and because the smaller areas that 
+            they cover will inhibit the formation of longer features.
+          </para>
+        </section>
+
+      </section>
+    </section>
+
+    <section id="Height Field GA">
+      <title>Height Field Construction</title>
+      <para>
+        The final algorithmic aspect that I discuss in depth is the height field 
+        construction step. This also employs a genetic algorithm, but to solve a 
+        somewhat harder problem than the boundary refinement problem (<xref 
+          linkend="Boundary GA"/>).
+      </para>
+
+      <section id="Height Field GA Overview">
+        <title>Overview</title>
+        <para>
+          The height field generation algorithm is, at its heart, a multi-scale 
+          image synthesis operation: the goal of this process is a height field 
+          (greyscale image) of the requested size and LOD, containing plausible 
+          imitations of the examples in the terrain library, arranged according 
+          to the user's map. At the beginning of this step, 
+          <citetitle>Terrainosaurus</citetitle> has the following inputs from 
+          the user (<xref linkend="Height Field GA - Inputs Diagram"/>):
+        </para>
+        <figure id="Height Field GA - Inputs Diagram">
+          <title>Height Field GA Inputs</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Height Field GA - Inputs Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <itemizedlist spacing="compact">
+          <listitem>
+            a 2D vector map, expressing the user's desired layout for the height 
+            field
+          </listitem>
+          <listitem>
+            a world-space, rectangular "active" chunk of this map, indicating 
+            the particular area of the map for which a height field should be 
+            generated
+          </listitem>
+          <listitem>
+            the target LOD to generate
+          </listitem>
+          <listitem>
+            a library of terrain samples, serving as examples of what the 
+            terrain types referenced by the user's map should look like
+          </listitem>
+        </itemizedlist>
+        <para>
+          The height field construction process proceeds in an iterative 
+          fashion, starting from the coarsest possible LOD and continuing until 
+          the target LOD has been reached. The coarsest LOD is constructed in a 
+          naïve fashion, by simply pasting together chunks of elevation data 
+          from the appropriate terrain types. Each subsequent LOD is constructed 
+          by the genetic algorithm, using the previous LOD as a rough "pattern" 
+          to follow.
+        </para>
+        <para>
+          The GA does not attempt to synthesize the height field from scratch; 
+          instead, it takes advantage of the fact that we already 
+          <emphasis>have</emphasis> realistic data for each terrain type...in 
+          the terrain library. Conceptually, the genetic algorithm searches for 
+          a way to blend together small chunks of terrain from the library, 
+          such that the resulting terrain "makes sense":
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            each region of the height field resembles its corresponding terrain 
+            type
+          </listitem>
+          <listitem>
+            the transition between regions at each boundary is smooth, without 
+            unrealistic discontinuities
+          </listitem>
+          <listitem>
+            the entire height field has the same macro-scale shape as the 
+            previous LOD
+          </listitem>
+        </itemizedlist>
+        <para>
+          The necessity of the first two of these constraints should be 
+          obvious: we want the terrain to look real. The reason for the third 
+          may require some further explanation. Recall that the LOD strategy 
+          used by <citetitle>Terrainosaurus</citetitle> is progressive 
+          refinement (<xref linkend="Progressive Refinement Methods"/>).  
+          During any run of the GA, earlier LODs have already established the 
+          macro-scale features of the terrain; the job of the current run of the 
+          GA is simply to add new, fine-scale detail, not to re-invent the 
+          coarse-scale structure.
+        </para>
+      </section>
+
+      <section id="Analyzing the Map">
+        <title>Analyzing the Map</title>
+        <para>
+          The map the user created is a vector drawing. This makes a lot of 
+          sense from a user-interface standpoint, since we have no way of 
+          knowing <foreignphrase>a priori</foreignphrase> what LOD the user will 
+          want to generate (the user himself may not know this, and even if he 
+          does have a particular LOD in mind, there is no guarantee he won't 
+          later decide that he needs a more detailed model). Representing the 
+          map with the (virtually) infinite resolution of a vector drawing 
+          allows us to defer this decision until the height field is actually 
+          generated.
+        </para>
+        <para>
+          However, since the height field we are going to generate is a raster 
+          object, it will be much more convenient to have the map in a similar 
+          form (i.e., a raster with the same dimensions as the height field).  
+          Furthermore, once the height field generation process begins, we 
+          <emphasis>do</emphasis> know the resolution of the height field we 
+          are to generate, so we can safely convert the map to a raster form, 
+          since the additional precision afforded by the vector representation 
+          is no longer useful. At the same time, we can do some extra analysis 
+          on the rasterized map that will be helpful later on. Specifically, for 
+          each grid cell in the rasterized map, the quantities we calculate are:
+          <itemizedlist spacing="compact">
+            <listitem>
+              the terrain type ID
+            </listitem>
+            <listitem>
+              the distance to the nearest region boundary
+            </listitem>
+            <listitem>
+              the unique ID for the enclosing terrain region
+            </listitem>
+          </itemizedlist>
+          The first of these is simply the result of rasterizing the map. The 
+          second two are derived from the first, and require segmenting the map 
+          back into contiguous regions. It is worth noting that the regions 
+          found at this stage may not have a 1-to-1 correspondence with those 
+          in the vector-drawn map, for a variety of reasons:
+          <itemizedlist spacing="compact">
+            <listitem>
+              two adjacent regions with the same terrain type are 
+              indistinguishable from one another, and will be merged
+            </listitem>
+            <listitem>
+              a region that is too tiny to cover any raster cells, or which 
+              falls outside of the active area of the map, will not appear in 
+              the rasterized map at all, and will be eliminated
+            </listitem>
+            <listitem>
+              a concave region that only partially intersects the active area 
+              of the map may have multiple, distinct fragments that fall within 
+              the active area, in which case it will create multiple regions
+            </listitem>
+          </itemizedlist>
+        </para>
+      </section>
+
+      <section id="Creating the Initial LOD">
+        <title>Creating the Initial LOD</title>
+        <para>
+          Since the GA requires a "pattern" height field to follow when 
+          constructing the next LOD, we cannot begin the generation process 
+          without a base LOD with which to prime the GA. Obviously, this base 
+          LOD cannot be constructed by the GA, so some other way of creating a 
+          height field is needed.
+        </para>
+        <para>
+          An easy way of creating this base height field is to randomly select 
+          appropriately shaped chunks of elevation data from the corresponding 
+          LODs of the terrain samples in the library. The discontinuities that 
+          would otherwise exist at the edges between terrain types can be 
+          avoided by making the selected chunks a few pixels wider around the 
+          border and blending between chunks where they overlap. This can be 
+          done as an image compositing operation, by constructing an 
+          appropriately shaped alpha mask with an alpha value of 1 in the 
+          region interior, fading to 0 just outside the region boundaries 
+          (<xref linkend="Height Field GA Alpha Mask Diagram"/>). 5 pixels of 
+          overlap seems to work well.
+        </para>
+        <figure id="Height Field GA Alpha Mask Diagram">
+          <title>Alpha Mask for Constructing the Base LOD</title>
+          <caption>
+            The base LOD is not constructed by the GA, but is instead created 
+            by combining chunks of raw data of the appropriate sizes and 
+            shapes, taken from the terrain library. These chunks are blended 
+            together, using an alpha mask with a linear falloff across the 
+            boundaries.
+          </caption>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Height Field GA - Region Alpha Mask Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section>
+        <title>Encoding &amp; Decoding a Height Field</title>
+        <para>
+          Once again, the problem must be expressed in a genetic encoding so 
+          that the GA can work on it. In this case, the thing that needs to be 
+          transformed into a set of genes is a height field.
+        </para>
+        <para>
+          Perhaps the simplest encoding would be for every pixel in the height 
+          field to be its own gene. We rejected this approach as being too 
+          fine-grained: a height field of any substantial size would contain 
+          thousands or millions of genes, and it is difficult to envision 
+          meaningful mutation operators to work on such an encoding.
+        </para>
+        <para>
+          In the encoding we selected, each gene represents a small, 
+          <inlineequation><xi:include href="resources/NxN.mml"/></inlineequation>-pixel 
+          chunk of the height field, and has a terrain type and a 
+          transformation associated with it.  A gene does not directly contain 
+          the elevation data for its chunk of the height field; instead, it 
+          holds a pointer to one of the example terrains for its terrain type, 
+          and the <inlineequation><xi:include href="resources/(x,y).mml"/></inlineequation> 
+          coordinates within that terrain from which to copy its source data.  
+          The transformation allows the source data to be rotated, translated 
+          and scaled before being blended into their target location (<xref 
+          linkend="Height Field GA Encoding Diagram"/>).
+        </para>
+        <figure id="Height Field GA Encoding Diagram">
+          <title>The Encoding of a Gene in the Height Field GA</title>
+          <caption>
+          </caption>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Height Field GA - Encoding Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          A chromosome is a 2D grid of such genes, arranged such that each 
+          gene overlaps slightly with those on each side of it (<xref 
+          linkend="Height Field GA Gene Grid Diagram"/>). To prevent unseemly 
+          seams from appearing between adjacent genes, we blend between adjacent 
+          genes using a 2D Gaussian blending function.
+        </para>
+        <figure id="Height Field GA Gene Grid Diagram">
+          <title>The Gene Grid</title>
+          <caption>
+            A chromosome in the height field GA is a 2D grid of overlapping 
+            genes. Each gene has a local area of influence, within which it is 
+            responsible for determining elevation values of the height field.  
+            In the overlapping areas, two or more genes contribute to the height 
+            field elevations, with the areas of influence smoothly blended 
+            between them.
+          </caption>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Height Field GA - Gene Grid Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          One benefit of this encoding is that it is relatively compact. By 
+          keeping only a <emphasis>reference</emphasis> to the source height 
+          field data within the gene, the chromosomes are able to be 
+          substantially smaller than they would be if they carried the pixel 
+          data internally (a single <inlineequation><xi:include 
+          href="resources/1024x1024.mml"/></inlineequation> height field stored 
+          in IEEE single-precision floating-point format is four megabytes in 
+          size!). As a result, memory is not a significant factor in 
+          determining the GA population size (instead, processing time is the 
+          limiting factor).
+        </para>
+        <para>
+          A second, less obvious benefit is that it is computationally 
+          inexpensive. Since the gene transformation is only applied to the 
+          pixel data when the chromosome is decoded, mutation operations that 
+          only modify the transformation parameters can be very fast.  Also, 
+          because no pixel data is stored in the gene, crossover operations are  
+          faster as well.  Furthermore, many queries about the geometric 
+          characteristics of a gene (mean elevation, gradient, etc.) can be 
+          made quite inexpensive by precomputing these quantities for each of 
+          the reference terrain samples. Then, to query these properties for a 
+          gene, all that needs to be done is to look up the precomputed 
+          property for the gene's source data location, accounting for any 
+          transformation applied to the data.
+        </para>
+        <para>
+          Another not-so-obvious trait of this encoding is that it is a 
+          <emphasis>lossless</emphasis> encoding: it is possible to encode and 
+          decode a height field using this scheme, recovering the original 
+          height field exactly. It also is relatively robust against numerical 
+          drift: the transformation parameters for each gene can be tweaked 
+          indefinitely without corrupting the elevation data, since the 
+          transformation is only applied when the chromosome is decoded back 
+          into a height field, and it is always applied to the original data.
+        </para>
+      </section>
+
+      <section id="Height Field GA Operators">
+        <title>Genetic Operators</title>
+        <para>
+          With this encoding, a wide variety of genetic operators is possible; 
+          virtually any image processing operation is a candidate, though not 
+          all operations are equally reasonable. For example, a "vortex" 
+          transformation on a gene is not likely to improve the terrain 
+          configuration substantially, and in many cases would introduce 
+          unrealistic shapes to the generated height field. On the other hand, 
+          an image "rotation" transformation corresponds directly to a 
+          geometric rotation of the height field surface, and could be quite 
+          useful for rearranging the genes.
+        </para>
+        <para>
+          We use a varied set of genetic operators to operate on the 
+          chromosomes for the height field GA.
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term> Rectangular Region Copy (crossover) </term>
+            <listitem>
+              This crossover operator exchanges rectangular clusters of 
+              corresponding genes (i.e., genes with the same grid indices) 
+              between two chromosomes.  The height and width of the copy 
+              rectangle are both selected randomly from the range  
+              <inlineequation><xi:include 
+              href="resources/%5B1,N%5D.mml"/></inlineequation>, thus, the 
+              number of copied genes falls into the range 
+              <inlineequation><xi:include 
+              href="resources/%5B1,N^2%5D.mml"/></inlineequation>.  The location 
+              of the copy rectangle within the gene grid is randomly selected 
+              such that the entire rectangle is within the grid.  This operator 
+              corresponds to an image copy operation.
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term> Vertical Offset (mutation) </term>
+            <listitem>
+              This mutation operator modifies the vertical offset component of 
+              a gene's transformation, effectively altering the mean elevation 
+              of the gene. It tends to transform the gene in the direction of 
+              the pattern height field's mean elevation in the vicinity of that 
+              gene. This operator is similar to an image brightness adjustment 
+              operation.
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term> Vertical Scale (mutation) </term>
+            <listitem>
+              This mutation operator modifies the vertical scale component of a 
+              gene's transformation, changing the elevation range of the gene 
+              without altering its mean elevation. It tends to transform the 
+              gene towards having the same elevation range as the pattern 
+              height field has in the vicinity of the gene. This operator 
+              corresponds to linearly stretching or compressing the contrast of 
+              an image.
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term> Rotation (mutation) </term>
+            <listitem>
+              This mutation operator modifies the rotation component of a 
+              gene's transformation, effectively rotating the contents of the 
+              gene about the horizontal center point of the gene. It tends to 
+              transform the gene toward having the same gradient direction as 
+              the pattern height field has in the vicinity of the gene. This 
+              operator corresponds directly to an image rotation operation.
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term> Random Source Data Selection (mutation) </term>
+            <listitem>
+              This mutation operator completely replaces the source data (i.e., 
+              the pointer to the source height field, and the coordinates 
+              within that height field) in a gene. The new source height field 
+              is randomly chosen from among the examples for the gene's terrain 
+              type, and the new source coordinates are randomly chosen from 
+              within that example.
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term> Horizontal Offset (mutation) </term>
+            <listitem>
+              This mutation operator modifies the coordinates within the source 
+              terrain sample from which the gene takes its data. Like the 
+              previous operator, this one has the effect of replacing the 
+              gene's contents with new data, but the effect is likely to be 
+              less drastic, as it keeps the same source height field and only 
+              picks new source coordinates within that height field.
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <para>
+          I said of several of the mutation operators (those that modify the 
+          gene's transformation parameters) that they "tend to" adjust the 
+          transformation towards conformity with the pattern height field. This 
+          works by introducing a random change to the transformation parameter, 
+          drawn from a Gaussian distribution centered over the value that would 
+          conform the gene to the pattern (thus, this value has the highest 
+          probability of being chosen, but a nearby value may be chosen 
+          instead).
+        </para>
+      </section>
+
+      <section id="Height Field GA Fitness Evaluation">
+        <title>Fitness Evaluation</title>
+        <para>
+          Finally, we come to the crux of the matter: how does the GA discern 
+          between good height fields and bad ones? The fitness evaluation is 
+          separated into two aspects, and we calculate the overall fitness as a 
+          weighted combination of the two (<xref linkend="Height Field Fitness 
+            Equation"/>).
+        </para>
+        <equation id="Height Field Fitness Equation">
+          <title>Height Field Fitness Equation</title>
+          <xi:include href="resources/Height Field GA - Fitness Equation.mml"/>
+        </equation>
+        <variablelist>
+          <varlistentry>
+            <term>
+              <inlineequation><xi:include href="resources/C_g.mml"/></inlineequation>
+            </term>
+            <listitem>
+              geometric compatibility
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <inlineequation><xi:include href="resources/S_r.mml"/></inlineequation>
+            </term>
+            <listitem>
+              regional terrain type similarity
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <inlineequation><xi:include href="resources/Alpha.mml"/></inlineequation>
+            </term>
+            <listitem>
+              a weighting coefficient, controlling how strongly each component 
+              affects the overall fitness; 0.5 was found experimentally to be a 
+              reasonable value
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <section>
+          <title>Geometric Compatibility</title>
+          <para>
+            <firstterm>Geometric compatibility</firstterm> describes how well 
+            the height field encoded in the chromosome matches the "pattern" 
+            provided by the previous LOD. This is important for ensuring that 
+            the generated LOD is conforming to the macro-scale features 
+            constructed by the previous LODs. The compatibility of a chromosome 
+            can be estimated directly from the genetic representation, by 
+            comparing the mean elevation and the mean gradient over each gene's 
+            area of influence with those values for the corresponding areas of 
+            the pattern height field.
+          </para>
+          <para>
+            In comparing these geometric properties, we encounter the same 
+            difficulty that we did earlier, in our discussion of comparing 
+            statistical distributions: we are trying to compare two unbounded 
+            quantities, to get a compatibility measure in the bounded range 
+            <inlineequation><xi:include 
+            href="resources/%5B0,1%5D.mml"/></inlineequation>.  We employ the 
+            same solution to this problem here as we did to the other instance: 
+            a Gaussian curve projection.  In this case, the  curve mean is the 
+            value of the pattern height field that we're trying to match, and 
+            the curve standard deviation is chosen to be one fourth the range 
+            for the gene's terrain type (e.g., for a "mountain" gene, the curve 
+            standard deviation would be one fourth of the elevation range for 
+            the "mountain" terrain type).  Again, the choice of standard 
+            deviation is somewhat arbitrary, but this value seems to work well, 
+            allowing a moderate amount of disagreement between a gene and the 
+            pattern before the gene starts to be heavily penalized. The total 
+            compatibility of a gene is then calculated from <xref linkend="Gene 
+            Compatibility Equation"/>.
+          </para>
+          <equation id="Gene Compatibility Equation">
+            <title>Gene Compatibility Equation</title>
+            <xi:include href="resources/Height Field GA - Gene Compatibility Equation.mml"/>
+          </equation>
+          <variablelist>
+            <varlistentry>
+              <term>
+                <inlineequation><xi:include href="resources/C_g,i.mml"/></inlineequation>
+              </term>
+              <listitem>
+                overall compatibility for gene <inlineequation><xi:include 
+                href="resources/i.mml"/></inlineequation>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>
+                <inlineequation><xi:include href="resources/E_i.mml"/></inlineequation>
+              </term>
+              <listitem>
+                mean elevation over gene <inlineequation><xi:include 
+                href="resources/i.mml"/></inlineequation>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>
+                <inlineequation><xi:include href="resources/M_i.mml"/></inlineequation>
+              </term>
+              <listitem>
+                mean gradient magnitude (slope) over gene 
+                <inlineequation><xi:include 
+                href="resources/i.mml"/></inlineequation>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>
+                <inlineequation><xi:include href="resources/A_i.mml"/></inlineequation>
+              </term>
+              <listitem>
+                mean gradient angle over gene <inlineequation><xi:include 
+                href="resources/i.mml"/></inlineequation>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+          <para>
+            The aggregate compatibility of the entire chromosome 
+            (<inlineequation><xi:include href="resources/C_g.mml"/></inlineequation>) is 
+            then simply the mean of all of the <inlineequation><xi:include 
+            href="resources/C_g,i.mml"/></inlineequation>'s.
+          </para>
+        </section>
+
+        <section>
+          <title>Regional Terrain Type Similarity</title>
+          <para>
+            The second aspect of height field fitness is the regional terrain 
+            type similarity: how similar each region is to the examples that 
+            make up its corresponding terrain type, in terms of measurable 
+            characteristics.
+          </para>
+          <para>
+            The similarity of each individual region is calculated just as 
+            described in <xref linkend="Terrain Library Analysis"/>. For the 
+            aggregate similarity of the whole height field, however, rather than 
+            simply using the arithmetic mean of the individual regional 
+            similarities, we instead calculate the area-weighted mean, using the 
+            proportion of pixels within each region as the weight for that 
+            region's similarity. This reduces the impact that small regions have 
+            on the overall fitness of the terrain.
+          </para>
+        </section>
+
+        <section id="Localized Guidance">
+          <title>Localized Guidance of the Genetic Algorithm</title>
+          <para>
+            As is the case for many things, the GA's great strength can also be 
+            a weakness. GAs can solve optimization problems in which the 
+            effects of changes are not well understood, precisely because the 
+            GA is agnostic about the internal interactions, only evaluating the 
+            outcomes. Unfortunately, this also means that a standard GA is 
+            rather "dumb": it does not take advantage of domain-specific 
+            knowledge that might help guide the GA more quickly in the direction 
+            of an optimal solution (or, at least, <emphasis>away</emphasis> from 
+            truly horrible solutions).  When the chromosome size is large, the 
+            contribution of any individual gene to the overall fitness is highly 
+            diluted, thus an "error" in a gene may take a long time to be fixed, 
+            and convergence will be slow.
+          </para>
+          <para>
+            To address this, we modify the GA to retain additional information 
+            from the fitness evaluation, and we use this information to adjust 
+            the probability of a mutation occurring in a gene and also to 
+            influence the probability distribution function for choosing which 
+            mutation operator is invoked.
+          </para>
+          <para>
+            We do this in several places in the GA. At the region level, we 
+            retain the region similarity measure, using it to increase or 
+            decrease the mutation probabilities of the genes within that region.  
+            Similarly, at the gene level, we retain the individual compatibility 
+            components, as well as the overall compatibility measure. The 
+            probability of a gene being mutated is calculated using <xref 
+              linkend="Height Field GA Mutation Probability Equation"/>:
+          </para>
+          <equation id="Height Field GA Mutation Probability Equation">
+            <title>Gene Mutation Probability</title>
+            <xi:include href="resources/Height Field GA - Mutation Probability Equation.mml"/>
+          </equation>
+          <para>
+            where <inlineequation><xi:include href="resources/P_m.mml"/></inlineequation> 
+            is the baseline probability of mutation.  With this formulation, 
+            the baseline mutation probability still has a strong effect, but 
+            genes in highly dissimilar regions and genes that are highly 
+            incompatible with the underlying pattern are substantially more 
+            likely to be mutated.
+          </para>
+          <para>
+            Once the GA decides to mutate a particular gene, it still has to 
+            choose which mutation operator it will apply. An attractive feature 
+            of this enhancement to the GA is that smart and dumb mutation 
+            operators may be freely intermixed. A <firstterm>smart</firstterm> 
+            mutation operator is one that has a predictable relationship to 
+            some component of the fitness evaluation (e.g., 
+            <inlineequation><xi:include href="resources/E_i.mml"/></inlineequation>, the 
+            mean elevation of a gene, is directly affected by the "vertical 
+            offset" operator).  In contrast, a <firstterm>dumb</firstterm> 
+            genetic operator produces unpredictable effects, or else cannot 
+            easily be related to any part of the fitness evaluation (e.g., the 
+            "pick new source location" operator). When deciding which operator 
+            to use, the GA modifies the mutation operator probability 
+            distribution function (PDF), giving higher probabilities to smart 
+            operators that are needed by the current gene and lower 
+            probabilities to smart operators that are not.  Probabilities for 
+            dumb operators remain fixed.
+          </para>
+          <para>
+            One way to understand these changes to the GA is as additional, 
+            tighter feedback loops within the GA, essentially creating several 
+            child GAs within the height field generation GA, who are better 
+            equipped to handle particular aspects of the problem. One point 
+            that deserves to be mentioned is that, despite incorporating this 
+            additional guidance, the algorithm is still a 
+            <emphasis>probabilistic</emphasis> algorithm, not a deterministic 
+            one. While a speedier convergence rate is generally a good thing, we 
+            want to retain the randomness and diversity of the GA, so as not to 
+            lose the ability to escape local maxima in the solution space (i.e., 
+            terrains that are "OK" but not "great").
+          </para>
+        </section>
+
+        <section>
+          <title>Cleaning Up the Final Result</title>
+          <para>
+            A final improvement we can make concerns those few genes that are 
+            out-of-place at the end of the GA. Given enough evolution cycles, 
+            the GA is generally successful at bringing 
+            <emphasis>most</emphasis> of the genes into alignment, however, 
+            since it is a probabilistic algorithm, it is not unlikely that a 
+            handful of genes out of the dozens (or hundreds) in the chromosome 
+            might escape being brought into conformity with the rest. Such 
+            genes are especially noticeable if they have a substantially 
+            different elevation from the surrounding terrain; they look sort of  
+            like squarish "fingers" poking up from the ground (<xref 
+              linkend="Terrain Fingers"/>).
+          </para>
+          <figure id="Terrain Fingers">
+            <title>Unaligned Genes Look Like "Fingers"</title>
+            <mediaobject>
+              <imageobject>
+                <imagedata scalefit="1" width="4in"
+                           fileref="Terrain Fingers.png"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+          <para>
+            These remaining artifacts can be removed by applying a 
+            <firstterm>conform</firstterm> operator to these aberrant genes.  
+            The conform operator simply sets the gene's transformation 
+            parameters so as to give the gene a compatibility value
+            <inlineequation><xi:include 
+            href="resources/C_g,i.mml"/></inlineequation> of 1; in effect, it 
+            forces the gene to fit the pattern height field as closely as 
+            possible.
+          </para>
+        </section>
+      </section>
+    </section>
+
+  </section>
+</chapter>

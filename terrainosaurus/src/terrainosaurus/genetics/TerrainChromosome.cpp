@@ -25,10 +25,10 @@ TerrainChromosome::TerrainChromosome(const TerrainChromosome & tc) {
     resize(tc.sizes(), false);
 
     // Copy pointers to data objects
-    if (tc._pattern)
-        setPattern(tc.pattern());
-    if (tc._map)
-        setMap(tc.map());
+    if (tc._patternSample)
+        setPatternSample(const_cast<TerrainChromosome &>(tc)._patternSample);
+    if (tc._scratchSample)
+        setScratchSample(const_cast<TerrainChromosome &>(tc)._scratchSample);
 
     // Now copy tc's gene data
     genes() = tc.genes();
@@ -42,31 +42,6 @@ void TerrainChromosome::claimGenes() {
     for (idx[0] = 0; idx[0] < size(0); ++idx[0])
         for (idx[1] = 0; idx[1] < size(0); ++idx[1])
             gene(idx).claim(this, lod, idx);
-}
-
-
-/*---------------------------------------------------------------------------*
- | Event listener (hacked in until ??)
- *---------------------------------------------------------------------------*/
-void TerrainChromosome::addGAListener(GAListenerPtr p) {
-    _listener = p;
-}
-void TerrainChromosome::removeGAListener(GAListenerPtr p) {
-    _listener.reset();
-}
-
-// XXX HACK ought to be protected
-void TerrainChromosome::fireAdvanced(int timestep) {
-    if (_listener)
-        _listener->advanced(timestep);
-}
-void TerrainChromosome::fireMutated(Pixel idx, int timestep) {
-    if (_listener)
-        _listener->mutated(gene(idx), GAEvent(GAEvent::Mutation, timestep));
-}
-void TerrainChromosome::fireCrossed(Pixel idx, int timestep) {
-    if (_listener)
-        _listener->crossed(gene(idx), GAEvent(GAEvent::Crossover, timestep));
 }
 
 
@@ -93,12 +68,18 @@ TerrainChromosome::fitness() const {
     return _fitness;
 }
 
-// Access to the multivariate fitness measure of the chromosome
-TerrainChromosome::RegionFitnessMeasure &
+// Access to the multivariate fitness measure of the chromosome for each region
+SizeType TerrainChromosome::regionCount() const {
+    return _regionFitnesses.size();
+}
+void TerrainChromosome::setRegionCount(SizeType rc) {
+    _regionFitnesses.resize(rc);
+}
+TerrainChromosome::RegionSimilarityMeasure &
 TerrainChromosome::regionFitness(IDType regionID) {
     return _regionFitnesses[regionID];
 }
-const TerrainChromosome::RegionFitnessMeasure &
+const TerrainChromosome::RegionSimilarityMeasure &
 TerrainChromosome::regionFitness(IDType regionID) const {
     return _regionFitnesses[regionID];
 }
@@ -116,37 +97,38 @@ void TerrainChromosome::setLevelOfDetail(TerrainLOD lod) {
 
 // Access to the heightfield properties of the chromosome
 const Heightfield::SizeArray & TerrainChromosome::heightfieldSizes() const {
-    return map().sizes();
+    return pattern().sizes();
 }
 
 
 // Access to the pattern sample we're trying to match
 const TerrainSample::LOD & TerrainChromosome::pattern() const {
-    return (*_pattern)[levelOfDetail()];
+    return (*_patternSample)[levelOfDetail()];
 }
-void TerrainChromosome::setPattern(const TerrainSample::LOD & p) {
-    if (&p != NULL) {
-        _pattern = p.getObject();
-        setLevelOfDetail(p.levelOfDetail());
-    } else {
-        _pattern.reset();
-    }
+TerrainSampleConstPtr TerrainChromosome::patternSample() const {
+    return _patternSample;
+}
+void TerrainChromosome::setPatternSample(TerrainSampleConstPtr ps) {
+    _patternSample = ps;
 }
 
-// Access to the rasterized map
-const MapRasterization::LOD & TerrainChromosome::map() const {
-    return (*_map)[levelOfDetail()];
+// Access to the scratch-work sample we render to
+TerrainSample::LOD & TerrainChromosome::scratch() {
+    return (*_scratchSample)[levelOfDetail()];
 }
-void TerrainChromosome::setMap(const MapRasterization::LOD & m) {
-    if (&m != NULL) {
-        _map = m.getObject();
-        setLevelOfDetail(m.levelOfDetail());
-        _regionFitnesses.resize(m.regionCount());
-    } else {
-        _map.reset();
-        _regionFitnesses.resize(0);
-    }
+const TerrainSample::LOD & TerrainChromosome::scratch() const {
+    return (*_scratchSample)[levelOfDetail()];
 }
+TerrainSamplePtr TerrainChromosome::scratchSample() {
+    return _scratchSample;
+}
+TerrainSampleConstPtr TerrainChromosome::scratchSample() const {
+    return _scratchSample;
+}
+void TerrainChromosome::setScratchSample(TerrainSamplePtr ss) {
+    _scratchSample = ss;
+}
+
 
 // Life and death kinda stuff
 bool TerrainChromosome::isAlive() const {
@@ -170,6 +152,7 @@ void TerrainChromosome::Gene::claim(TerrainChromosome * p,
     _parent = p;
     _levelOfDetail = lod;
     _indices = idx;
+    setJitter(Offset(0, 0));
 }
 
 // Access to the parent TerrainChromosome
@@ -192,12 +175,16 @@ TerrainLOD TerrainChromosome::Gene::levelOfDetail() const { return _levelOfDetai
 
 // What TerrainType and TerrainSample do we represent?
 const TerrainType::LOD & TerrainChromosome::Gene::terrainType() const {
-    return terrainSample().terrainType();
+    return *_terrainType;
+}
+void TerrainChromosome::Gene::setTerrainType(const TerrainType::LOD & tt) {
+    _terrainType = & tt;
 }
 const TerrainSample::LOD & TerrainChromosome::Gene::terrainSample() const {
     return *_terrainSample;
 }
 void TerrainChromosome::Gene::setTerrainSample(const TerrainSample::LOD & ts) {
+    setTerrainType(ts.terrainType());
     _terrainSample = & ts;
 }
 

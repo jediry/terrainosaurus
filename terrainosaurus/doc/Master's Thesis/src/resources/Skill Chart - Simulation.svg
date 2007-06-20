@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="279"
+   height="157.5"
+   id="svg19643"
+   sodipodi:version="0.32"
+   inkscape:version="0.43+devel"
+   version="1.0"
+   sodipodi:docbase="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources"
+   sodipodi:docname="Skill Chart - Simulation.svg">
+  <defs
+     id="defs19645" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.1372791"
+     inkscape:cx="215.18391"
+     inkscape:cy="78.443672"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="3.1in"
+     height="1.75in"
+     inkscape:window-width="909"
+     inkscape:window-height="588"
+     inkscape:window-x="636"
+     inkscape:window-y="263" />
+  <metadata
+     id="metadata19648">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:sans"
+       x="10.18165"
+       y="30.017567"
+       id="text19651"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan19653"
+         x="10.18165"
+         y="30.017567">Realism</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text19763"
+       y="67.224411"
+       x="10.18165"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:sans"
+       xml:space="preserve"><tspan
+         y="67.224411"
+         x="10.18165"
+         id="tspan19765"
+         sodipodi:role="line">Speed</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:sans"
+       x="10.18165"
+       y="104.60652"
+       id="text19767"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan19769"
+         x="10.18165"
+         y="104.60652">Control</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text19771"
+       y="141.99826"
+       x="10.18165"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:sans"
+       xml:space="preserve"><tspan
+         y="141.99826"
+         x="10.18165"
+         id="tspan19773"
+         sodipodi:role="line">Ease</tspan></text>
+    <image
+       y="8.8980646"
+       x="96.522774"
+       id="image19713"
+       height="27.353878"
+       width="51.551537"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       xlink:href="Gem (lit).png" />
+    <image
+       xlink:href="Gem (lit).png"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       width="51.551537"
+       height="27.353878"
+       id="image19775"
+       x="158.07947"
+       y="8.8980646" />
+    <image
+       y="8.8980646"
+       x="219.63615"
+       id="image19777"
+       height="27.353878"
+       width="51.551537"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       xlink:href="Gem (lit).png" />
+    <image
+       xlink:href="Gem (unlit).png"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       width="51.551537"
+       height="27.353878"
+       id="image19779"
+       x="96.522774"
+       y="46.114677" />
+    <image
+       y="46.114677"
+       x="158.07947"
+       id="image19781"
+       height="27.353878"
+       width="51.551537"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       xlink:href="Gem (unlit).png" />
+    <image
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       width="51.551537"
+       height="27.353878"
+       id="image19783"
+       x="219.63615"
+       y="46.114677"
+       xlink:href="Gem (unlit).png" />
+    <image
+       y="120.87875"
+       x="96.522774"
+       id="image19785"
+       height="27.353878"
+       width="51.551537"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       xlink:href="Gem (lit).png" />
+    <image
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       width="51.551537"
+       height="27.353878"
+       id="image19787"
+       x="158.07947"
+       y="120.87875"
+       xlink:href="Gem (unlit).png" />
+    <image
+       y="120.87875"
+       x="219.63615"
+       id="image19789"
+       height="27.353878"
+       width="51.551537"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (lit).png"
+       xlink:href="Gem (unlit).png" />
+    <image
+       y="83.496658"
+       x="96.522537"
+       id="image19760"
+       height="27.354"
+       width="51.551998"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (unlit).png"
+       xlink:href="Gem (lit).png" />
+    <image
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (unlit).png"
+       width="51.551998"
+       height="27.354"
+       id="image19791"
+       x="158.07924"
+       y="83.496658"
+       xlink:href="Gem (unlit).png" />
+    <image
+       y="83.496658"
+       x="219.63593"
+       id="image19793"
+       height="27.354"
+       width="51.551998"
+       sodipodi:absref="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources\Gem (unlit).png"
+       xlink:href="Gem (unlit).png" />
+  </g>
+</svg>

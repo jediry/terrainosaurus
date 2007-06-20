@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+  <!--
+Show that Monument valley breaks things... what assumption failed here?
+
+We could introduce multi-rez techniques to boundary gen, allowing different 
+more detailed generation:
+    straight rough bdry
+    winding, smooth bdry
+
+neural net for similarity??
+human-in-the-loop neuro-evolution of FF?
+    -->
+<chapter id="Future Work">
+  <title>Future Work</title>
+  <para>
+    While the results achieved with this method are respectable, numerous 
+    extensions and improvements are possible, offering greater performance, a 
+    higher degree of realism, greater ease of use, and/or additional control 
+    over the generated terrain.
+  </para>
+
+  <section>
+    <title>User Study</title>
+    <para>
+      One of the main objectives of this research has been to develop a method 
+      of generating terrain that is easy and intuitive for a user to use. In 
+      pursuit of this goal, I have had to make a number of judgments as to the 
+      user-friendliness of particular aspects, armed primarily with my own 
+      intuition as a user and creator of graphically-oriented software. While I 
+      have some degree of experience using painting, illustration, modeling and 
+      animation software, I am unquestionably more technically adept than the 
+      average user of such software. Furthermore, as the programmer of 
+      <citetitle>Terrainosaurus</citetitle>, I have the luxury/handicap of 
+      knowing all the details of its implementation. Hence, it would be 
+      beneficial to evaluate the effectiveness of 
+      <citetitle>Terrainosaurus</citetitle> with groups of professional 3D 
+      artists, architects, and simulation/game designers to see how effectively 
+      they are able to use it, what features they like, and what features they 
+      find to be either constraining or conspicuously absent.
+    </para>
+  </section>
+
+  <section>
+    <title>Placement of Features</title>
+    <para>
+      In <citetitle>Terrainosaurus</citetitle>, the user's control over the 
+      design of his terrain is region-based: all user modifications to the 
+      shape of the terrain are made through creating regions of various shapes 
+      and sizes, and assigning terrain types to them.  If the user wants a 
+      finer degree of control over one area of the map, he creates smaller 
+      regions and/or a finer taxonomy of terrain types. This works well enough 
+      for exercising fine control over the size and shape of regions, and the 
+      spatial relationships between them, but is less effective at guaranteeing 
+      the presence of particular features (e.g., rivers, volcanoes, cliffs etc.) 
+      in the places the user wants them.
+    </para>
+    <para>
+      A very useful extension to this method would be to allow the user to 
+      specify the geometric attributes of particular features (e.g., the path 
+      of a river, the location and elevation of a mountain peak, etc.) during 
+      the design phase. In the generation phase, these feature specifications 
+      would impose additional, localized constraints for the GA to meet, and 
+      would influence or override the shape of the generated terrain in that 
+      area. Such an extension would provide the user a whole new level of 
+      control over the generation process, with no necessary increase in 
+      complexity (if the user doesn't care about the placement of specific 
+      features, he can simply not use that extension; then the terrain 
+      generation process is no different than described above).
+    </para>
+    <para>
+      There are at least two challenges in creating such an extension. First, 
+      the definition of what constitutes a "feature" in this context is a bit 
+      hazy. How large of an area around a user-placed mountain peak should be 
+      considered "the mountain"? And what sort of data structure should be used 
+      to represent the "feature"? One possibility is to let features be areas 
+      (not necessarily rectangular) of height field data isolated from the input 
+      terrain samples. This has the benefit of providing a natural relationship 
+      between the identified features and the terrain types in which they 
+      occur, but it is not clear how this would encompass features like rivers 
+      (since they can be of arbitrary length).
+    </para>
+    <para>
+      Besides the difficulty of defining and representing distinct features, 
+      there is also the problem of maintaining physically correct relationships 
+      in the vicinity of these features. For example, if the user places a 
+      cliff or a waterfall in a particular location, then it becomes necessary 
+      to ensure that the area "above" that cliff/waterfall has a higher 
+      elevation than the ground "below" the feature. Or, to give another 
+      example, when placing rivers, it may be necessary to create lakes or cut 
+      gorges in order to maintain the constraint that a river can never flow 
+      uphill.
+    </para>
+    <para>
+      Both of these challenges suggest that terrain synthesis using  
+      individually placed features may add a significant amount of complexity 
+      to the generation process. A good first step toward understanding this 
+      problem might be to identify a representative set of features (mountains,  
+      rivers, gorges, waterfalls, alluvial fans, cliffs, etc.) and to analyze 
+      the geometric "environment" in which each feature can exist. This might 
+      give some insight into how to represent a feature and how to incorporate its 
+      constraints into the generation process.
+    </para>
+  </section>
+
+  <section>
+    <title>Automatic Map Construction</title>
+    <para>
+      In the usual case, a user of <citetitle>Terrainosaurus</citetitle> will 
+      want to exercise control over the general layout of the terrain, so 
+      leaving the layout of the terrain type map in the hands of the user makes 
+      a lot of sense.  Nevertheless, there are cases in which it would be useful 
+      to be able to create a plausible map automatically, such as a game engine 
+      creating random worlds, or an artist looking for inspiration. Therefore, 
+      some sort of higher-level mechanism for automatic map construction 
+      (possibly another GA), could be a useful extension.
+    </para>
+  </section>
+
+  <section>
+    <title>Automatic Generation of Textures &amp; Objects</title>
+    <para>
+      As lovely as the terrains generated by <citetitle>Terrainosaurus</citetitle> are, they are a bit 
+      lacking in visual realism without appropriate textures and objects.  
+      Without these sorts of visual cues, the illusion of "the real world" will  
+      never be complete. Thus, an important companion task to the generation of 
+      the landscape is the synthesis and placement of realistic textures and 
+      objects.
+    </para>
+    <para>
+      Although the generated terrain model could be textured in a number of 
+      ways, ideally we would like to be able to texture the generated model 
+      automatically, using the geometry of the height field and the terrain-type 
+      map to guide the process. A genetic algorithm approach similar to that 
+      employed for generating the height field might be very successful at 
+      generating believable textures.  Taking this idea a bit further, the 
+      placement of three-dimensional objects (such as natural objects like 
+      rocks and trees, or man-made objects like bridges and houses) could also 
+      be automated. By taking the geometry and terrain type into account, more 
+      realistic results could be achieved (e.g., trees should not be placed 
+      above the treeline elevation, houses built on swamp land could be built 
+      on stilts).
+    </para>
+  </section>
+
+  <section id="Computer-aided Classification">
+    <title>Computer-aided Terrain Classification &amp; Segmentation</title>
+    <para>
+      Currently, the most tedious and error-prone part of this approach is the 
+      construction of the terrain type library: the process is completely 
+      dependent on a human to classify terrain samples correctly, and also 
+      requires the person doing the classification to avoid samples containing 
+      mixtures of terrain types (such as lakes, seashore, etc.).
+    </para>
+    <para>
+      A useful extension would be to incorporate the feature analysis into this 
+      earlier stage as well. The computer could analyze new terrain samples as 
+      they are being added, compare them to those already present in the 
+      library, and inform the user of how similar it is to those already in the 
+      library, and how a particular classification of the sample would affect 
+      the aggregate statistics that control the similarity function (i.e., 
+      would adding this terrain to the "mountains" category significantly 
+      diminish the agreement between "mountains" examples?). This information 
+      could help the user to make a better decision in classifying the 
+      sample.
+    </para>
+    <para>
+      Ideally, the terrain library would be able to admit any height field as a 
+      terrain sample. As discussed in <xref linkend="Classifying Well"/>, 
+      terrain samples containing multiple terrain types, are currently unusable. 
+      In order to make them usable, the terrain library needs to handle 
+      non-rectangular sub-regions of the height field, allowing a terrain sample 
+      to be segmented into its constitutent terrain types. Some of this can be 
+      done automatically (since a body of water has constant elevation, the 
+      computer should be able to segment water from non-water quite easily), 
+      but segmenting other types of terrain would require fuzzy boundaries and 
+      more sophisticated segmentation algorithms. Perhaps an adaptation of the 
+      user-initiated classification procedure described in Gill's paper on ice 
+      classification <biblioref linkend="Ice Cover Discrimination"/> would be 
+      effective for this.
+    </para>
+  </section>
+
+  <section>
+    <title>Terrain Type Interpolation</title>
+    <para>
+      Some types of terrain occur only near certain other types. For example, 
+      it would be unusual to find sandy terrain in the middle of a grassy plain 
+      (unless it's a golf course). On the other hand, sandy beaches are 
+      ubiquitous near the ocean. Terrain types such as this could be viewed as 
+      <firstterm>transitionary</firstterm> types and could be introduced 
+      automatically near the user-generated regions of the neighboring terrain 
+      type. So, for example, the user could create a region of "plains" 
+      adjacent to "mountains" and the height field construction algorithm would 
+      introduce some "mountain foothills" around the boundary between them.
+    </para>
+  </section>
+
+  <section>
+    <title>More Intelligent Construction of the Base LOD</title>
+    <para>
+      One weakness of <citetitle>Terrainosaurus</citetitle>, in the normal case where multiple terrain 
+      types are present in the map, is that the algorithm for constructing the 
+      coarsest LOD is rather naive: a simple copy-and-paste operation with 
+      blending near the seams to prevent sharp drops. This can have a 
+      disconcerting, unrealistic effect when the mean elevations are 
+      significantly different. A more intelligent means of constructing this 
+      initial LOD could eliminate this problem.
+    </para>
+  </section>
+
+  <section id="Enhanced Similarity Function">
+    <title>Enhanced Similarity Function</title>
+    <para>
+      The current fitness function evaluates generated terrain regions for 
+      similarity to the reference terrain type by comparing a few of the more 
+      obvious characteristics of terrain. There must be other characteristics 
+      that could be incorporated to give additional discriminating power to the 
+      similarity function and thus improve the quality of the generated 
+      terrains. Some ideas for future investigation are:
+      <itemizedlist spacing="compact">
+        <listitem>
+          the spatial "density" of features&em;how close together they 
+          typically occur, how "clumped" they are
+        </listitem>
+        <listitem>
+          the distance to the terrain type boundary&em;how far from the 
+          transition between terrain types certain features typically occur 
+          (e.g., we would expect a mountain peak of any significant size to 
+          occur towards the interior of a mountainous region)
+        </listitem>
+        <listitem>
+          "directionality" of features&em;to what extent certain features 
+          exhibit the same directional tendency; this might be necessary to 
+          reproduce terrains strongly affected by wind erosion, for example
+        </listitem>
+        <listitem>
+          frequency-spectrum information&em;though direct comparison of Fourier 
+          transform coefficients did not yield useful results (<xref 
+          linkend="Failures"/>), it may be that a more 
+          sophisticated frequency analysis would do so
+        </listitem>
+        <listitem>
+          higher-order derivatives of the surface&em;how the curvature varies 
+          across the terrain surface
+        </listitem>
+      </itemizedlist>
+    </para>
+  </section>
+
+  <section>
+    <title>Cross-LOD Analysis</title>
+    <para>
+      The iterative, multi-LOD height field generation approach used in 
+      <citetitle>Terrainosaurus</citetitle> is based on the observation that different features become 
+      visible at different scales. Hence, it is reasonable to consider them as 
+      "belonging" to different LODs and generate them accordingly. No attempt 
+      has been made, however, to look for relationships between features at 
+      different LODs. It might be, for example, that fine-scale ridges tend to 
+      occur nearby and perpendicular to larger-scale ridges in certain types of 
+      mountain ranges. It seems likely that there would be many relationships 
+      of this sort that could be exploited to achieve more believable terrain 
+      models, though how to discover and apply these relationships is unclear.
+    </para>
+  </section>
+
+  <section>
+    <title>Enhanced Mutation &amp; Crossover Operators</title>
+    <para>
+      In conjunction with a better terrain similarity function, it would also 
+      be nice to have some smarter mutation and crossover operators. One way in 
+      which the operators might be made more intelligent is with regard to the 
+      formation of features in the terrain. Rather than naively copying 
+      rectangular regions, a crossover operator could copy contiguous genes 
+      that span an identified feature. Similarly, a mutation operator might push 
+      the source coordinates for a gene closer to or further from a feature 
+      detected in the source height field, in an attempt to find more plausible 
+      source material, given the state of features forming in the generated 
+      height field.
+    </para>
+  </section>
+
+  <section id="Performance Improvements">
+    <title>Performance Improvements</title>
+    <para>
+      Unfortunately, the height field generation phase is a bit on the slow 
+      side. This is partially attributable to the use of a genetic algorithm, 
+      but there are also other areas of the process that contribute to its 
+      slowness.
+    </para>
+    <para>
+      The use of a genetic algorithm in the height field generation process has 
+      certain benefits, such as the enormous amount of flexibility it affords, 
+      but is not without its drawbacks. The most obvious of these is its runtime 
+      complexity, as discussed in <xref linkend="Runtime Complexity"/>. It might 
+      be possible to achieve similar results using a different, more efficient  
+      optimization algorithm (though doing so might preclude the implementation 
+      of some of the other improvements described above).
+    </para>
+    <para>
+      The most CPU-intensive part of the fitness analysis is the feature 
+      detection step; scale-space feature detection is a rather expensive 
+      operation. A useful topic for future research would be to investigate how 
+      the diagnostic power of the feature detector changes as the range and 
+      number of scales searched decreases. Because the terrain construction 
+      process focuses at each step on generating detail at a particular LOD (the 
+      detail at coarser LODs is already essentially fixed, and the detail at 
+      finer LODs does not exist yet), it might even be that a single-scale 
+      detector could perform as well as or better than a multi-scale detector.
+    </para>
+    <para>
+      Another aspect of the algorithm with a lot of potential for optimization 
+      is its inherent parallelizability. A large proportion of the computations 
+      performed during the height field generation algorithm are done once per 
+      element (whether an "element" is a pixel, a height field cell, or a gene), 
+      with relatively few conditional branches and data dependencies, and so 
+      might be able to benefit from a symmetric multiprocessing system, or 
+      better yet, implementation on a modern GPU. The large memory sizes and 
+      programmability features of recent GPU architectures suggest that it 
+      might be possible to run large parts of the construction algorithm 
+      entirely on the GPU.
+    </para>
+  </section>
+
+</chapter>

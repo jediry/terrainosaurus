@@ -1,113 +1,70 @@
+/** -*- C++ -*-
+ *
+ * \file    TerrainSampleWindow.hpp
+ *
+ * \author  Ryan L. Saunders
+ *
+ * Copyright 2005, Ryan L. Saunders. Permission is granted to use and
+ *      distribute this file freely for educational purposes.
+ *
+ * Description:
+ *      The TerrainSampleWindow class is a top-level Window subclass for
+ *      displaying a TerrainSample in 3D and for monitoring the progress of the
+ *      heightfield refinement algorithm.
+ *
+ *      FIXME: the determination of GA/not is kinda ghetto
+ *              TerrainSample is overloaded in this context
+ */
+
+#pragma once
 #ifndef TERRAINOAURUS_UI_TERRAIN_SAMPLE_WINDOW
 #define TERRAINOAURUS_UI_TERRAIN_SAMPLE_WINDOW
 
 // Import library configuration
 #include <terrainosaurus/terrainosaurus-common.h>
 
-#include "ImageWindow.hpp"
-
 
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
     class TerrainSampleWindow;
+
+    // Pointer typedefs
+    typedef shared_ptr<TerrainSampleWindow>       TerrainSampleWindowPtr;
+    typedef shared_ptr<TerrainSampleWindow const> TerrainSampleWindowConstPtr;
 }
 
-// Import augmented enumeration mechanism
-#include <inca/util/Enumeration.hpp>
+// Import superclass definition
+#include <inca/ui/Window.hpp>
 
-// Import raster operators
-#include <inca/raster/operators/magnitude>
-
-
-// What thing do we want to see?
-INCA_ENUM( SampleVisualizationMode,
-         ( Elevation,
-         ( GradientMagnitude,
-         ( Edges,
-         ( Ridges,
-         ( ScaleSpace,
-           BOOST_PP_NIL ) ) ) ) ) );
+// Import data objects
+#include <terrainosaurus/data/TerrainSample.hpp>
 
 
-// Simple window displaying an image
-class terrainosaurus::TerrainSampleWindow : public ImageWindow {
+class terrainosaurus::TerrainSampleWindow : public inca::ui::Window {
 public:
-    // Constructor taking an image
-    TerrainSampleWindow(TerrainSampleConstPtr s,
-                        MapRasterizationConstPtr m,
-                        TerrainLOD startLOD,
-                        const std::string &title = "Terrain Sample")
-            : ImageWindow((*s)[startLOD].elevations(), title), lod(_lod) {
-        load(s);
-    }
+    // Constructor taking a view-only TerrainSample
+    explicit TerrainSampleWindow(TerrainSamplePtr ts,
+                                 const std::string & title = "Terrain Viewer");
 
-    // Setter for a real, 2D image
-    void load(TerrainSampleConstPtr s) {
-        cerr << "Loading TerrainSample\n";
-        sample = s;
-    }
+    // Constructor taking a pattern TerrainSample and a to-build TerrainSample
+    explicit TerrainSampleWindow(TerrainSamplePtr ts, TerrainSamplePtr ps,
+                                 const std::string & title = "Terrain Generator");
 
-    void key(char k, int x, int y) {
-        bool change = false;
-        switch (k) {
-            case 'a':
-                vizMode--;
-                if (vizMode == SampleVisualizationMode_Underflow)
-                    vizMode = SampleVisualizationMode::maximum();
-                change = true;
-                break;
-            case 'd':
-                vizMode++;
-                if (vizMode == SampleVisualizationMode_Overflow)
-                    vizMode = SampleVisualizationMode::minimum();
-                change = true;
-                break;
-            case 'w':
-                lod++;
-                if (lod == TerrainLOD_Overflow)
-                    lod = TerrainLOD::minimum();
-                change = true;
-                break;
-            case 's':
-                lod--;
-                if (lod == TerrainLOD_Underflow)
-                    lod = TerrainLOD::maximum();
-                change = true;
-                break;
-        }
+    // TerrainSample accessors
+    TerrainSamplePtr terrainSample();
+    void setTerrainSample(TerrainSamplePtr ts);
 
-        if (change) {
-            switch (vizMode) {
-                case Elevation:
-                    cerr << "Displaying elevation image for " << lod << endl;
-                    this->loadImage((*sample)[lod].elevations());
-                    break;
-                case GradientMagnitude:
-                    cerr << "Displaying gradient image for " << lod << endl;
-                    this->loadImage(magnitude((*sample)[lod].gradients()));
-                    break;
-                case Edges:
-                    cerr << "Displaying edge image for " << lod << endl;
-//                    this->loadImage(sample->edgeImage(lod));
-                    break;
-                case Ridges:
-                    cerr << "Displaying ridge image for " << lod << endl;
-//                    this->loadImage(sample->ridgeImage(lod));
-                    break;
-                case ScaleSpace:
-                    cerr << "Displaying scalespace image for " << lod << endl;
-//                    this->loadImage(sample->hyper);
-                    break;
-            }
-            requestRedisplay();
-        }
-    }
+    // Pattern TerrainSample accessors
+    TerrainSamplePtr patternSample();
+    void setPatternSample(TerrainSamplePtr ps);
 
 protected:
-    TerrainSampleConstPtr sample;
-    SampleVisualizationMode vizMode;
-    TerrainLOD lod;
+    // UI construction function
+    void construct();
+
+    TerrainSamplePtr    _terrainSample;
+    TerrainSamplePtr    _patternSample;
 };
 
 #endif

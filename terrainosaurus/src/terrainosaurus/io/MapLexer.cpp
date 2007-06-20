@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.5 (20050201): "Map.g" -> "MapLexer.cpp"$ */
+/* $ANTLR 2.7.5 (20050613): "Map.g" -> "MapLexer.cpp"$ */
 #include "MapLexer.hpp"
 #include <antlr/CharBuffer.hpp>
 #include <antlr/TokenStreamException.hpp>
@@ -31,9 +31,10 @@ MapLexer::MapLexer(const antlr::LexerSharedInputState& state)
 
 void MapLexer::initLiterals()
 {
-	literals["f"] = 6;
-	literals["tt"] = 7;
 	literals["v"] = 4;
+	literals["tt"] = 7;
+	literals["f"] = 6;
+	literals["e"] = 11;
 }
 
 antlr::RefToken MapLexer::nextToken()
@@ -65,9 +66,70 @@ antlr::RefToken MapLexer::nextToken()
 				theRetToken=_returnToken;
 				break;
 			}
+			case 0x3c /* '<' */ :
+			{
+				mLEFT_ABRACKET(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x3e /* '>' */ :
+			{
+				mRIGHT_ABRACKET(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x5b /* '[' */ :
+			{
+				mLEFT_SBRACKET(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x5d /* ']' */ :
+			{
+				mRIGHT_SBRACKET(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x2c /* ',' */ :
+			{
+				mCOMMA(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x3d /* '=' */ :
+			{
+				mASSIGN(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x3a /* ':' */ :
+			{
+				mCOLON(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x26 /* '&' */ :
+			{
+				mAMPERSAND(true);
+				theRetToken=_returnToken;
+				break;
+			}
 			case 0x2e /* '.' */ :
 			{
 				mDOT(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x2f /* '/' */ :
+			{
+				mFORESLASH(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			case 0x2b /* '+' */ :
+			case 0x2d /* '-' */ :
+			{
+				mSIGN(true);
 				theRetToken=_returnToken;
 				break;
 			}
@@ -83,13 +145,6 @@ antlr::RefToken MapLexer::nextToken()
 			case 0x39 /* '9' */ :
 			{
 				mNUMBER(true);
-				theRetToken=_returnToken;
-				break;
-			}
-			case 0x2b /* '+' */ :
-			case 0x2d /* '-' */ :
-			{
-				mSIGN(true);
 				theRetToken=_returnToken;
 				break;
 			}
@@ -125,8 +180,31 @@ antlr::RefToken MapLexer::nextToken()
 				theRetToken=_returnToken;
 				break;
 			}
-			default:
+			case 0x22 /* '\"' */ :
+			case 0x27 /* '\'' */ :
 			{
+				mQUOTED_STRING(true);
+				theRetToken=_returnToken;
+				break;
+			}
+			default:
+				if ((LA(1) == 0x5c /* '\\' */ ) && (LA(2) == 0x20 /* ' ' */ )) {
+					mNBSP(true);
+					theRetToken=_returnToken;
+				}
+				else if ((LA(1) == 0x25 /* '%' */ ) && (LA(2) == 0x23 /* '#' */ )) {
+					mANTLR_DUMMY_TOKEN(true);
+					theRetToken=_returnToken;
+				}
+				else if ((LA(1) == 0x25 /* '%' */ ) && (true)) {
+					mPERCENT(true);
+					theRetToken=_returnToken;
+				}
+				else if ((LA(1) == 0x5c /* '\\' */ ) && (true)) {
+					mBACKSLASH(true);
+					theRetToken=_returnToken;
+				}
+			else {
 				if (LA(1)==EOF_CHAR)
 				{
 					uponEOF();
@@ -187,9 +265,40 @@ void MapLexer::mLETTER(bool _createToken) {
 	_saveIndex=0;
 }
 
-void MapLexer::mEOL(bool _createToken) {
+void MapLexer::mWS_CHAR(bool _createToken) {
 	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
-	_ttype = EOL;
+	_ttype = WS_CHAR;
+	std::string::size_type _saveIndex;
+	
+	{
+	switch ( LA(1)) {
+	case 0x20 /* ' ' */ :
+	{
+		match(' ' /* charlit */ );
+		break;
+	}
+	case 0x9 /* '\t' */ :
+	{
+		match('\t' /* charlit */ );
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+	}
+	}
+	}
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mEOL_CHAR(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = EOL_CHAR;
 	std::string::size_type _saveIndex;
 	
 	{
@@ -207,9 +316,71 @@ void MapLexer::mEOL(bool _createToken) {
 	}
 	
 	}
-#line 174 "Map.g"
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mDQUOTE(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = DQUOTE;
+	std::string::size_type _saveIndex;
+	
+	match('\"' /* charlit */ );
+#line 195 "Map.g"
+	{ text.erase(_begin); text += ""; };
+#line 335 "MapLexer.cpp"
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mSQUOTE(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = SQUOTE;
+	std::string::size_type _saveIndex;
+	
+	match('\'' /* charlit */ );
+#line 196 "Map.g"
+	{ text.erase(_begin); text += ""; };
+#line 352 "MapLexer.cpp"
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mSPACE(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = SPACE;
+	std::string::size_type _saveIndex;
+	
+	match(' ' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mEOL(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = EOL;
+	std::string::size_type _saveIndex;
+	
+	mEOL_CHAR(false);
+#line 200 "Map.g"
 	newline();
-#line 212 "MapLexer.cpp"
+#line 383 "MapLexer.cpp"
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -232,16 +403,16 @@ void MapLexer::mCOMMENT(bool _createToken) {
 			}
 		}
 		else {
-			goto _loop25;
+			goto _loop34;
 		}
 		
 	}
-	_loop25:;
+	_loop34:;
 	} // ( ... )*
-	mEOL(false);
-#line 176 "Map.g"
-	_ttype = EOL;
-#line 244 "MapLexer.cpp"
+	mEOL_CHAR(false);
+#line 202 "Map.g"
+	newline(); _ttype = EOL;
+#line 415 "MapLexer.cpp"
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -255,27 +426,149 @@ void MapLexer::mWS(bool _createToken) {
 	_ttype = WS;
 	std::string::size_type _saveIndex;
 	
-	{
-	switch ( LA(1)) {
-	case 0x20 /* ' ' */ :
-	{
-		match(' ' /* charlit */ );
-		break;
+	{ // ( ... )+
+	int _cnt37=0;
+	for (;;) {
+		if ((LA(1) == 0x9 /* '\t' */  || LA(1) == 0x20 /* ' ' */ )) {
+			mWS_CHAR(false);
+		}
+		else {
+			if ( _cnt37>=1 ) { goto _loop37; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+		}
+		
+		_cnt37++;
 	}
-	case 0x9 /* '\t' */ :
-	{
-		match('\t' /* charlit */ );
-		break;
-	}
-	default:
-	{
-		throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
-	}
-	}
-	}
-#line 177 "Map.g"
+	_loop37:;
+	}  // ( ... )+
+#line 203 "Map.g"
 	_ttype = antlr::Token::SKIP;
-#line 278 "MapLexer.cpp"
+#line 445 "MapLexer.cpp"
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mLEFT_ABRACKET(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = LEFT_ABRACKET;
+	std::string::size_type _saveIndex;
+	
+	match('<' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mRIGHT_ABRACKET(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = RIGHT_ABRACKET;
+	std::string::size_type _saveIndex;
+	
+	match('>' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mLEFT_SBRACKET(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = LEFT_SBRACKET;
+	std::string::size_type _saveIndex;
+	
+	match('[' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mRIGHT_SBRACKET(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = RIGHT_SBRACKET;
+	std::string::size_type _saveIndex;
+	
+	match(']' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mCOMMA(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = COMMA;
+	std::string::size_type _saveIndex;
+	
+	match(',' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mASSIGN(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = ASSIGN;
+	std::string::size_type _saveIndex;
+	
+	match('=' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mPERCENT(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = PERCENT;
+	std::string::size_type _saveIndex;
+	
+	match('%' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mCOLON(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = COLON;
+	std::string::size_type _saveIndex;
+	
+	match(':' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mAMPERSAND(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = AMPERSAND;
+	std::string::size_type _saveIndex;
+	
+	match('&' /* charlit */ );
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -289,7 +582,7 @@ void MapLexer::mDOT(bool _createToken) {
 	_ttype = DOT;
 	std::string::size_type _saveIndex;
 	
-	match(".");
+	match('.' /* charlit */ );
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -298,25 +591,40 @@ void MapLexer::mDOT(bool _createToken) {
 	_saveIndex=0;
 }
 
-void MapLexer::mNUMBER(bool _createToken) {
+void MapLexer::mBACKSLASH(bool _createToken) {
 	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
-	_ttype = NUMBER;
+	_ttype = BACKSLASH;
 	std::string::size_type _saveIndex;
 	
-	{ // ( ... )+
-	int _cnt31=0;
-	for (;;) {
-		if (((LA(1) >= 0x30 /* '0' */  && LA(1) <= 0x39 /* '9' */ ))) {
-			mDIGIT(false);
-		}
-		else {
-			if ( _cnt31>=1 ) { goto _loop31; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
-		}
-		
-		_cnt31++;
+	match('\\' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
 	}
-	_loop31:;
-	}  // ( ... )+
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mFORESLASH(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = FORESLASH;
+	std::string::size_type _saveIndex;
+	
+	match('/' /* charlit */ );
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mNBSP(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = NBSP;
+	std::string::size_type _saveIndex;
+	
+	match("\\ ");
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -348,6 +656,33 @@ void MapLexer::mSIGN(bool _createToken) {
 	}
 	}
 	}
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mNUMBER(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = NUMBER;
+	std::string::size_type _saveIndex;
+	
+	{ // ( ... )+
+	int _cnt55=0;
+	for (;;) {
+		if (((LA(1) >= 0x30 /* '0' */  && LA(1) <= 0x39 /* '9' */ ))) {
+			mDIGIT(false);
+		}
+		else {
+			if ( _cnt55>=1 ) { goto _loop55; } else {throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+		}
+		
+		_cnt55++;
+	}
+	_loop55:;
+	}  // ( ... )+
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
 	   _token = makeToken(_ttype);
 	   _token->setText(text.substr(_begin, text.length()-_begin));
@@ -458,11 +793,11 @@ void MapLexer::mNAME(bool _createToken) {
 		}
 		default:
 		{
-			goto _loop37;
+			goto _loop59;
 		}
 		}
 	}
-	_loop37:;
+	_loop59:;
 	} // ( ... )*
 	_ttype = testLiteralsTable(_ttype);
 	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
@@ -473,9 +808,91 @@ void MapLexer::mNAME(bool _createToken) {
 	_saveIndex=0;
 }
 
+void MapLexer::mQUOTED_STRING(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = QUOTED_STRING;
+	std::string::size_type _saveIndex;
+	
+	switch ( LA(1)) {
+	case 0x22 /* '\"' */ :
+	{
+		{
+		mDQUOTE(false);
+		{ // ( ... )*
+		for (;;) {
+			if ((_tokenSet_1.member(LA(1)))) {
+				matchNot('\"' /* charlit */ );
+			}
+			else {
+				goto _loop63;
+			}
+			
+		}
+		_loop63:;
+		} // ( ... )*
+		mDQUOTE(false);
+		}
+		break;
+	}
+	case 0x27 /* '\'' */ :
+	{
+		{
+		mSQUOTE(false);
+		{ // ( ... )*
+		for (;;) {
+			if ((_tokenSet_2.member(LA(1)))) {
+				matchNot('\'' /* charlit */ );
+			}
+			else {
+				goto _loop66;
+			}
+			
+		}
+		_loop66:;
+		} // ( ... )*
+		mSQUOTE(false);
+		}
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());
+	}
+	}
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void MapLexer::mANTLR_DUMMY_TOKEN(bool _createToken) {
+	int _ttype; antlr::RefToken _token; std::string::size_type _begin = text.length();
+	_ttype = ANTLR_DUMMY_TOKEN;
+	std::string::size_type _saveIndex;
+	
+	match("%#%dummy%#%");
+	if ( _createToken && _token==antlr::nullToken && _ttype!=antlr::Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
 
 const unsigned long MapLexer::_tokenSet_0_data_[] = { 4294958072UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
-// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xb 0xc 0xe 0xf 
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xb 0xc 0xe 0xf 0x10 0x11 0x12 0x13 0x14 
+// 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! \" # 
 const antlr::BitSet MapLexer::_tokenSet_0(_tokenSet_0_data_,16);
+const unsigned long MapLexer::_tokenSet_1_data_[] = { 4294967288UL, 4294967291UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10 0x11 0x12 0x13 
+// 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! # 
+const antlr::BitSet MapLexer::_tokenSet_1(_tokenSet_1_data_,16);
+const unsigned long MapLexer::_tokenSet_2_data_[] = { 4294967288UL, 4294967167UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 4294967295UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// 0x3 0x4 0x5 0x6 0x7 0x8 0x9 0xa 0xb 0xc 0xd 0xe 0xf 0x10 0x11 0x12 0x13 
+// 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! \" # 
+const antlr::BitSet MapLexer::_tokenSet_2(_tokenSet_2_data_,16);
 
 ANTLR_END_NAMESPACE

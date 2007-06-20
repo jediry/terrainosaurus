@@ -1,0 +1,1142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE bibliography PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN" "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+<bibliography xmlns:xi="http://www.w3.org/2001/XInclude" label="References">
+<title>References</title>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Winged Edge">
+<abbrev>Baumgart 1975</abbrev>
+<title>Winged Edge Polyhedron Representation for Computer Vision</title>
+<author>
+      <surname>Baumgart</surname>
+      <firstname>Bruce</firstname>
+      <othername role="mi">G</othername>
+    </author>
+<confgroup>
+      <conftitle>National Computer Conference</conftitle>
+      <confsponsor>American Federation of Information Processing Societies (AFIPS)</confsponsor>
+      <confdates>May 1975</confdates>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of the 1975 National Computer Conference</bibliosource>
+<publisher>
+      <publishername>AFIPS Press</publishername>
+      <address format="linespecific">
+        <city>Arlington</city>
+        <state>VA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>1975</pubdate>
+<artpagenums>589–596</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Halo 2" role="software">
+<abbrev>Bungie 2004</abbrev>
+<title>Halo 2</title>
+<corpauthor xreflabel="Bungie">Bungie Studios</corpauthor>
+<publisher>
+      <publishername>Microsoft Corporation</publishername>
+      <address format="linespecific">
+        <city>Redmond</city>
+        <state>WA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Area51" role="website">
+<abbrev>Burke 1996</abbrev>
+<title>Generating Terrain</title>
+<author>
+      <surname>Burke</surname>
+      <firstname>Carl</firstname>
+    </author>
+<pubdate>1996</pubdate>
+<bibliomisc role="url">http://www.geocities.com/Area51/6902/terrain.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Algorithms" role="book">
+<abbrev>Cormen et al. 2001</abbrev>
+<title>Introduction to Algorithms, 2nd Ed.</title>
+<authorgroup>
+      <author>
+        <surname>Cormen</surname>
+        <firstname>Thomas</firstname>
+        <othername role="mi">H</othername>
+      </author>
+      <author>
+        <surname>Leiserson</surname>
+        <firstname>Charles</firstname>
+        <othername role="mi">E</othername>
+      </author>
+      <author>
+        <surname>Rivest</surname>
+        <firstname>Ronald</firstname>
+        <othername role="mi">L</othername>
+      </author>
+      <author>
+        <surname>Stein</surname>
+        <firstname>Clifford</firstname>
+      </author>
+    </authorgroup>
+<isbn>0-262-03293-7</isbn>
+<publisher>
+      <publishername>MIT Press</publishername>
+      <address format="linespecific">
+        <city>Cambridge</city>
+        <state>MA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2001</pubdate>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Bryce 3D" role="software">
+<abbrev>DAZ 2006</abbrev>
+<title>Bryce 3D</title>
+<corpauthor xreflabel="DAZ">DAZ Productions</corpauthor>
+<publisher>
+      <publishername>DAZ Productions</publishername>
+      <address format="linespecific">
+        <city>Draper</city>
+        <state>UT</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.daz3d.com/program/bryce/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="ROAM" role="proceedings">
+<abbrev>Duchaineau et al. 1997</abbrev>
+<title>ROAMing Terrain: Real-time Optimally Adapting Meshes</title>
+<authorgroup>
+      <author>
+        <surname>Duchaineau</surname>
+        <firstname>Mark</firstname>
+      </author>
+      <author>
+        <surname>Wolinsky</surname>
+        <firstname>Murray</firstname>
+      </author>
+      <author>
+        <surname>Sigeti</surname>
+        <firstname>David</firstname>
+        <othername role="mi">E</othername>
+      </author>
+      <author>
+        <surname>Miller</surname>
+        <firstname>Mark</firstname>
+        <othername role="mi">C</othername>
+      </author>
+      <author>
+        <surname>Aldrich</surname>
+        <firstname>Charles</firstname>
+      </author>
+      <author>
+        <surname>Mineev-Weinstein</surname>
+        <firstname>Mark</firstname>
+        <othername role="mi">B</othername>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>Visualization '97</conftitle>
+      <confsponsor>IEEE</confsponsor>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of IEEE Visualization '97</bibliosource>
+<publisher>
+      <publishername>IEEE Computer Society Press</publishername>
+      <address format="linespecific">
+        <city>Los Alamitos</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>October, 1997</pubdate>
+<artpagenums>81–88</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="SimCity 4" role="software">
+<abbrev>Electronic Arts 2003</abbrev>
+<title>SimCity 4</title>
+<corpauthor>Electronic Arts</corpauthor>
+<publisher>
+      <publishername>Electronic Arts</publishername>
+    </publisher>
+<pubdate>2003</pubdate>
+<bibliomisc role="url">http://simcity.ea.com/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="UT 2004" role="software">
+<abbrev>Epic Games 2004</abbrev>
+<title>Unreal Tournament 2004</title>
+<corpauthor xreflabel="Epic Games">Epic Games, Inc</corpauthor>
+<publisher>
+      <publishername>Atari, Inc</publishername>
+      <address format="linespecific">
+        <city>Lyon</city>
+        <country>France</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+<bibliomisc role="url">http://www.unrealtournament.com/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="ArcGIS" role="software">
+<abbrev>ESRI 2006</abbrev>
+<title>ArcGIS</title>
+<corpauthor>ESRI</corpauthor>
+<publisher>
+      <publishername>ESRI</publishername>
+      <address format="linespecific">
+        <city>Redlands</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.esri.com/software/arcgis/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Lighthouse 3D" role="website">
+<abbrev>Fernandez 2006</abbrev>
+<title>Lighthouse 3D - Terrain Tutorial</title>
+<author>
+      <surname>Fernandez</surname>
+      <firstname>António Ramires</firstname>
+    </author>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.lighthouse3d.com/opengl/terrain/index.php3</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="MPD Method" role="journal">
+<abbrev>Fournier et al. 1982</abbrev>
+<title>Computer Rendering of Stochastic Models</title>
+<authorgroup>
+      <author>
+        <surname>Fournier</surname>
+        <firstname>Alain</firstname>
+      </author>
+      <author>
+        <surname>Fussell</surname>
+        <firstname>Don</firstname>
+      </author>
+      <author>
+        <surname>Carpenter</surname>
+        <firstname>Loren</firstname>
+      </author>
+    </authorgroup>
+<bibliosource role="compilation">Communications of the ACM</bibliosource>
+<volumenum>25</volumenum>
+<issuenum>6</issuenum>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>June, 1982</pubdate>
+<artpagenums>371–384</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Spectral Synthesis" role="website">
+<abbrev>Franke 2000</abbrev>
+<title>Spectral Synthesis Noise for Creating Terrain</title>
+<author>
+      <surname>Franke</surname>
+      <firstname>Scott</firstname>
+    </author>
+<bibliosource role="compilation">GameDev.net</bibliosource>
+<publisher>
+      <publishername>GameDev.net</publishername>
+    </publisher>
+<pubdate>January 1, 2000</pubdate>
+<bibliomisc role="url">http://www.gamedev.net/reference/articles/article900.asp</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="FFTW" role="software">
+<abbrev>Friggo &amp; Johnson 2003</abbrev>
+<title>FFTW: The Fastest Fourier Transform in the West, Version 3</title>
+<authorgroup>
+      <author>
+        <surname>Friggo</surname>
+        <firstname>Matteo</firstname>
+      </author>
+      <author>
+        <surname>Johnson</surname>
+        <firstname>Steven</firstname>
+        <othername role="mi">G</othername>
+      </author>
+    </authorgroup>
+<publisher>
+      <publishername>Massachusetts Institute of Technology</publishername>
+      <address format="linespecific">
+        <city>Cambridge</city>
+        <state>MA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>April, 2003</pubdate>
+<bibliomisc role="url">http://www.fftw.org/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Positive Wavelet">
+<abbrev>Gallant &amp; Hutchinson 1996</abbrev>
+<title>Towards an Understanding of Landscape Scale and Structure</title>
+<authorgroup>
+      <author>
+        <surname>Gallant</surname>
+        <firstname>John</firstname>
+        <othername role="mi">C</othername>
+      </author>
+      <author>
+        <surname>Hutchinson</surname>
+        <firstname>Michael</firstname>
+        <othername role="mi">F</othername>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>Third International Conference/Workshop on Integrating GIS and Environmental Modeling</conftitle>
+      <confsponsor>National Center for Geographic Information and Analysis</confsponsor>
+      <confdates>January 21–25, 1996</confdates>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of the Third International Conference/Workshop on Integrating GIS and Environmental Modeling</bibliosource>
+<publisher>
+      <publishername>National Center for Geographic Information and Analysis</publishername>
+      <address format="linespecific">
+        <city>Santa Barbara</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>1996</pubdate>
+<bibliomisc role="url">http://www.ncgia.ucsb.edu/conf/SANTA_FE_CD-ROM/sf_papers/gallant_john/paper.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Gamasutra" role="website">
+<abbrev>Gamasutra 2006</abbrev>
+<title>Gamasutra: The Art &amp; Business of Making Games</title>
+<corpauthor>Gamasutra</corpauthor>
+<publisher>
+      <publishername>CMP Media LLC</publishername>
+      <address format="linespecific">
+        <city>San Francisco</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.gamasutra.com/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="NeHe" role="website">
+<abbrev>GameDev.net 2006</abbrev>
+<title>NeHe Productions</title>
+<publisher>
+      <publishername>GameDev.net</publishername>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://nehe.gamedev.net/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Ice Cover Discrimination">
+<abbrev>Gill 2003</abbrev>
+<title>SAR Surface Ice Cover Discrimination Using Distribution Matching</title>
+<author>
+      <surname>Gill</surname>
+      <firstname>Rashpal</firstname>
+      <othername role="mi">S</othername>
+    </author>
+<confgroup>
+      <conftitle>POLinSAR 2003</conftitle>
+      <confsponsor>European Space Agency</confsponsor>
+      <confdates>January 14–16, 2003</confdates>
+    </confgroup>
+<pubdate>January 14, 2003</pubdate>
+<bibliosource role="compilation">Proceedings of POLinSAR 2003</bibliosource>
+<bibliomisc role="url">http://earth.esa.int/workshops/polinsar2003/pr.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Pattern Recognition" role="website">
+<abbrev>Gutierrez-Osuna 2004</abbrev>
+<title>Lecture Notes: Course in Pattern Recognition</title>
+<author>
+      <surname>Gutierrez-Osuna</surname>
+      <firstname>Ricardo</firstname>
+    </author>
+<publisher>
+      <publishername>PRISM Group at Texas A&amp;M University</publishername>
+      <address format="linespecific">
+        <city>College Station</city>
+        <state>TX</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+<bibliomisc role="url">http://research.cs.tamu.edu/prism/lectures.htm</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Stream Erosion" role="proceedings">
+<abbrev>Kelley et al. 1988</abbrev>
+<title>Terrain Simulation Using a Model of Stream Erosion</title>
+<authorgroup>
+      <author>
+        <surname>Kelley</surname>
+        <firstname>Alex</firstname>
+        <othername role="mi">D</othername>
+      </author>
+      <author>
+        <surname>Malin</surname>
+        <firstname>Michael</firstname>
+        <othername role="mi">C</othername>
+      </author>
+      <author>
+        <surname>Nielson</surname>
+        <firstname>Gregory</firstname>
+        <othername role="mi">M</othername>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>SIGGRAPH '88</conftitle>
+      <confsponsor>ACM</confsponsor>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of SIGGRAPH '88</bibliosource>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>June 1988</pubdate>
+<artpagenums>263–268</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Scale-space Blob">
+    <abbrev>Lindeberg 1998,1</abbrev>
+    <title>Feature Detection with Automatic Scale Selection</title>
+    <author>
+      <surname>Lindeberg</surname>
+      <firstname>Tony</firstname>
+    </author>
+    <bibliosource role="compilation">International Journal of Computer Vision</bibliosource>
+    <volumenum>30</volumenum>
+    <issuenum>2</issuenum>
+    <publisher>
+      <publishername>Springer</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+    <pubdate>August 1998</pubdate>
+    <artpagenums>77–116</artpagenums>
+    <bibliomisc role="url">ftp://ftp.nada.kth.se/CVAP/reports/cvap198.pdf</bibliomisc>
+  </biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Scale-space Edge/Ridge">
+    <abbrev>Lindeberg 1998,2</abbrev>
+    <title>Edge Detection and Ridge Detection with Automatic Scale Selection</title>
+    <author>
+      <surname>Lindeberg</surname>
+      <firstname>Tony</firstname>
+    </author>
+    <bibliosource role="compilation">International Journal of Computer Vision</bibliosource>
+    <volumenum>30</volumenum>
+    <issuenum>2</issuenum>
+    <publisher>
+      <publishername>Springer</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+    <pubdate>August 1998</pubdate>
+    <artpagenums>117–154</artpagenums>
+    <bibliomisc role="url">ftp://ftp.nada.kth.se/CVAP/reports/cvap191.pdf</bibliomisc>
+  </biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Feature-based CLOD" role="proceedings">
+<abbrev>Li et al. 2003</abbrev>
+<title>Feature-based Visibility-driven CLOD for Terrain</title>
+<authorgroup>
+      <author>
+        <surname>Li</surname>
+        <firstname>Sheng</firstname>
+      </author>
+      <author>
+        <surname>Liu</surname>
+        <firstname>Xuehui</firstname>
+      </author>
+      <author>
+        <surname>Wu</surname>
+        <firstname>Enhua</firstname>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>Pacific Graphics 2003</conftitle>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of Pacific Graphics 2003</bibliosource>
+<publisher>
+      <publishername>IEEE Computer Society Press</publishername>
+      <address format="linespecific">
+        <city>Los Alamitos</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>October, 2003</pubdate>
+<artpagenums>313–322</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Geometry Clipmaps" role="proceedings">
+<abbrev>Losasso &amp; Hoppe 2004</abbrev>
+<title>Geometry Clipmaps: Terrain Rendering Using Nested Regular Grids</title>
+<authorgroup>
+      <author>
+        <surname>Losasso</surname>
+        <firstname>Frank</firstname>
+      </author>
+      <author>
+        <surname>Hoppe</surname>
+        <firstname>Hugues</firstname>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>SIGGRAPH 2004</conftitle>
+      <confsponsor>ACM</confsponsor>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of SIGGRAPH 2004</bibliosource>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>August, 2004</pubdate>
+<artpagenums>769–776</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Mandelbrot" role="book">
+<abbrev>Mandelbrot 1982</abbrev>
+<title>The Fractal Geometry of Nature</title>
+<author>
+      <surname>Mandelbrot</surname>
+      <firstname>Benoit</firstname>
+    </author>
+<publisher>
+      <publishername>W. H. Freeman</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>August 15, 1982</pubdate>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Procedure Models" role="proceedings">
+<abbrev>Marshall et al. 1980</abbrev>
+<title>Procedure Models for Generating Three-Dimensional Terrain</title>
+<authorgroup>
+      <author>
+        <surname>Marshall</surname>
+        <firstname>Robert</firstname>
+      </author>
+      <author>
+        <surname>Wilson</surname>
+        <firstname>Rodger</firstname>
+      </author>
+      <author>
+        <surname>Carlson</surname>
+        <firstname>Wayne</firstname>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>SIGGRAPH '80</conftitle>
+      <confsponsor>ACM SIGGRAPH</confsponsor>
+      <confdates>July, 1980</confdates>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of SIGGRAPH '80</bibliosource>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>July, 1980</pubdate>
+<artpagenums>154–162</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="FS 2004" role="software">
+<abbrev>Microsoft Game Studios 2004</abbrev>
+<title>Flight Simulator 2004</title>
+<corpauthor>Microsoft Game Studios</corpauthor>
+<publisher>
+      <publishername>Microsoft Corporation</publishername>
+      <address format="linespecific">
+        <city>Redmond</city>
+        <state>WA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+<bibliomisc role="url">http://www.microsoft.com/games/flightsimulator/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Eroded Fractal Terrains" role="proceedings">
+<abbrev>Musgrave et al. 1989</abbrev>
+<title>The Synthesis and Rendering of Eroded Fractal Terrains</title>
+<authorgroup>
+      <author>
+        <surname>Musgrave</surname>
+        <firstname>F</firstname>
+        <othername role="mi">Kenton</othername>
+      </author>
+      <author>
+        <surname>Kolb</surname>
+        <firstname>Craig</firstname>
+        <othername role="mi">E</othername>
+      </author>
+      <author>
+        <surname>Mace</surname>
+        <firstname>Robert</firstname>
+        <othername role="mi">S</othername>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>SIGGRAPH '89</conftitle>
+      <confsponsor>ACM</confsponsor>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of SIGGRAPH '89</bibliosource>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>July, 1989</pubdate>
+<artpagenums>41–50</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Genetic Algorithms" role="proceedings">
+<abbrev>Obitko &amp; Skavík 1999</abbrev>
+<title>Visualization of Genetic Algorithms in a Learning Environment</title>
+<authorgroup>
+      <author>
+        <surname>Obitko</surname>
+        <firstname>Marek</firstname>
+      </author>
+      <author>
+        <surname>Skavík</surname>
+        <firstname>Pavel</firstname>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>Spring Conference on Computer Graphics '99</conftitle>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of Spring Conference on Computer Graphics '99</bibliosource>
+<publisher>
+      <publishername>Comenius University</publishername>
+      <address format="linespecific">
+        <city>Bratislava</city>
+        <country>Slovakia</country>
+      </address>
+    </publisher>
+<pubdate>1999</pubdate>
+<artpagenums>101–106</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="TIN">
+<abbrev>Pajarola et al. 2002</abbrev>
+<title>QuadTIN: Quadress-based Triangulated Irregular Networks</title>
+<authorgroup>
+      <author>
+        <surname>Pajarola</surname>
+        <firstname>Renato</firstname>
+      </author>
+      <author>
+        <surname>Antonijuan</surname>
+        <firstname>Marc</firstname>
+      </author>
+      <author>
+        <surname>Lario</surname>
+        <firstname>Roberto</firstname>
+      </author>
+    </authorgroup>
+<bibliosource role="compilation">Proceedings of IEEE Visualization 2002</bibliosource>
+<confgroup>
+      <conftitle>Visualization 2002</conftitle>
+      <confsponsor>IEEE</confsponsor>
+      <confdates>2002</confdates>
+    </confgroup>
+<publisher>
+      <publishername>IEEE Computer Society Press</publishername>
+      <address format="linespecific">
+        <city>Los Alamitos</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2002</pubdate>
+<artpagenums>395-402</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="MojoWorld" role="software">
+<abbrev>Pandromeda 2004</abbrev>
+<title>MojoWorld</title>
+<corpauthor xreflabel="Pandromeda">Pandromeda, Inc</corpauthor>
+<publisher>
+      <publishername>Pandromeda, Inc</publishername>
+      <address format="linespecific">
+        <city>New Creek</city>
+        <state>WV</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+<bibliomisc role="url">http://www.pandromeda.com/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Procedural Cities">
+<abbrev>Parish &amp; Müller 2001</abbrev>
+<title>Procedural Modeling of Cities</title>
+<authorgroup>
+      <author>
+        <surname>Parish</surname>
+        <firstname>Yoav</firstname>
+      </author>
+      <author>
+        <surname>Müller</surname>
+        <firstname>Pascal</firstname>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>International Conference on Computer Graphics and Interactive Techniques</conftitle>
+      <confsponsor>ACM SIGGRAPH</confsponsor>
+      <confdates>2001</confdates>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of the 28th Annual Conference on Computer Graphics and Interactive Techniques</bibliosource>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2001</pubdate>
+<artpagenums>301–308</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="ANTLR" role="software">
+<abbrev>Parr 2006</abbrev>
+<title>ANTLR: ANother Tool for Language Recognition</title>
+<author>
+      <surname>Parr</surname>
+      <firstname>Terence</firstname>
+    </author>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.antlr.org/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Combat Simulation" role="proceedings">
+<abbrev>Parry 1997</abbrev>
+<title>The Generation and Use of Parameterized Terrain in Land Combat Simulation</title>
+<author>
+      <surname>Parry</surname>
+      <firstname>Sam</firstname>
+      <othername role="mi">H</othername>
+    </author>
+<confgroup>
+      <conftitle>Winter Simulation Conference '77</conftitle>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of Winter Simulation Conference '77</bibliosource>
+<pubdate>December, 1997</pubdate>
+<artpagenums>422–431</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Wavelet Synthesis" role="tech-report">
+<abbrev>Pelton &amp; Atkinson 2003</abbrev>
+<title>Flexible Generation and Lightweight View-Dependent Rendering of Terrain</title>
+<authorgroup>
+      <author>
+        <surname>Pelton</surname>
+        <firstname>Blake</firstname>
+      </author>
+      <author>
+        <surname>Atkinson</surname>
+        <firstname>Darren</firstname>
+        <othername role="mi">C</othername>
+      </author>
+    </authorgroup>
+<bibliosource role="catalog">School of Engineering Technical Report COEN-2003-01-22</bibliosource>
+<publisher>
+      <publishername>Santa Clara University, Department of Computer Engineering</publishername>
+      <address format="linespecific">
+        <city>Santa Clara</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>January, 2003</pubdate>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Perlin Noise">
+<abbrev>Perlin 1996</abbrev>
+<title>An Image Synthesizer</title>
+<author>
+      <surname>Perlin</surname>
+      <firstname>Ken</firstname>
+    </author>
+<bibliosource role="compilation">Proceedings of SIGGRAPH '85</bibliosource>
+<confgroup>
+      <conftitle>SIGGRAPH '85</conftitle>
+      <confsponsor>ACM SIGGRAPH</confsponsor>
+      <confdates>January 21–25, 1996</confdates>
+    </confgroup>
+<publisher>
+      <publishername>ACM Press</publishername>
+      <address format="linespecific">
+        <city>New York</city>
+        <state>NY</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<artpagenums>287–296</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Terragen" role="software">
+<abbrev>Planetside 2006</abbrev>
+<title>Terragen</title>
+<corpauthor xreflabel="Planetside">Planetside Software</corpauthor>
+<publisher>
+      <publishername>Planetside Software</publishername>
+      <address format="linespecific">
+        <city>Ellesmere Port</city>
+        <state>Cheshire</state>
+        <country>UK</country>
+      </address>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.planetside.co.uk/terragen/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Mountains and Rivers" role="proceedings">
+<abbrev>Prusinkiewicz &amp; Hammel 1993</abbrev>
+<title>A Fractal Model of Mountains with Rivers</title>
+<authorgroup>
+      <author>
+        <surname>Prusinkiewicz</surname>
+        <firstname>Przemyslaw</firstname>
+      </author>
+      <author>
+        <surname>Hammel</surname>
+        <firstname>Mark</firstname>
+      </author>
+    </authorgroup>
+<confgroup>
+      <conftitle>Graphics Interface '93</conftitle>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of Graphics Interface '93</bibliosource>
+<pubdate>May 1993</pubdate>
+<artpagenums>174–180</artpagenums>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="GeoCommunity" role="website">
+<abbrev>Qlinks 2006</abbrev>
+<title>Geo Community Website</title>
+<corpauthor xreflabel="Qlinks">Qlinks Media Group</corpauthor>
+<publisher>
+      <publishername>Qlinks Media Group</publishername>
+      <address format="linespecific">
+        <city>Niceville</city>
+        <state>FL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.geocomm.com/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="GDC 2002" role="website">
+<abbrev>Sanchez-Crespo 2002</abbrev>
+<title>Science Imitates Nature at GDC</title>
+<author>
+      <surname>Sanchez-Crespo</surname>
+      <firstname>Daniel</firstname>
+    </author>
+<bibliosource role="compilation">Gamasutra.com</bibliosource>
+<publisher>
+      <publishername>CMP Media LLC</publishername>
+      <address format="linespecific">
+        <city>San Francisco</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>March 23, 2002</pubdate>
+<bibliomisc role="url">http://www.gamasutra.com/gdc2002/features/nature/nature_01.htm</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="World Machine" role="software">
+<abbrev>Schmidt 2006</abbrev>
+<title>World Machine</title>
+<author>
+      <surname>Schmidt</surname>
+      <firstname>Stephen</firstname>
+    </author>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.world-machine.com/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="L3DT" role="software">
+<abbrev>Torpy 2006</abbrev>
+<title>L3DT</title>
+<author>
+      <surname>Torpy</surname>
+      <firstname>Aaron</firstname>
+    </author>
+<publisher>
+      <publishername>Bundysoft</publishername>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.bundysoft.com/L3DT/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Chunked LOD" role="course-notes">
+<abbrev>Ulrich 2002</abbrev>
+<title>Rendering Massive Terrains Using Chunked Level of Detail Control</title>
+<author>
+      <surname>Ulrich</surname>
+      <firstname>Thatcher</firstname>
+    </author>
+<confgroup>
+      <conftitle>SIGGRAPH 2001</conftitle>
+      <confsponsor>ACM</confsponsor>
+    </confgroup>
+<bibliosource role="compilation">Proceedings of SIGGRAPH 2001</bibliosource>
+<pubdate>April 14, 2002</pubdate>
+<bibliomisc role="url">http://cvs.sourceforge.net/viewcvs.py/*checkout*/tu-testbed/tu-testbed/docs/sig-notes.pdf?rev=HEAD</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="SDTS Specification" role="website">
+<abbrev>USGS 2003</abbrev>
+<title>The SDTS Document</title>
+<corpauthor>USGS</corpauthor>
+<editor>
+      <surname>Rinehart</surname>
+      <firstname>Robert</firstname>
+    </editor>
+<publisher>
+      <publishername>United States Geological Survey</publishername>
+      <address format="linespecific">
+        <city>Reston</city>
+        <state>VA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>September 11, 2003</pubdate>
+<bibliomisc role="url">http://rockyweb.cr.usgs.gov/nmpstds/demstds.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="DEM Specification" role="website">
+<abbrev>USGS 2003</abbrev>
+<title>National Mapping Program Standards</title>
+<corpauthor>USGS</corpauthor>
+<publisher>
+      <publishername>United States Geological Survey</publishername>
+      <address format="linespecific">
+        <city>Reston</city>
+        <state>VA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>April 10, 2003</pubdate>
+<bibliomisc role="url">http://rockyweb.cr.usgs.gov/nmpstds/demstds.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="USGS Maps" role="website">
+<abbrev>USGS 2004</abbrev>
+<title>USGS Seamless Data Distribution</title>
+<corpauthor>USGS</corpauthor>
+<publisher>
+      <publishername>United States Geological Survey</publishername>
+      <address format="linespecific">
+        <city>Reston</city>
+        <state>VA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>April 14, 2004</pubdate>
+<bibliomisc role="url">http://gisdata.usgs.net/Website/Seamless/viewer.php</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="USGS" role="website">
+<abbrev>USGS 2006</abbrev>
+<title>USGS Website</title>
+<corpauthor>USGS</corpauthor>
+<publisher>
+      <publishername>United States Geological Survey</publishername>
+      <address format="linespecific">
+        <city>Reston</city>
+        <state>VA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.usgs.gov/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Erosion 3D" role="software">
+<abbrev>von Werner 1996</abbrev>
+<title>Erosion 3D</title>
+<author>
+      <surname>von Werner</surname>
+      <firstname>Michael</firstname>
+    </author>
+<publisher>
+      <publishername>Institut für Geographische Wissenschaften</publishername>
+      <address format="linespecific">
+        <city>Berlin</city>
+        <country>Germany</country>
+      </address>
+    </publisher>
+<pubdate>1996</pubdate>
+<bibliomisc role="url">http://www.geog.fu-berlin.de/~erosion/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="VTP" role="software">
+<abbrev>VTP 2006</abbrev>
+<title>The Virtual Terrain Project</title>
+<corpauthor>VTP</corpauthor>
+<publisher>
+      <publishername>VTP</publishername>
+    </publisher>
+<pubdate>2006</pubdate>
+<bibliomisc role="url">http://www.vterrain.org/</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="OBJ Specification">
+<abbrev>Wavefront 1995</abbrev>
+<title>The OBJ File Format Specification</title>
+<corpauthor xreflabel="Wavefront">Wavefront Technologies</corpauthor>
+<pubdate>1995</pubdate>
+<bibliomisc role="url">http://www.martinreddy.net/gfx/3d/OBJ.spec</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Mean">
+<abbrev>Weisstein 2004</abbrev>
+<title>Sample Mean</title>
+<author>
+      <surname>Weisstein</surname>
+      <firstname>Eric</firstname>
+      <othername role="mi">W</othername>
+    </author>
+<bibliosource role="compilation">MathWorld—A Wolfram Web Resource</bibliosource>
+<publisher>
+      <publishername>Wolfram Research, Inc</publishername>
+      <address format="linespecific">
+        <city>Champaign</city>
+        <state>IL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+<bibliomisc role="url">http://mathworld.wolfram.com/SampleMean.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Standard Deviation">
+<abbrev>Weisstein 2003</abbrev>
+<title>Standard Deviation</title>
+<author>
+      <surname>Weisstein</surname>
+      <firstname>Eric</firstname>
+      <othername role="mi">W</othername>
+    </author>
+<bibliosource role="compilation">MathWorld—A Wolfram Web Resource</bibliosource>
+<publisher>
+      <publishername>Wolfram Research, Inc</publishername>
+      <address format="linespecific">
+        <city>Champaign</city>
+        <state>IL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2003</pubdate>
+<bibliomisc role="url">http://mathworld.wolfram.com/StandardDeviation.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Skewness">
+<abbrev>Weisstein 2005</abbrev>
+<title>Skewness</title>
+<author>
+      <surname>Weisstein</surname>
+      <firstname>Eric</firstname>
+      <othername role="mi">W</othername>
+    </author>
+<bibliosource role="compilation">MathWorld—A Wolfram Web Resource</bibliosource>
+<publisher>
+      <publishername>Wolfram Research, Inc</publishername>
+      <address format="linespecific">
+        <city>Champaign</city>
+        <state>IL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2005</pubdate>
+<bibliomisc role="url">http://mathworld.wolfram.com/Skewness.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Kurtosis">
+<abbrev>Weisstein 2004</abbrev>
+<title>Kurtosis</title>
+<author>
+      <surname>Weisstein</surname>
+      <firstname>Eric</firstname>
+      <othername role="mi">W</othername>
+    </author>
+<bibliosource role="compilation">MathWorld—A Wolfram Web Resource</bibliosource>
+<publisher>
+      <publishername>Wolfram Research, Inc</publishername>
+      <address format="linespecific">
+        <city>Champaign</city>
+        <state>IL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2004</pubdate>
+<bibliomisc role="url">http://mathworld.wolfram.com/Kurtosis.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="k-Statistic">
+<abbrev>Weisstein 2002</abbrev>
+<title>k-Statistic</title>
+<author>
+      <surname>Weisstein</surname>
+      <firstname>Eric</firstname>
+      <othername role="mi">W</othername>
+    </author>
+<bibliosource role="compilation">MathWorld—A Wolfram Web Resource</bibliosource>
+<publisher>
+      <publishername>Wolfram Research, Inc</publishername>
+      <address format="linespecific">
+        <city>Champaign</city>
+        <state>IL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2002</pubdate>
+<bibliomisc role="url">http://mathworld.wolfram.com/k-Statistic.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Sample Central Moment">
+<abbrev>Weisstein 2003</abbrev>
+<title>Sample Central Moment</title>
+<author>
+      <surname>Weisstein</surname>
+      <firstname>Eric</firstname>
+      <othername role="mi">W</othername>
+    </author>
+<bibliosource role="compilation">MathWorld—A Wolfram Web Resource</bibliosource>
+<publisher>
+      <publishername>Wolfram Research, Inc</publishername>
+      <address format="linespecific">
+        <city>Champaign</city>
+        <state>IL</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>2003</pubdate>
+<bibliomisc role="url">http://mathworld.wolfram.com/SampleCentralMoment.html</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Fluid Simulation" role="website">
+<abbrev>Woodhouse 2003</abbrev>
+<title>Terrain Generation Using Fluid Simulation</title>
+<author>
+      <surname>Woodhouse</surname>
+      <firstname>Francis</firstname>
+    </author>
+<bibliosource role="compilation">GameDev.net</bibliosource>
+<publisher>
+      <publishername>GameDev.net</publishername>
+    </publisher>
+<pubdate>September 30, 2003</pubdate>
+<bibliomisc role="url">http://www.gamedev.net/reference/articles/article2001.asp</bibliomisc>
+</biblioentry>
+<biblioentry xmlns:mml="http://www.w3.org/1998/Math/MathML" id="Trespasser Postmortem" role="website">
+<abbrev>Wyckoff 1999</abbrev>
+<title>Postmortem: DreamWorks Interactive's Trespasser</title>
+<author>
+      <surname>Wyckoff</surname>
+      <firstname>Richard</firstname>
+    </author>
+<bibliosource role="compilation">Gamasutra.com</bibliosource>
+<publisher>
+      <publishername>CMP Media LLC</publishername>
+      <address format="linespecific">
+        <city>San Francisco</city>
+        <state>CA</state>
+        <country>USA</country>
+      </address>
+    </publisher>
+<pubdate>May 14, 1999</pubdate>
+<bibliomisc role="url">http://www.gamasutra.com/features/19990514/trespasser_01.htm</bibliomisc>
+</biblioentry>
+</bibliography>

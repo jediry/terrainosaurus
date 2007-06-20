@@ -8,6 +8,8 @@
  *
  * Description:
  *      FIXME: This class needs a different name. This is sorta just a hack until I figure out the "right" way to do this.
+ *              This also belongs in Inca
+ *              Also needs an "init" call into the object
  */
 
 #ifndef TERRAINOSAURUS_UI_OBJECT_RENDERING_VIEW
@@ -24,22 +26,23 @@ namespace terrainosaurus {
 
 
 // Import superclass definition
-#include <inca/ui/View.hpp>
+#include <inca/ui/widgets/BasicWidget.hpp>
 
 
 template <class T>
-class terrainosaurus::ObjectRenderingView : public inca::ui::View {
+class terrainosaurus::ObjectRenderingView : public inca::ui::BasicWidget {
 public:
     typedef T                   Object;
     typedef shared_ptr<T>       ObjectPtr;
     typedef shared_ptr<T const> ObjectConstPtr;
 
     // Constructor
-    ObjectRenderingView(const std::string & nm = "") { name = nm; }
-    ObjectRenderingView(Object * ptr, const std::string & nm = "")
-        : _object(ptr) { name = nm; }
-    ObjectRenderingView(ObjectPtr ptr, const std::string & nm = "")
-        : _object(ptr) { name = nm; }
+    ObjectRenderingView(const std::string & nm = std::string())
+        : BasicWidget(nm) { }
+    ObjectRenderingView(Object * ptr, const std::string & nm = std::string())
+        : BasicWidget(nm), _object(ptr) { }
+    ObjectRenderingView(ObjectPtr ptr, const std::string & nm = std::string())
+        : BasicWidget(nm), _object(ptr) { }
 
     ObjectPtr      object()       { return _object; }
     ObjectConstPtr object() const { return _object; }
@@ -47,9 +50,7 @@ public:
         _object = ptr;
     }
 
-    void initializeView() { }
-    void resizeView(Dimension size) { }
-    void renderView() {
+    void render() const {
         if (_object)
             (*_object)(this->renderer());
     }

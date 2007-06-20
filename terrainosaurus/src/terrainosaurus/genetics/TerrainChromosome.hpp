@@ -32,17 +32,12 @@
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
     // Forward declarations
+    template <typename S, int C> class MultipartFitnessMeasure;
     class ChromosomeFitnessMeasure;
-    class RegionFitnessMeasure;
+    class RegionSimilarityMeasure;
     class GeneCompatibilityMeasure;
     class GeneShape;
-    struct GAEvent;
-    class GAListener;
     class TerrainChromosome;
-
-    // Pointer typedefs
-    typedef shared_ptr<GAListener>       GAListenerPtr;
-    typedef shared_ptr<GAListener const> GAListenerConstPtr;
 };
 
 
@@ -57,77 +52,73 @@ namespace terrainosaurus {
 #include <terrainosaurus/data/MapRasterization.hpp>
 
 
-// This macro makes it easy to create named accessor functions in the fitness
+// These macros make it easy to create named accessor functions in the fitness
 // measure classes
-#define NAMED_ACCESSOR(NAME, INDEX)                                         \
-    scalar_t & NAME()       { return (*this)[INDEX]; }                      \
-    scalar_t   NAME() const { return (*this)[INDEX]; }
+#define NAMED_ACCESSOR(NAME)                                                \
+    Scalar & NAME()       { return _ ## NAME; }                             \
+    Scalar   NAME() const { return _ ## NAME; }
+#define INDEXED_ACCESSOR(NAME, INDEX)                                       \
+    Scalar & NAME()       { return (*this)[INDEX]; }                        \
+    Scalar   NAME() const { return (*this)[INDEX]; }
+
+
+// Base class for the multi-faceted fitness measurements
+template <typename ScalarT, int count>
+class terrainosaurus::MultipartFitnessMeasure
+    : public inca::Array<ScalarT, count> {
+public:
+    // Base class
+    static const int submeasureCount = count;
+    typedef ScalarT                                 Scalar;
+    typedef inca::Array<Scalar, submeasureCount>    Superclass;
+
+    // Constructor
+    explicit MultipartFitnessMeasure()
+        : Superclass(0), _overall(0), _normalized(0) { }
+
+    // If this is used in a scalar context, we return the overall fitness. E.g.:
+    //      scalar_t overallFitness = fitnessMeasure;
+    operator scalar_t() const { return overall(); }
+    operator scalar_t &()     { return overall(); }
+
+    // Named accessors to the overall & population-normalized fitness
+    NAMED_ACCESSOR(overall);
+    NAMED_ACCESSOR(normalized);
+
+protected:
+    Scalar _overall,
+           _normalized;
+};
 
 
 // The multivariate fitness measure for a TerrainChromosome
-class terrainosaurus::ChromosomeFitnessMeasure : public inca::Array<scalar_t, 2> {
+class terrainosaurus::ChromosomeFitnessMeasure
+    : public MultipartFitnessMeasure<scalar_t, 2> {
 public:
-    // Base class
-    typedef inca::Array<scalar_t, 2>    Superclass;
-
-    // Default constructor
-    ChromosomeFitnessMeasure() : Superclass(scalar_t(0)) { }
-
-    // If this is used in a scalar context, we return the overall fitness. E.g.:
-    //      scalar_t overallFitness = fitnessMeasure;
-    operator scalar_t() const { return overall(); }
-    operator scalar_t &()     { return overall(); }
-
     // Aggregate fitness accessors
-    NAMED_ACCESSOR(overall,               0);
-    NAMED_ACCESSOR(normalized,            1);
+    INDEXED_ACCESSOR(similarity,    0);
+    INDEXED_ACCESSOR(compatibility, 1);
 };
 
-class terrainosaurus::RegionFitnessMeasure : public inca::Array<scalar_t, 5> {
+class terrainosaurus::RegionSimilarityMeasure
+    : public MultipartFitnessMeasure<scalar_t, 5> {
 public:
-    // Base class
-    typedef inca::Array<scalar_t, 5>    Superclass;
-
-    // Default constructor
-    RegionFitnessMeasure() : Superclass(scalar_t(0)) { }
-
-    // If this is used in a scalar context, we return the overall fitness. E.g.:
-    //      scalar_t overallFitness = fitnessMeasure;
-    operator scalar_t() const { return overall(); }
-    operator scalar_t &()     { return overall(); }
-
-    // Aggregate fitness accessors
-    NAMED_ACCESSOR(overall,               0);
-    NAMED_ACCESSOR(normalized,            1);
-
     // Component fitness accessors
-    NAMED_ACCESSOR(elevationRMS,          2);
-    NAMED_ACCESSOR(gradientMagnitudeRMS,  3);
-    NAMED_ACCESSOR(gradientAngleRMS,      4);
+    INDEXED_ACCESSOR(elevation,     0);
+    INDEXED_ACCESSOR(slope,         1);
+    INDEXED_ACCESSOR(edgeLength,    2);
+    INDEXED_ACCESSOR(edgeScale,     3);
+    INDEXED_ACCESSOR(edgeStrength,  4);
 };
 
 
-class terrainosaurus::GeneCompatibilityMeasure : public inca::Array<scalar_t, 5> {
+class terrainosaurus::GeneCompatibilityMeasure
+    : public MultipartFitnessMeasure<scalar_t, 3> {
 public:
-    // Base class
-    typedef inca::Array<scalar_t, 5>    Superclass;
-
-    // Default constructor
-    GeneCompatibilityMeasure() : Superclass(scalar_t(0)) { }
-
-    // If this is used in a scalar context, we return the overall fitness. E.g.:
-    //      scalar_t overallFitness = fitnessMeasure;
-    operator scalar_t() const { return overall(); }
-    operator scalar_t &()     { return overall(); }
-
-    // Aggregate compatibility accessors
-    NAMED_ACCESSOR(overall,               0);
-    NAMED_ACCESSOR(normalized,            1);
-
     // Component compatibility accessors
-    NAMED_ACCESSOR(elevation,             2);
-    NAMED_ACCESSOR(angle,                 3);
-    NAMED_ACCESSOR(slope,                 4);
+    INDEXED_ACCESSOR(elevation,             0);
+    INDEXED_ACCESSOR(angle,                 1);
+    INDEXED_ACCESSOR(slope,                 2);
 };
 
 
@@ -162,21 +153,7 @@ protected:
 
 // Clean up the preprocessor namespace
 #undef NAMED_ACCESSOR
-
-// Event class for sending to GA listeners
-struct terrainosaurus::GAEvent {
-    // Enumeration of the different event types
-    enum Type { None, Mutation, Crossover };
-
-    // Default constructor
-    explicit GAEvent() : type(None), timestep(0) { }
-
-    // Initializing constructor
-    explicit GAEvent(Type t, int ts) : type(t), timestep(ts) { }
-
-    Type type;      // What sort of event is this?
-    int timestep;   // When did it happen?
-};
+#undef INDEXED_ACCESSOR
 
 
 /*****************************************************************************
@@ -192,14 +169,16 @@ public:
     class Gene;
 
     // Multivariate fitness & compatibility measures
-    typedef terrainosaurus::ChromosomeFitnessMeasure    ChromosomeFitnessMeasure;
-    typedef terrainosaurus::RegionFitnessMeasure        RegionFitnessMeasure;
-    typedef terrainosaurus::GeneCompatibilityMeasure    GeneCompatibilityMeasure;
+    typedef terrainosaurus::ChromosomeFitnessMeasure ChromosomeFitnessMeasure;
+    typedef terrainosaurus::RegionSimilarityMeasure  RegionSimilarityMeasure;
+    typedef terrainosaurus::GeneCompatibilityMeasure GeneCompatibilityMeasure;
 
     // Two dimensional grid of Genes
     typedef inca::MultiArray<Gene, 2>   GeneGrid;
     typedef GeneGrid::SizeArray         SizeArray;
     typedef GeneGrid::IndexArray        IndexArray;
+    typedef GeneGrid::Iterator          Iterator;
+    typedef Iterator                    iterator;
 
 
 /*---------------------------------------------------------------------------*
@@ -212,22 +191,6 @@ public:
 
 protected:
     void claimGenes();
-
-
-/*---------------------------------------------------------------------------*
- | Event listener (hacked in until ??)
- *---------------------------------------------------------------------------*/
-public:
-    void addGAListener(GAListenerPtr p);
-    void removeGAListener(GAListenerPtr p);
-
-    // XXX HACK ought to be protected
-    void fireAdvanced(int timestep);
-    void fireMutated(Pixel idx, int timestep);
-    void fireCrossed(Pixel idx, int timestep);
-
-protected:
-    GAListenerPtr _listener;
 
 
 /*---------------------------------------------------------------------------*
@@ -257,6 +220,14 @@ public:
     const Gene & gene(const IndexList & idx) const {
         return _genes(idx);
     }
+    
+    // Iterators HACK -- should this just inherit MA?
+    GeneGrid::Iterator begin() {
+        return _genes.begin();
+    }
+    GeneGrid::Iterator end() {
+        return _genes.end();
+    }
 
     // Size accessors
     SizeType size() const { return _genes.size(); }
@@ -283,9 +254,12 @@ public:
     // Fitness measurement accessors: whole HF and each region
           ChromosomeFitnessMeasure & fitness();
     const ChromosomeFitnessMeasure & fitness() const;
-          RegionFitnessMeasure & regionFitness(IDType regionID);
-    const RegionFitnessMeasure & regionFitness(IDType regionID) const;
 
+    // Per-region fitness accessors
+    SizeType regionCount() const;
+    void setRegionCount(SizeType rc);
+          RegionSimilarityMeasure & regionFitness(IDType regionID);
+    const RegionSimilarityMeasure & regionFitness(IDType regionID) const;
 
     // What level of detail are we?
     TerrainLOD levelOfDetail() const;
@@ -294,36 +268,32 @@ public:
     // Heightfield property accessors
     const Heightfield::SizeArray & heightfieldSizes() const;
 
-    // Access to the pattern and rasterized map
+    // Access to the TerrainSample acting as the pattern to be matched
     const TerrainSample::LOD & pattern() const;
-    void setPattern(const TerrainSample::LOD & p);
-    const MapRasterization::LOD & map() const;
-    void setMap(const MapRasterization::LOD & m);
+    TerrainSampleConstPtr patternSample() const;
+    void setPatternSample(TerrainSampleConstPtr ps);
+    
+    // Access to the TerrainSample acting as a scratch pad for the GA
+          TerrainSample::LOD & scratch();
+    const TerrainSample::LOD & scratch() const;
+    TerrainSamplePtr      scratchSample();
+    TerrainSampleConstPtr scratchSample() const;
+    void setScratchSample(TerrainSamplePtr ss);
 
     // Is this chromosome "alive" (part of the active population)?
     bool isAlive() const;
     void setAlive(bool alive);
 
 protected:
-    // The contents of this Chromosome
-    TerrainSampleConstPtr       _pattern;   // What we're trying to match
-    MapRasterizationConstPtr    _map;       // How the terrain is laid out
-    TerrainLOD                  _lod;       // What level of detail are we?
+    // The height field layout & structure we're trying to match
+    TerrainSampleConstPtr   _patternSample;
+    TerrainSamplePtr        _scratchSample;
+    TerrainLOD              _lod;           // What level of detail are we?
 
     GeneGrid        _genes;     // The genes making up this chromosome
     bool            _alive;     // Is it allowed to go to the next cycle?
-    std::vector<RegionFitnessMeasure>   _regionFitnesses;
+    std::vector<RegionSimilarityMeasure>   _regionFitnesses;
     ChromosomeFitnessMeasure            _fitness;
-};
-
-
-// XXX OBSOLETE
-// Listener interface for observing the progress of the GA
-class terrainosaurus::GAListener {
-public:
-    virtual void advanced(int timestep) = 0;
-    virtual void mutated(const TerrainChromosome::Gene & g, GAEvent e) = 0;
-    virtual void crossed(const TerrainChromosome::Gene & g, GAEvent e) = 0;
 };
 
 
@@ -361,7 +331,8 @@ public:
     TerrainLOD levelOfDetail() const;
 
     // What TerrainType and TerrainSample do we represent?
-    const TerrainType::LOD   & terrainType() const;
+    const TerrainType::LOD & terrainType() const;
+    void setTerrainType(const TerrainType::LOD & tt);
     const TerrainSample::LOD & terrainSample() const;
     void setTerrainSample(const TerrainSample::LOD & ts);
 
@@ -371,6 +342,7 @@ public:
 
 protected:
     TerrainLOD                  _levelOfDetail;
+    TerrainType::LOD const *    _terrainType;
     TerrainSample::LOD const *  _terrainSample;
     GeneCompatibilityMeasure    _compatibility;
 

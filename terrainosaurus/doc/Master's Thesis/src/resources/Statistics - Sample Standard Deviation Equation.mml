@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <mi>&sigma;</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mfrac linethickness="thin">
+      <mn>1</mn>
+      <mi>N</mi>
+    </mfrac>
+    <munderover>
+      <mo>&sum;</mo>
+      <mrow>
+        <mi>i</mi>
+        <mo>=</mo>
+        <mn>1</mn>
+      </mrow>
+      <mi>N</mi>
+    </munderover>
+    <msup>
+      <mfenced>
+        <mrow>
+          <msub>
+            <mi>x</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>&minus;</mo>
+          <mi>&mu;</mi>
+        </mrow>
+      </mfenced>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+</math>

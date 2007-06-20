@@ -1,42 +1,35 @@
 #ifndef INC_TerrainLibraryLexer_hpp_
 #define INC_TerrainLibraryLexer_hpp_
 
-#line 20 "TerrainLibrary.g"
+#line 21 "TerrainLibrary.g"
 
     // Import library configuration
     #include <terrainosaurus/terrainosaurus-common.h>
 
     // Forward declarations
     namespace terrainosaurus {
-        class TerrainLibraryLexer;
         class TerrainLibraryParser;
+        class TerrainLibraryLexer;
     };
+
+    // Import parser superclass and supergrammer definitions
+    #include "INIParser.hpp"
+    #include "CommonParser.hpp"
+
+
+    // Include STL string algorithms
+    #include <algorithm>
+
 
     // Import TerrainLibrary and related object definitions
     #include <terrainosaurus/data/TerrainLibrary.hpp>
 
-    // Import container definitions
-    #include <inca/util/hash_container>
-
     // Import augmented enumeration mechanism
-//    #include <inca/util/Enumeration.hpp>
+    #include <inca/util/Enumeration.hpp>
 
-    // This enumerates all the properties that we can check/set. The
-    // functions that check/set them implicitly work on the "current"
-    // TerrainType or TerrainSeam.
-/*    ENUMV ( TTLPropertyType,
-          ( ( TTColor,             1 ),
-          ( ( TSNumChromosomes,    2 ),
-          ( ( TSSmoothness,        4 ),
-          ( ( TSMutationRatio,     8 ),
-          ( ( TSCrossoverRatio,    16 ),
-          ( ( TSSelectionRatio,    32 ),
-          ( ( TSAspectRatio,       64 ),
-              BOOST_PP_NIL ))))))));*/
-
-#line 38 "TerrainLibraryLexer.hpp"
+#line 31 "TerrainLibraryLexer.hpp"
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.5 (20050201): "TerrainLibrary.g" -> "TerrainLibraryLexer.hpp"$ */
+/* $ANTLR 2.7.5 (20050613): "TerrainLibrary.g" -> "TerrainLibraryLexer.hpp"$ */
 #include <antlr/CommonToken.hpp>
 #include <antlr/InputBuffer.hpp>
 #include <antlr/BitSet.hpp>
@@ -50,7 +43,7 @@ ANTLR_BEGIN_NAMESPACE(terrainosaurus)
 class CUSTOM_API TerrainLibraryLexer : public antlr::CharScanner, public TerrainLibraryTokenTypes
 {
 #line 1 "TerrainLibrary.g"
-#line 53 "TerrainLibraryLexer.hpp"
+#line 46 "TerrainLibraryLexer.hpp"
 private:
 	void initLiterals();
 public:
@@ -63,8 +56,10 @@ public:
 	TerrainLibraryLexer(antlr::InputBuffer& ib);
 	TerrainLibraryLexer(const antlr::LexerSharedInputState& state);
 	antlr::RefToken nextToken();
-	protected: void mDIGIT(bool _createToken);
+	public: void mID(bool _createToken);
 	protected: void mLETTER(bool _createToken);
+	protected: void mDIGIT(bool _createToken);
+	public: void mANTLR_DUMMY_TOKEN(bool _createToken);
 	protected: void mWS_CHAR(bool _createToken);
 	protected: void mEOL_CHAR(bool _createToken);
 	protected: void mDQUOTE(bool _createToken);
@@ -73,21 +68,21 @@ public:
 	public: void mEOL(bool _createToken);
 	public: void mCOMMENT(bool _createToken);
 	public: void mWS(bool _createToken);
-	public: void mOPEN_ABRACKET(bool _createToken);
-	public: void mCLOSE_ABRACKET(bool _createToken);
-	public: void mOPEN_SBRACKET(bool _createToken);
-	public: void mCLOSE_SBRACKET(bool _createToken);
+	public: void mLEFT_ABRACKET(bool _createToken);
+	public: void mRIGHT_ABRACKET(bool _createToken);
+	public: void mLEFT_SBRACKET(bool _createToken);
+	public: void mRIGHT_SBRACKET(bool _createToken);
 	public: void mCOMMA(bool _createToken);
 	public: void mASSIGN(bool _createToken);
+	public: void mPERCENT(bool _createToken);
 	public: void mCOLON(bool _createToken);
-	public: void mAND(bool _createToken);
+	public: void mAMPERSAND(bool _createToken);
 	public: void mDOT(bool _createToken);
 	public: void mBACKSLASH(bool _createToken);
 	public: void mFORESLASH(bool _createToken);
 	public: void mNBSP(bool _createToken);
-	public: void mNUMBER(bool _createToken);
 	public: void mSIGN(bool _createToken);
-	public: void mNAME(bool _createToken);
+	public: void mNUMBER(bool _createToken);
 	public: void mQUOTED_STRING(bool _createToken);
 private:
 	

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE book PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<book>
+  <bookinfo>
+    <title>Terrainosaurus</title>
+    <subtitle>Realistic Terrain Synthesis Using Genetic Algorithms</subtitle>
+    <authorgroup>
+      <author>
+        <firstname>Ryan</firstname>
+        <othername role="mi">L.</othername>
+        <surname>Saunders</surname>
+        <contrib>Student</contrib>
+      </author>
+      <editor>
+        <honorific>Dr</honorific>
+        <firstname>John</firstname>
+        <surname>Keyser</surname>
+        <contrib>Chair of Committee</contrib>
+      </editor>
+      <editor>
+        <honorific>Dr</honorific>
+        <firstname>Glen</firstname>
+        <surname>Williams</surname>
+        <contrib>Member</contrib>
+      </editor>
+      <editor>
+        <honorific>Dr</honorific>
+        <firstname>Donald</firstname>
+        <surname>House</surname>
+        <contrib>Member</contrib>
+      </editor>
+      <editor>
+        <honorific>Dr</honorific>
+        <firstname>Valerie</firstname>
+        <surname>Taylor</surname>
+        <contrib>Head of Department</contrib>
+      </editor>
+    </authorgroup>
+
+    <date>December 2006</date>
+    <orgname>Texas A&amp;M University</orgname>
+    <bibliomisc role="degree">Master of Science</bibliomisc>
+    <bibliomisc role="major-subject">Computer Science</bibliomisc>
+
+    <!-- Front Matter -->
+    <xi:include href="abstract.xml"/>
+
+  </bookinfo>
+
+
+  <!-- Front Matter -->
+  <!--xi:include href="acknowledgements.xml"/-->
+
+  <!-- Major Sections -->
+  <xi:include href="introduction.xml"/>
+  <xi:include href="motivation.xml"/>
+  <xi:include href="background.xml"/>
+  <xi:include href="methods.xml"/>
+  <xi:include href="implementation.xml"/>
+  <xi:include href="discussion.xml"/>
+  <xi:include href="future-work.xml"/>
+  <xi:include href="conclusion.xml"/>
+
+  <!-- Back Matter -->
+  <xi:include href="references.xml"/>
+  <xi:include href="vita.xml"/>
+
+</book>

@@ -1,0 +1,1381 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+  <!-- Didn't mention:
+        auto-resampling from other LODs
+        HF should use bicubic resampling
+        MR MUST use NN resampling!!!
+  -->
+
+<chapter id="Implementation">
+  <title>Implementation</title>
+  <para>
+    In this chapter, I discuss some of the architectural features of the 
+    prototype implementation of <citetitle>Terrainosaurus</citetitle>, covering  
+    some of the more significant design decisions that were made and how some of 
+    the technical challenges were dealt with. In so doing, I hope to save other 
+    developers some of the difficulties I encountered during this research.
+  </para>
+  <para>
+    In this chapter, I present the following topics:
+  </para>
+  <itemizedlist spacing="compact">
+    <listitem>
+      the choice of development platform and technologies used
+    </listitem>
+    <listitem>
+      a discussion of the application architecture
+    </listitem>
+    <listitem>
+      suggested optimizations and simplifications
+    </listitem>
+  </itemizedlist>
+
+  <section>
+    <title>Technologies</title>
+    <para>
+      The <citetitle>Terrainosaurus</citetitle> algorithm could be implemented 
+      using any number of programming languages and libraries, both commercial 
+      and free, proprietary and open-source.  While these decisions are 
+      ultimately up to the programmer(s) implementing the algorithm, it may be 
+      productive to consider the decisions made in the design of the current 
+      implementation, and the reasons for them.
+    </para>
+
+    <section>
+      <title>Development Platform</title>
+      <para>
+        The current implementation of <citetitle>Terrainosaurus</citetitle> was 
+        developed in C++, with heavy reliance on the Standard Template Library 
+        (STL) and a number of the Boost libraries. C++ was selected for a number 
+        of reasons, including the following:
+        <itemizedlist spacing="compact">
+          <listitem>
+            C++ is a multi-paradigm programming language, allowing the developer  
+            a great deal of freedom in selecting the best approach to a 
+            particular problem. Object-oriented techniques, for example, are 
+            well-suited to implementing user interfaces, whereas generic 
+            programming techniques are appropriate for low-level utilities and 
+            complex algorithms.
+          </listitem>
+          <listitem>
+            C++ gives the programmer a great deal of freedom in managing 
+            resources (such as memory), and typically does not incur the cost 
+            of compiler-generated run-time checks, meaning that a carefully 
+            written program can be very fast. Languages such as C# and Java 
+            provide nice additional features (run-time array bounds checking, 
+            garbage collection, etc.), but these come at the cost of run-time 
+            performance; thus, a well-written C++ program will always be faster 
+            than an equivalent program in C# or Java. Of course, the risk of 
+            foregoing these features is that bugs may be harder to track down, 
+            and as a result, it may take longer to develop the application.
+          </listitem>
+          <listitem>
+            Good compilers for C++ exist for all major computing platforms, such 
+            as Microsoft's compiler for the Win32 platform and GCC for the many 
+            UNIX variant platforms.
+          </listitem>
+          <listitem>
+            Third-party libraries, of both the commercial and free varieties, 
+            are widely available for C++, solving a diverse spectrum of 
+            problems.
+          </listitem>
+        </itemizedlist>
+      </para>
+      <para>
+        Another means of implementing <citetitle>Terrainosaurus</citetitle> that 
+        was considered is as an extension to a general-purpose numeric 
+        processing application, such as <citetitle>Matlab</citetitle> or its 
+        free cousin, <citetitle>Octave</citetitle>.  These programs provide 
+        native implementations of mathematical constructs such  as vectors and 
+        matrices, have a (limited) graphical user interface, and have an 
+        impressive array of add-on "toolboxes" providing additional 
+        functionality, including statistical analysis, image processing, and 
+        pattern analysis. Because <citetitle>Matlab</citetitle> is an 
+        interpreted language it is especially useful for rapid prototyping of 
+        algorithms.
+      </para>
+      <para>
+        Although it was considered, <citetitle>Matlab</citetitle> was ultimately 
+        rejected as a development platform, for two main reasons.
+        <orderedlist spacing="compact">
+          <listitem>
+            <citetitle>Matlab</citetitle> is a commercial product; if 
+            implemented as a <citetitle>Matlab</citetitle> toolbox, 
+            <citetitle>Terrainosaurus</citetitle> would only be usable by 
+            persons having access to a copy of <citetitle>Matlab</citetitle>. A 
+            person interested in modeling terrain is not especially likely to be 
+            a <citetitle>Matlab</citetitle> user.
+          </listitem>
+          <listitem>
+            <citetitle>Matlab</citetitle>'s programming language does not 
+            provide sufficient facilities for modularization, type safety, and 
+            code reuse to make development of a medium- to large-scale 
+            application feasible.
+          </listitem>
+        </orderedlist>
+      </para>
+    </section>
+
+    <section>
+      <title>Graphics API</title>
+      <para>
+        <citetitle>OpenGL</citetitle> was chosen as the 3D rendering API, 
+        because of its cross-platform availability and familiarity.  Another 
+        immediate-mode rendering API (e.g., <citetitle>Direct3D</citetitle>) 
+        could have been used equivalently.
+      </para>
+      <para>
+        Another possibility for displaying the results is to implement an 
+        interface to one of the commercially available modeling and rendering  
+        systems (e.g., <citetitle>Maya</citetitle>, <citetitle>3D 
+          Studio</citetitle>).  Then, rather than being rendered directly, the 
+        results would be used to instantiate objects in the modeling system's 
+        scene graph. In this way, one could get high-quality rendering support 
+        "for free".
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Supporting Libraries</title>
+    <para>
+      While almost any needed functionality could, in principle, be implemented 
+      directly in C++, this is wasted effort when there already exist mature, 
+      freely available C/C++ libraries and tools providing good solutions for 
+      these problems. In order to simplify the development process, a 
+      third-party library was used wherever possible, as long as the following 
+      things were true of it:
+      <orderedlist spacing="compact">
+        <listitem>
+          The library is fairly mature, providing a robust, full-featured 
+          solution to the problem domain it addresses. Incomplete and 
+          alpha-quality libraries are not desirable.
+        </listitem>
+        <listitem>
+          The library has adequate documentation, and is under active 
+          development/maintenance. This gives some degree of confidence that 
+          the developers of the library are committed to its continued 
+          existence and improvement.
+        </listitem>
+        <listitem>
+          The library is cross-platform, and does not have dependencies on 
+          proprietary libraries. This keeps 
+          <citetitle>Terrainosaurus</citetitle> from being bound to a particular 
+          operating system variant.
+        </listitem>
+        <listitem>
+          The library is distributed under fairly liberal licensing terms. A 
+          "do (mostly) whatever you want" style license, such as the Apache 
+          License or the LGPL is preferable, but a GPL'd library  was considered 
+          acceptable if it is also available under a commercial license. This 
+          leaves open the possibility of future commercial development.
+        </listitem>
+      </orderedlist>
+    </para>
+
+    <section>
+      <title>File Parsing</title>
+      <para>
+        For small-scale projects, it may be sufficient to hard-code 
+        configuration constants and algorithm parameters directly into the 
+        source code. An application of any significant size and complexity, 
+        though, generally needs to be able to accept configurable parameters 
+        from data files (and ideally, in a robust way, so that a malformed data 
+        file does not cause the application to crash). Besides adding to the 
+        overall quality of the application, having the ability to read 
+        configurable parameters from a file can also drastically cut down on the 
+        amount of time needed to tune a complex algorithm, by eliminating the 
+        edit/compile/run cycle.
+      </para>
+      <para>
+        Writing robust file parsing code can be both difficult and tedious, so 
+        some sort of higher-level solution is desirable.  
+        <citetitle>ANTLR</citetitle> <biblioref linkend="ANTLR"/> is one such 
+        tool, allowing a developer to write a description of the grammar for his 
+        file format and generating Java, C#, C++, or Python code for parsing 
+        files in that format. The generated code is human readable (unlike that 
+        produced by other tools like yacc), and generates fairly good error 
+        messages for  malformed files.  Once familiar with 
+        <citetitle>ANTLR</citetitle>, a developer can modify or extend the 
+        format of the file with very little effort.
+      </para>
+    </section>
+
+    <section>
+      <title>Fourier Transform</title>
+      <para>
+        Frequency-domain signal analysis generally implies calculating the 
+        discrete Fourier transform (DFT) of a spatial-domain or time-domain 
+        signal (this is needed in <citetitle>Terrainosaurus</citetitle> for 
+        speeding up the feature detection step, as described in <xref 
+        linkend="Frequency Domain Convolution"/>).  However, writing an 
+        efficient discrete Fourier transform (DFT) implementation is tricky 
+        indeed&em;a research area in its own right.
+        Fortunately, a very complete and highly optimized C library exists for 
+        performing many variations on the DFT, called 
+        <citetitle>FFTW</citetitle> (the "Fastest Fourier Transform in the 
+        West") <biblioref linkend="FFTW"/>.  <citetitle>FFTW</citetitle> is 
+        available from the Massachusetts Institute of Technology under both the 
+        GPL and a commercial license.
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Application Architecture</title>
+    <para>
+      A suggested general architecture for an implementation of 
+      <citetitle>Terrainosaurus</citetitle> is pictured in <xref 
+      linkend="Implementation - Architecture Overview Diagram"/>. To a large 
+      degree, this is a straightforward reflection of the concepts described in 
+      <xref linkend="Methods"/>.
+    </para>
+    <para>
+      In this section, I discuss the following aspects of this suggested 
+      architecture in greater depth:
+      <itemizedlist spacing="compact">
+        <listitem>how LOD is expressed in the architecture</listitem>
+        <listitem>inputs and outputs of the algorithm</listitem>
+        <listitem>the data structures</listitem>
+        <listitem>the user interface</listitem>
+        <listitem>implementing the genetic algorithms</listitem>
+      </itemizedlist>
+    </para>
+    <figure id="Implementation - Architecture Overview Diagram">
+      <title>A Suggested Application Architecture</title>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="Implementation - Architecture Overview.svg"/>
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <section>
+      <title>LOD Handling</title>
+      <para>
+        <firstterm>Level of detail</firstterm> is a concept fundamental to 
+        <citetitle>Terrainosaurus</citetitle>, and is important for a number of 
+        things. As discussed in <xref linkend="Methods"/>, LOD is central to the 
+        height field generation algorithm: starting from a coarse LOD, the 
+        algorithm builds progressively finer-scale height fields, until reaching 
+        the user's desired LOD. In each iteration, the algorithm uses real-world 
+        elevation data of that LOD, either taken directly from GIS data 
+        available at that LOD, or else resampled from GIS data at a different 
+        LOD. LOD is also important in other, less obvious ways. For example, the 
+        desired LOD tells us how finely the map boundaries must be subdivided in 
+        order for there not to be any straight boundaries in the resulting 
+        height field. Also, when rendering a height field, it is necessary to 
+        know the LOD: this specifies how to scale the 
+        <inlineequation><xi:include href="resources/x.mml"/></inlineequation> 
+        and <inlineequation><xi:include 
+        href="resources/y.mml"/></inlineequation> dimensions of the height field 
+        in order to be in correct proportion to the vertical axis.
+      </para>
+      <para>
+        Because we are working with USGS elevation data, the choice of LODs 
+        has already been made for us, to a large degree. USGS DEMs are 
+        commonly available in resolutions of 1/9 arc-second (3 1/3 meters per 
+        sample), 1/3 arc-second (10 meters per sample) and 1 arc-second (30 
+        meters per sample). Because of this, a power-of-three relationship 
+        between LODs is most convenient, as it requires the least amount of 
+        resampling, because the standard-resolution DEMs can be used directly.  
+        Following this power-of-three relationship, coarser LODs can be derived 
+        with resolutions of 90m, 270m, 810m (<xref linkend="Implementation 
+        - LOD Breakdown Chart"/>).  Further resolutions, such as 2.4km and 
+          coarser, are less useful because standard USGS 10m and 30m DEMs become 
+          unusably small when resampled to such coarse resolutions (around 4x4 
+          samples).
+      </para>
+      <figure id="Implementation - LOD Breakdown Chart" floatstyle="right">
+        <title>Choice of Levels of Detail</title>
+        <caption>
+          USGS digital elevation maps come in a range of LODs, with a 
+          power-of-three relationship between successive resolutions.  This 
+          scheme can be extended to include additional resolutions for which 
+          data is not typically available (in these cases, the 
+          standard-resolution maps must be resampled).
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="Implementation - LOD Breakdown Chart.svg"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <para>
+        Because LOD is so ubiquitous throughout 
+        <citetitle>Terrainosaurus</citetitle>, it is natural that its data 
+        structures would directly support multiple levels of detail. The 
+        diagrams in this chapter depict the multi-LOD components of the data 
+        structures as in <xref linkend="Implementation - Multi-LOD Object 
+        Diagram"/>.
+      </para>
+      <figure id="Implementation - Multi-LOD Object Diagram" floatstyle="right">
+        <title>Multi-LOD Objects</title>
+        <caption>
+          Most of the data structures suggested for 
+          <citetitle>Terrainosaurus</citetitle> have at least some attributes 
+          that are LOD-specific.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="Implementation - Multi-LOD Object.svg"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+
+    <section>
+      <title>Inputs &amp; Outputs</title>
+      <para>
+        <xref linkend="Implementation - Architecture Overview Diagram"/> depicts 
+        the inputs and outputs of an implementation of 
+        <citetitle>Terrainosaurus</citetitle>.  Assuming that 
+        <citetitle>Terrainosaurus</citetitle> is not embedded in the context of 
+        a larger application, this generally implies that 
+        <citetitle>Terrainosaurus</citetitle> is reading/writing files from/to 
+        machine storage (e.g., the computer's hard drive).
+      </para>
+      <para>
+        The input and output files include:
+        <itemizedlist spacing="compact">
+          <listitem>
+            the terrain type library (TTL) file&em;this describes the user's 
+            classification of example height fields into a taxonomy of terrain 
+            types and is read to determine what elevation map files should be 
+            loaded (see <xref linkend="TTL Example Listing"/> in <xref 
+            linkend="Data  Structure - Terrain Library"/> for a suggested format 
+            for this file)
+          </listitem>
+          <listitem>
+            terrain type map (MAP) files&em;these contain the map designs 
+            authored by the user, and are both read and written by 
+            <citetitle>Terrainosaurus</citetitle> (see <xref linkend="MAP 
+            Example Listing"/> in <xref linkend="Data Structure - Map"/> for a 
+            suggested format for these files)
+          </listitem>
+          <listitem>
+            digital elevation map (DEM) files&em;these contain height field 
+            elevation data, and are read to load the example height fields, and  
+            written to save the height fields generated by 
+            <citetitle>Terrainosaurus</citetitle> (see <xref linkend="Data 
+            Structure - Terrain Sample"/> for a discussion of file formats for 
+            height fields)
+          </listitem>
+          <listitem>
+            image (IMG) files&em;these encode the terrain type of each point in 
+            a height field as a pixel color and are generated as a by-product of 
+            the map-rasterization process; they may be used for 
+            terrain-type-based postprocessing of the generated height fields
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section>
+      <title>Suggested Data Structures</title>
+      <para>
+        The way in which data is organized is of great importance in the design 
+        of most kinds of software. A poorly structured data model will adversely 
+        impact the design of the rest of the system and may be difficult to 
+        change once the rest of the system has been built. As an aid to future 
+        implementors, I offer the following suggested organization of data 
+        structures.
+      </para>
+
+      <section id="Data Structure - Terrain Library">
+        <title>Terrain Library</title>
+        <figure id="Terrain Library Diagram" floatstyle="right">
+          <title>The Terrain Library Data Structure</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Terrain Library.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The Terrain Library structure 
+          (<xref linkend="Terrain Library Diagram"/>) is primarily a container 
+          for the other data structures, but it also holds aggregate statistics 
+          for the entire library of height fields. The important components of 
+          the Terrain Library are:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            a set of Terrain Type objects representing the various types of 
+            terrain defined by the user
+          </listitem>
+          <listitem>
+            a set of Terrain Seam objects representing the properties of the 
+            seams between each possible pair of Terrain Types
+          </listitem>
+          <listitem>
+            terrain statistics aggregated from all of the Terrain Samples in the 
+            library; these are used to establish the significance of the 
+            agreement between the Terrain Samples of a Terrain Type
+          </listitem>
+          <listitem>
+            similarity parameters aggregated from all of the Terrain Types in 
+            the library; these are used as a fallback when a Terrain Type does 
+            not have enough Terrain Samples to calculate its own similarity 
+            parameters
+          </listitem>
+        </itemizedlist>
+        <para>
+          Because the Terrain Library, once constructed, is essentially static, 
+          it makes sense to store this information in a file, and to load it at 
+          application startup. A simple way to accomplish this is with a file 
+          format resembling the Windows .ini format, essentially a 
+          human-readable list of key/value pairs grouped into sections (<xref 
+          linkend="TTL Example Listing"/>).
+        </para>
+        <figure id="TTL Example Listing">
+          <title>An Example Terrain Type Library (.ttl) File</title>
+          <programlisting>
+# A Terrain Type entry
+[Terrain Type: California_Coast_Hills]
+  color = &lt;0.6, 0.6, 0.3, 1.0&gt;
+  sample = "35120e8 - Cypress Mountain, CA"
+  sample = "35120f8 - Lime Mountain, CA"
+  sample = "35121f1 - Pebblestone Shut-in, CA"
+  sample = "33116b7 - Mesa Grande, CA"
+.
+.
+# A Terrain Seam entry
+[Terrain Seam: Colorado_Small_Mountains &amp; Colorado_Large_Mountains]
+  smoothness = 0.3
+.
+.
+# Terrain statistics aggregated across the whole library for an LOD
+[Aggregate: LOD_30m]
+
+  # Whole-library variances, used to calculate agreement
+  elevation_mean_variance     = 8.18938e+008f
+  elevation_stddev_variance   = 2.14651e+006f
+  elevation_skewness_variance = 11.5058f
+  elevation_kurtosis_variance = 85.087f
+.
+.
+  # Whole-library averages, used when a terrain type has
+  # insufficient samples to calculate its own values
+  default_elevation_mean_variance     = 2.48967e+006f
+  default_elevation_stddev_variance   = 68969.8f
+  default_elevation_skewness_variance = 1.74482f
+  default_elevation_kurtosis_variance = 4.5054f
+.
+.
+          </programlisting>
+        </figure>
+      </section>
+
+      <section id="Data Structure - Terrain Type">
+        <title>Terrain Type</title>
+        <figure id="Terrain Type Diagram" floatstyle="right">
+          <title>The Terrain Type Data Structure</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Terrain Type.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          A Terrain Type (<xref linkend="Terrain Type Diagram"/>) represents a 
+          single, conceptual type of terrain, having one or more concrete 
+          examples. Its important components are:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            a name, describing the terrain type in a way that is meaningful to 
+            the user (e.g., "Mountains")
+          </listitem>
+          <listitem>
+            an integer ID, uniquely identifying this Terrain Type within the 
+            parent Terrain Library; this ID is used by other data structures to 
+            reference this Terrain Type
+          </listitem>
+          <listitem>
+            a set of Terrain Sample objects, the example terrains that make up 
+            this Terrain Type
+          </listitem>
+          <listitem>
+            terrain statistics aggregated from all the Terrain Samples belonging 
+            to this Terrain Type; these are used to calculate the similarity 
+            parameters used when measuring how "like" this Terrain Type a 
+            generated height field is
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section id="Data Structure - Terrain Sample">
+        <title>Terrain Sample</title>
+        <figure id="Terrain Sample Diagram" floatstyle="right">
+          <title>The Terrain Sample Data Structure</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Terrain Sample.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The Terrain Sample class (<xref linkend="Terrain Sample Diagram"/>) 
+          represents a single, rectangular chunk of terrain, and can be thought 
+          of as an enhanced height field. It serves two similar, but distinct 
+          functions:
+        </para>
+        <orderedlist spacing="compact">
+          <listitem>
+            it represents the example GIS terrains within the Terrain Library, 
+            in which case it has a parent Terrain Type
+          </listitem>
+          <listitem>
+            it represents the under-construction terrains, in which case it has 
+            a Map Rasterization and does <emphasis>not</emphasis> have a parent 
+            Terrain Type
+          </listitem>
+        </orderedlist>
+        <para>
+          The important components of a Terrain Sample are:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            if this is an example terrain in the terrain library, a reference to 
+            the parent Terrain Type
+          </listitem>
+          <listitem>
+            if this is a height field being generated by 
+            <citetitle>Terrainosaurus</citetitle>, a reference to a Map 
+            Rasterization describing where the terrain regions are located and 
+            what the terrain type is at each point in the height field
+          </listitem>
+          <listitem>
+            a rectangular grid of height field elevations (pictured above in 
+            yellow)
+          </listitem>
+          <listitem>
+            a rectangular grid of 2D vectors representing the gradient at each 
+            point in the height field (pictured above in green)
+          </listitem>
+          <listitem>
+            lists of features (peaks, edges, ridges, etc.) located within the 
+            height field; each feature contains one or more 4-dimensional 
+            points, giving the <inlineequation><xi:include 
+            href="resources/(x,y).mml"/></inlineequation> location within the 
+            height  field, the scale at which the detector gave the strongest 
+            response, and the value of that detector response
+          </listitem>
+          <listitem>
+            calculated statistics for each region in the height field (encoded 
+            in the associated Map Rasterization); these statistics need to be 
+            evaluated separately for each region because each region must be 
+            evaluated against its corresponding Terrain Type
+          </listitem>
+          <listitem>
+            raster objects containing windowed statistical measurements of the 
+            Terrain Sample, such as the mean elevation, mean gradient and 
+            minimum/maximum elevation, calculated over the 
+            <inlineequation><xi:include 
+            href="resources/NxN.mml"/></inlineequation> neighborhood surrounding 
+            each cell of the raster; these are precalculated when the Terrain 
+            Sample is studied, and are during the height field construction GA 
+            to perform efficient queries of the geometry of individual genes
+            (pictured above in blue)
+          </listitem>
+        </itemizedlist>
+        <para>
+          The vast majority of the data processed by 
+          <citetitle>Terrainosaurus</citetitle> comes from terrain elevation 
+          maps. Height field data are commonly found in either the DEM (Digital 
+          Elevation Map) format <biblioref linkend="DEM Specification"/> or the 
+          SDTS (Spatial Data Transfer Standard) format <biblioref linkend="SDTS 
+          Specification"/>, with newer data available only in the SDTS format. 
+          The DEM format is an ASCII text format with fixed-length records, a 
+          relatively simple format, but also rather bulky&em;a typical 30m DEM 
+          is larger than a megabyte. SDTS, in contrast, is a binary file format, 
+          and is much more compact, but also much more complicated, as SDTS is 
+          the USGS's "Swiss Army Knife" format, capable of storing a wide range 
+          of raster and vector map data.
+        </para>
+        <para>
+          While the preceding discussion may sound disheartening, the 
+          developer of terrain processing software actually has quite a bit of 
+          latitude in selecting a terrain file format. This is because, while 
+          GIS data sources typically use only the aforementioned formats, there 
+          exist public-domain utilities for converting between these formats 
+          and a wide array of raster formats, including TIFF, Targa, raw XYZ 
+          coordinates, POV (the <citetitle>POV-Ray</citetitle> ray tracer file 
+          format), and <citetitle>AutoCAD</citetitle> DXF. The 
+          <citetitle>Virtual Terrain Project</citetitle> <biblioref 
+          linkend="VTP"/> also describes an additional, terrain-specific format, 
+          the Binary Terrain (BT) format, which also offers better compression 
+          than ASCII formats.
+        </para>
+        <para>
+          In the current implementation of 
+          <citetitle>Terrainosaurus</citetitle>, we chose to implement a parser 
+          for the DEM format, because DEM is easy to read and because PC 
+          environments typically have plenty of hard drive space, so the data 
+          expansion is not a huge problem.  Image file formats are not ideal for 
+          storing terrain data because, in order to  encode a height field into 
+          such a format, the elevations must be scaled to fit within the range 
+          of legal pixel values (often <inlineequation><xi:include 
+          href="resources/%5B0,1%5D.mml"/></inlineequation> or 
+          <inlineequation><xi:include 
+          href="resources/%5B0,255%5D.mml"/></inlineequation>; doing so loses 
+          the absolute scale of the data, and makes it impossible to compare 
+          elevations between different height fields.
+        </para>
+        <para>
+          One important "gotcha" to be wary of, when using DEM or SDTS data, is 
+          that the real-world tiles covered by the data in an elevation map are 
+	  often non-rectangular<!--(<xref linkend="Non-rectangular Tile 
+		  Diagram"/>)-->, due to the curvature of the Earth (<xref 
+          linkend="Geodetic Mapping"/>). As a result, the actual, valid region 
+          of a DEM or SDTS height field may be a trapezoid (or even an arbitrary 
+          quadrilateral, depending on the mapping coordinate system used); grid 
+          cells outside of this valid region will be marked "void".  A simple 
+          solution for dealing with this is to trim some number of pixels off of 
+          each edge (30 pixels seems to be sufficient), thereby ensuring a 
+          rectangular valid region.
+        </para>
+        <!--figure id="Non-rectangular Tile Diagram" floatstyle="right">
+          <title>Non-rectangular Geo-spatial Data</title>
+          <caption>
+            Geo-spatial data found in SDTS and DEM files typically covers a 
+            non-rectangular area of the grid, with cells falling outside of this 
+            polygon being marked "void". The height field can be made 
+            rectangular by trimming off pixels from each side of the grid.
+          </caption>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Non-rectangular Tile Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure-->
+      </section>
+
+      <section id="Data Structure - Terrain Seam">
+        <title>Terrain Seam</title>
+        <figure id="Terrain Seam Diagram" floatstyle="right">
+          <title>The Terrain Seam Data Structure</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Terrain Seam.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The Terrain Seam class (<xref linkend="Terrain Seam Diagram"/>) 
+          represents characteristics of the boundary between two different 
+          Terrain Types (two adjacent regions of the same Terrain Type are 
+          considered to be a single, contiguous region; thus, a Terrain Type 
+          cannot have a boundary with itself). The components of a Terrain Seam 
+          are:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            a scalar in the range <inlineequation><xi:include 
+            href="resources/%5B0,1%5D.mml"/></inlineequation> indicating the 
+            target smoothness for that boundary type
+          </listitem>
+          <listitem>
+            references to the two Terrain Types this Terrain Seam separates
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section id="Data Structure - Map">
+        <title>Map</title>
+        <figure id="Map Diagram">
+          <title>The Map Data Structure</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Map.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+         The Map class (<xref linkend="Map Diagram"/>) represents a 
+         user-authored, vector-drawn Terrain Type map.
+        </para>
+        <para>
+          The Map can be implemented as a 2-dimensional connected polygonal mesh 
+          (using, for example, a variation of the winged-edge <biblioref 
+          linkend="Winged Edge"/> data structure): polygonal regions in the map 
+          correspond to mesh faces, and boundaries between regions correspond to 
+          mesh edges.  The usefulness of this approach is that conventional 
+          polygon-modeling tools and techniques may be used to author the map.  
+          Furthermore, most 3D modeling packages already contain robust tools 
+          for editing polygon meshes, possibly simplifying implementation of 
+          <citetitle>Terrainosaurus</citetitle> as part of such a package.
+        </para>
+        <para>
+          In order to use a polygon mesh structure to represent the map, it 
+          must be augmented with some additional data fields. Instead of 
+          conventional polygon mesh attributes like 3D positional coordinates, 
+          texture coordinates, vertex colors and normals, the map mesh needs 
+          the following attributes:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            2D positional coordinates for each vertex in the map
+          </listitem>
+          <listitem>
+            the Terrain Type for each region (face) in the map
+          </listitem>
+          <listitem>
+            the sequence of 2D points representing the boundary refinement for 
+            each edge in the map
+          </listitem>
+        </itemizedlist>
+        <para>
+          Because the Map is implemented as a topologically connected polygon 
+          mesh, it must also be stored this map in a format that preserves this 
+          information. A simple way to do this is with a trimmed-down version of 
+          the Wavefront OBJ file format <biblioref linkend="OBJ 
+          Specification"/>.  The only record types of the OBJ format that are 
+          needed are a 2D version of the vertex record ('v'), a terrain type 
+          declaration ('tt', analogous to the material declaration), and a face 
+          record ('f') (see <xref linkend="MAP Example Listing"/>).
+        </para>
+        <figure id="MAP Example Listing">
+          <title>An Example Terrain Type Map File</title>
+          <caption>
+            One way of persisting the user's terrain type map is with a 
+            variation on the ubiquitous Wavefront OBJ file format.
+          </caption>
+          <programlisting>
+# Map vertices
+v -700.0 -700.0     # 1
+v -400.0 -400.0     # 2
+.
+.
+# Map regions (faces)
+tt California_Coast_Hills
+f 1 2 3 4 5 6
+.
+.
+          </programlisting>
+        </figure>
+      </section>
+
+      <section id="Data Structure - Map Rasterization">
+        <title>Map Rasterization</title>
+        <figure id="Map Rasterization Diagram" floatstyle="right">
+          <title>The Map Rasterization Data Structure</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="Implementation - Map Rasterization.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The Map Rasterization class (<xref linkend="Map Rasterization
+          Diagram"/>) is a raster version of a Map, and is usually associated
+          with one or more Terrain Samples of the same dimensions.  Besides
+          being useful during the height field generation process, as described
+          in <xref linkend="Analyzing the Map"/>, the Map Rasterization is also
+          useful for exporting a representation of the map in a form useful for
+          downstream processing of the height field: the raster of terrain type
+          IDs can be saved in a conventional image format (PNG or Targa, for
+          example), and used to do further computation, such as assigning
+          texture coordinates to the terrain, or populating the terrain with
+          trees, rocks, or other objects. The components of a Map Rasterization
+          are:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            a raster object containing the integer terrain type ID for each grid 
+            cell
+          </listitem>
+          <listitem>
+            a raster object containing the integer region ID for the region 
+            enclosing each grid cell
+          </listitem>
+          <listitem>
+            a raster object containing the scalar distance from the center of 
+            the grid cell to the nearest region boundary; this is used to 
+            generate the alpha masks for creating the coarsest LOD to prime the 
+            generation process (<xref linkend="Creating the Initial LOD"/>)
+          </listitem>
+          <listitem>
+            the number of distinct regions present in the Map Rasterization
+          </listitem>
+          <listitem>
+            the Terrain Type, pixel-area, axis-aligned bounding box of each 
+            region, and a pixel located inside of that region (needed to 
+            flood-fill the region)
+          </listitem>
+        </itemizedlist>
+      </section>
+
+    </section>
+
+    <section>
+      <title>Suggested User Interface</title>
+      <para>
+        Ideally, a graphical user interface for 
+        <citetitle>Terrainosaurus</citetitle> should allow the user to view, 
+        navigate and edit the terrain type map in an intuitive fashion, and to 
+        invoke the height field generation GA, and to visualize the results. At 
+        a minimum, the interface should support the following operations:
+        <itemizedlist spacing="compact">
+          <listitem>load map</listitem>
+          <listitem>save map</listitem>
+          <listitem>create region</listitem>
+          <listitem>delete region</listitem>
+          <listitem>move vertex</listitem>
+          <listitem>set terrain type</listitem>
+          <listitem>refine boundary</listitem>
+          <listitem>select region to generate</listitem>
+          <listitem>save terrain</listitem>
+        </itemizedlist>
+      </para>
+      <para>
+        The prototype implementation of <citetitle>Terrainosaurus</citetitle> 
+        accomplishes these operations with two user interface windows: a map 
+        editor window and a terrain viewer window.
+      </para>
+      <para>
+        The map editor window (<xref linkend="Map Editor Window"/>) allows the 
+        user to select regions, boundaries, and vertices by clicking on them or 
+        "lasso selecting" them with the mouse. When selecting individual objects 
+        or adding regions to the map, the mouse pointer will snap to nearby 
+        vertices and edges, making it possible to create connected polygons.  
+        Loading, saving and editing operations are triggered by keyboard 
+        commands.
+      </para>
+      <figure id="Map Editor Window">
+        <title>The Map Editor Window</title>
+        <caption>
+          The map editor window allows the user to view, navigate and edit a 
+          terrain type map using polygon modeling operations.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="4in"
+                       fileref="Implementation - Map Editor Window.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <para>
+        The terrain viewer window (<xref linkend="Terrain Viewer Window"/>) is 
+        a 3D height field viewer, allowing the user to explore the generated 
+        height field (or one of the example height fields) in 3D.  One minor 
+        "trick" that deserves mentioning is that, when displaying a height 
+        field, the height field geometry (or the camera) should be offset in 
+        the vertical direction by the mean elevation of the height field. This   
+        is necessary in order to have the height field in the viewport; if 
+        this transformation is not done, the height field surface may be 
+        located far above or below the camera in the 3D space, making it 
+        difficult to find.
+      </para>
+      <figure id="Terrain Viewer Window">
+        <title>The Terrain Viewer Window</title>
+        <caption>
+          The terrain viewer window allows the user to view the generated 
+          terrain at different levels of detail and from any angle.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="4in"
+                       fileref="Implementation - Terrain Viewer Window.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+
+    <section>
+      <title>Implementing the Genetic Algorithms</title>
+      <para>
+        Because GAs are used in multiple places in 
+        <citetitle>Terrainosaurus</citetitle>, it is advantageous to write the 
+        bulk of the GA code in a reusable manner and then to specialize it as 
+        needed for each of the GAs. To do this, however, is slightly more 
+        complicated than writing reusable library functions, since the parts of 
+        the algorithm that need to be specialized are embedded deep within the 
+        algorithm (i.e., the reused functionality is the over-arching algorithm, 
+        not the low-level functions and objects, as is normally the case when 
+        creating a reusable code library).
+      </para>
+
+      <section>
+        <title>A Generic GA Framework</title>
+        <para>
+          This pattern of interaction between the reusable and 
+          application-specific parts of the code is sometimes referred to 
+          <firstterm>inversion of control</firstterm>, and implementations of 
+          this principle are commonly called <firstterm>frameworks</firstterm>.  
+          Frameworks can be implemented in a structured programming language 
+          through the use of callback functions (the GLU polygon tessellator 
+          code is a small example of this), but object-oriented and generic 
+          programming constructs (inheritance, polymorphism and templates) make 
+          framework implementation much simpler and cleaner.  The usual method 
+          of creating a framework is for the <firstterm>hotspots</firstterm> 
+          (application-specific parts of the framework) to be implemented as 
+          abstract interfaces, and the rest of the framework to be implemented 
+          in terms of these abstract objects.  Then, to specialize the framework 
+          for a particular application, all that a developer needs to do is to 
+          create application-specific objects to fit into those hotspots.
+        </para>
+        <variablelist>
+          <para>
+            A suggested way of decomposing a GA as a framework is as follows. To 
+            use the framework to solve a particular problem, the developer would 
+            subclass some or all of the following classes to implement 
+            problem-specific functionality.
+          </para>
+          <varlistentry>
+            <term>Genetic Algorithm</term>
+            <listitem>
+              the top-level object of the framework. This object has a number of 
+              parameters specifying the overall behavior of the algorithm, such 
+              as the population size, number of evolution cycles, and the 
+              probabilities of mutation and crossover. In addition to setting 
+              these parameters, the developer must add one or more specialized 
+              Operator objects to the GA. Once configured, the GA is launched by 
+              calling its run() function.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Chromosome</term>
+            <listitem>
+              the representation of an individual solution in the algorithm.  
+              This class should contain some number of Genes, and the 
+              specialized Operators should be written to work on it.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Gene</term>
+            <listitem>
+              an atomic sub-part of a Chromosome. Mutation and crossover 
+              operators work on these.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Initialization Operator</term>
+            <listitem>
+              an operator for performing some arbitrary initialization on a 
+              Chromosome. These are called to initialize new Chromosomes as they 
+              are introduced into the population (e.g., to replace those that 
+              were killed off in the previous evolution cycle).
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Crossover Operator</term>
+            <listitem>
+              an operator for performing some sort of exchange of genetic 
+              material between two Chromosomes. The probability of a crossover 
+              operator being invoked on a pair of Chromosome is controlled by 
+              the Genetic Algorithm's <emphasis>crossover probability</emphasis> 
+              parameter.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutation Operator</term>
+            <listitem>
+              an operator for performing some arbitrary mutation on a Gene.  The 
+              probability of a mutation operator being invoked on a gene is 
+              controlled by the Genetic Algorithm's <emphasis>mutation 
+              probability</emphasis> parameter.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Fitness Operator</term>
+            <listitem>
+              an operator for calculating a fitness value (a scalar in the range 
+              <inlineequation><xi:include 
+              href="resources/%5B0,1%5D.mml"/></inlineequation>) for a 
+              Chromosome.
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <para>
+          A Genetic Algorithm must have <emphasis>at least</emphasis> one 
+          initialization operator and one fitness operator, but it may have as 
+          many operators of each type as desired, and may optionally assign a 
+          weight to each registered operator.  For the initialization, 
+          crossover, and mutation operators, these weights are used to construct 
+          a cumulative probability distribution function, which is then used to 
+          select which of the available operators is used (with probabilistic 
+          preference given to operators with higher weights). In the case of the 
+          fitness operators, <emphasis>each</emphasis> registered operator is 
+          invoked on the chromosome, and the weights are used to determine how 
+          significant each fitness component is to the overall fitness 
+          calculation.
+        </para>
+      </section>
+
+      <section>
+        <title>The Boundary Refinement GA</title>
+        <para>
+          The boundary refinement GA is relatively straightforward to implement, 
+          with each gene containing only a relative angle from the previous 
+          segment and the absolute angle with respect to the 
+          <inlineequation><xi:include href="resources/x.mml"/></inlineequation> 
+          axis. The operators defined on this GA are:
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term>Init: <emphasis>Random Angle</emphasis></term>
+            <listitem>
+              an initialization operator that populates a chromosome with random 
+              angles in each gene (subject to the max absolute angle constraint)
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Init: <emphasis>Straight Line</emphasis></term>
+            <listitem>
+              an initialization operator that populates a chromosome with an 
+              angle of zero between consecutive segments
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Cross: <emphasis>Splice Subsequences</emphasis></term>
+            <listitem>
+              a crossover operator that chooses a split-point and exchanges the 
+              subsequences following that point between two chromosomes
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutate: <emphasis>Random Bend</emphasis></term>
+            <listitem>
+              a mutation operator that introduces a random change to the angle 
+              in a single gene
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Fitness: <emphasis>Smoothness</emphasis></term>
+            <listitem>
+              a fitness operator that evaluates the fitness of a chromosome 
+              according to the scheme described in <xref linkend="Boundary GA 
+              Fitness"/>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <para>
+          The boundary refinement GA itself has only one additional parameter 
+          beyond the standard parameters belonging the the Genetic Algorithm 
+          framework:
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term><emphasis>max absolute angle</emphasis></term>
+            <listitem>
+              the maximum allowed deviation from the <inlineequation><xi:include 
+              href="resources/x.mml"/></inlineequation> axis; see <xref 
+              linkend="Accumulated Angle Discussion"/> in <xref 
+              linkend="Discussion"/> for further discussion of the problems and 
+              implications associated with this.
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
+      <section>
+        <title>The Height Field Generation GA</title>
+        <para>
+          The height field GA is a bit more complicated than that for the 
+          boundary refinement. The Chromosome for this GA contains a 2D grid of 
+          Genes, each of which contains pointers to its source Terrain Sample 
+          and Terrain Type, as well as a set of transformation parameters. Also, 
+          the Chromosome retains the results of the last fitness evaluation (the 
+          regions' similarity and gene compatibility measurements), and uses 
+          these values to bias the operator probabilities towards operators that 
+          are more likely to be helpful (<xref linkend="Height Field GA Fitness 
+          Evaluation"/>).
+        </para>
+        <variablelist>
+          <para>
+            The operators defined for the height field GA are:
+          </para>
+          <varlistentry>
+            <term>Init: <emphasis>Random Source Data</emphasis></term>
+            <listitem>
+              an initialization operator that initializes each Gene with a 
+              randomly selected source Terrain Sample from the appropriate 
+              Terrain Type, and randomly chosen <inlineequation><xi:include 
+              href="resources/(x,y).mml"/></inlineequation> coordinates within 
+              that Terrain Sample from which to get its elevation data.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Cross: <emphasis>Swap Rectangular Region</emphasis></term>
+            <listitem>
+              a crossover operator that swaps rectangular clusters of Genes 
+              between two Chromosomes
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutate: <emphasis>Reset Transform</emphasis></term>
+            <listitem>
+              a mutation operator that resets the transformation parameters in a 
+              Gene.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutate: <emphasis>Vertical Offset</emphasis></term>
+            <listitem>
+              a mutation operator that adjusts the mean elevation of a Gene.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutate: <emphasis>Vertical Scale</emphasis></term>
+            <listitem>
+              a mutation operator that adjusts the vertical range spanned by a 
+              Gene.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutate: <emphasis>Vertical Rotate</emphasis></term>
+            <listitem>
+              a mutation operator that adjusts the rotation around the vertical 
+              applied to the elevation values for a Gene.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Mutate: <emphasis>Horizontal Translate</emphasis></term>
+            <listitem>
+              a mutation operator that adjusts the <inlineequation><xi:include 
+              href="resources/(x,y).mml"/></inlineequation> coordinates used for 
+              the source height field data for a Gene.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Fitness: <emphasis>Gene Compatibility</emphasis></term>
+            <listitem>
+              a fitness operator that evaluates the similarity between the 
+              approximate geometric shape of the elevations controlled by each 
+              Gene and the corresponding area of the "pattern" height field from 
+              the previous LOD.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Fitness: <emphasis>Region Similarity</emphasis></term>
+            <listitem>
+              a fitness operator that evaulates the similarity between each 
+              region of generated terrain and the corresponding terrain type 
+              that that region is supposed to emulate.
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <variablelist>
+          <para>
+            Also, the height field GA has several additional parameters beyond 
+            the standard parameters belonging the the Genetic Algorithm 
+            framework:
+          </para>
+          <varlistentry>
+            <term><emphasis>gene size</emphasis></term>
+            <listitem>
+              the width/height (in pixels) of a single Gene&em;larger values 
+              result in fewer Genes being required to cover the entire height 
+              field, but also permit less fine-scale modification to the height 
+              field; values around 16 pixels seem to work well, at least for 
+              lower resolution height fields (up to 90m).
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><emphasis>overlap factor</emphasis></term>
+            <listitem>
+              the percentage of linear overlap between adjacent Genes (see <xref 
+              linkend="Height Field GA Gene Grid Diagram"/>); this controls how 
+              much blending occurs between adjacent Genes&em;a value of zero 
+              implies no blending, and would result in discontinuities at gene 
+              boundaries; values around 20% seem to work well.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><emphasis>max crossover width</emphasis></term>
+            <listitem>
+              the width of the largest rectangular chunk of Genes that will be 
+              swapped during a single crossover operation; if this value is 
+              <inlineequation><xi:include 
+              href="resources/N.mml"/></inlineequation>, this implies that, at 
+              most, <inlineequation><xi:include 
+              href="resources/N^2.mml"/></inlineequation> Genes will be swapped.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><emphasis>max vertical scale</emphasis></term>
+            <listitem>
+              the maximum factor by which to scale a Gene's elevation values 
+              during a single mutation; this controls how drastic of a change 
+              the GA is allowed to make.
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><emphasis>max vertical offset</emphasis></term>
+            <listitem>
+              the maximum amount by which to change a Gene's mean elevation 
+              during a single mutation; this controls how drastic of a change 
+              the GA is allowed to make.
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+    </section>
+  </section>
+
+  <section>
+    <title>Optimizations &amp; Simplifications</title>
+    <para>
+      <citetitle>Terrainosaurus</citetitle> is a computationally expensive 
+      algorithm; as such, anything that can be done to increase its efficiency 
+      is a welcome improvement. Furthermore, it will be easier to implement if 
+      existing technologies can be leveraged to solve some of its sub-problems.  
+      Toward these ends, I offer several ideas for optimizing and/or 
+      simplifying the implementation of the algorithm that were used in 
+      implementing the prototype. Further suggestions for optimizing the 
+      process that have not yet been explored are discussed in <xref 
+      linkend="Future Work"/>.
+    </para>
+
+    <section>
+      <title>Caching the Analysis of Library Terrain Samples</title>
+      <para>
+        The height field analysis step is, by far, the most expensive part of 
+        the algorithm. While this cost cannot be completely eliminated (as each 
+        generated height field must be evaluated for fitness), it is at least 
+        possible to avoid repeatedly analyzing those height fields belonging to 
+        the Terrain Library, since these are essentially 
+        static. One way to do this is to dump the results of analyzing an LOD of 
+        a height field into a file as soon as it is analyzed. Then, whenever 
+        that LOD of that particular height field is needed thereafter, if the 
+        dump file is newer than the .dem file from which it was generated, the 
+        analysis can be skipped, and the previously calculated results just 
+        rehydrated from the file.
+      </para>
+      <para>
+        In fact, if the dump file is created as a <emphasis>binary</emphasis> 
+        dump of the Terrain Sample's data structures, the 
+        analysis results can be loaded very quickly, even more quickly than 
+        loading the original .dem file that they originally came from! This can 
+        be attributed to the rather bad compression of the .dem file format, and 
+        to the cost of parsing ASCII text into numeric data, which is avoided by 
+        reading and writing as binary.  One word of warning though: during 
+        active development, it is easy to change a data structure, while 
+        forgetting the impact that this will have on the dump files. Be sure to 
+        verify that your dump files are the size your data structures expect 
+        them to be.
+      </para>
+    </section>
+
+    <section>
+      <title>Optimizing the Feature Detection Step</title>
+      <para>
+        Feature detection is the most computationally expensive part of the 
+        height field fitness evaluation&em;speeding this up will result in a 
+        significant reduction in overall execution time. Several things can be 
+        done to accelerate this step.
+      </para>
+
+      <section id="Frequency Domain Convolution">
+        <title>Do Convolution in the Frequency Domain</title>
+        <para>
+          The first step in scale-space feature detection is to generate the 
+          scale-space representation of height field (height field), which  
+          requires convolving the image with Gaussian filters of various sizes.  
+          As the size of the filter increases, the convolution becomes more and 
+          more computationally expensive to perform in the spatial domain.  
+          Fortunately, because of the properties of the Fourier transform, the 
+          expensive spatial-domain operation of convolving two images is 
+          equivalent to performing ordinary, element-wise  multiplication of 
+          their frequency domain representations (i.e., their Fourier 
+          transforms). The computational cost of this multiplication does not 
+          increase as the filter size grows. Therefore, if the amount of 
+          convolution to be done is large enough, the computational savings of 
+          doing this convolution in the frequency domain will more than offset 
+          the expense of  performing the forward and inverse Fourier transforms, 
+          for a net increase in speed.
+        </para>
+      </section>
+
+      <section>
+        <title>Save &amp; Reuse Computations</title>
+        <para>
+          At the risk of stating the obvious, one way of reducing the expense 
+          of feature detection is to cache the results of computations rather 
+          than recomputing them each time they are needed. Feature detectors 
+          typically use first, second, and third, or even higher partial 
+          derivatives of the image to compute their response, and these 
+          derivatives occur multiple times in the evaluation. Because of this, a 
+          significant speed-up can be realized (at the cost of higher memory  
+          usage) by creating additional rasters to cache the various 
+          derivatives. Furthermore, different detectors often have some of their 
+          sub-computations in common; thus, the overall cost of doing both edge 
+          and ridge detection can be reduced by keeping the intermediate results 
+          from the edge detector and reusing them for the ridge detector.
+        </para>
+      </section>
+
+      <section>
+        <title>Limit the Number of Scales</title>
+        <para>
+          The cost of feature detection is proportional to the number of scales 
+          being searched. Thus, a good way to limit the expense is to reduce 
+          the number of scales. Because of the known, power-of-three 
+          relationship between successive LODs of the terrain, it may be 
+          possible (or even preferable) to limit the scales searched by the 
+          feature detection step to a small number. How significantly this will 
+          affect the performance of the GA fitness function is not clear, and is 
+          an area for future research (<xref linkend="Performance 
+          Improvements"/>).
+        </para>
+      </section>
+    </section>
+
+    <section>
+      <title>Optimizing the Computation of Windowed Statistics</title>
+      <para>
+        In the "studying" phase of analysis for a 
+        Terrain Sample, several statistics are calculated 
+        over <inlineequation><xi:include href="resources/NxN.mml"/></inlineequation> cell 
+        neighborhoods around each cell of the height field. Computing these 
+        quantities is very similar to performing convolution with an 
+        <inlineequation><xi:include href="resources/NxN.mml"/></inlineequation> pixel 
+        filter. Just like many filters, these operations are 
+        <firstterm>separable</firstterm>, meaning that they can be done more 
+        efficiently by being evaluated as two sequential 1-dimensional 
+        operations: first the statistic is evaluated across the 
+        <inlineequation><xi:include 
+        href="resources/x.mml"/></inlineequation>-coordinate, and then across 
+        the <inlineequation><xi:include 
+        href="resources/y.mml"/></inlineequation>-coordinate of the result.
+      </para>
+    </section>
+
+    <section>
+      <title>Simplifying Rasterization of the Map</title>
+      <para>
+        Generating the Map Rasterization from the Map is a somewhat difficult 
+        problem, primarily because, especially with the addition of the refined 
+        boundaries, the polygons that make up the map tend to have many, many 
+        edges, and to be highly non-convex.
+      </para>
+      <para>
+        Fortunately, this problem has already been solved. The <citetitle>GL 
+        Utilities (GLU) Library</citetitle> includes a tessellator for 
+        transforming (possibly self-intersecting) non-convex polygons into 
+        triangles, which can be rendered easily. Then, to create the Map 
+        Rasterization, we need only render these triangles, with an 
+        appropriately chosen viewport, and then to read back the rendered pixels 
+        from the framebuffer. For this to work, the color with which each 
+        triangle is rendered needs to encode the terrain type ID for its 
+        corresponding region. Also, it is important to 
+        <emphasis>disable</emphasis> lighting, antialiasing and alpha blending, 
+        so that the rendering system does not interpolate colors (thus 
+        destroying this encoding).
+      </para>
+      <para>
+        Another potential solution, if using <citetitle>OpenGL</citetitle> is 
+        impossible or undesirable, is to rasterize the boundaries between 
+        regions, and then to use a flood-fill algorithm to fill in the regions.
+      </para>
+    </section>
+
+  </section>
+
+</chapter>

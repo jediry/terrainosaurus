@@ -1,7 +1,7 @@
 #ifndef INC_MapParser_hpp_
 #define INC_MapParser_hpp_
 
-#line 22 "Map.g"
+#line 23 "Map.g"
 
     // Import library configuration
     #include <terrainosaurus/terrainosaurus-common.h>
@@ -15,9 +15,12 @@
     // Import Map and related object definitions 
     #include "../data/Map.hpp"
 
-#line 19 "MapParser.hpp"
+    // Import parser superclass and supergrammer definitions
+    #include "CommonParser.hpp"
+
+#line 22 "MapParser.hpp"
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.5 (20050201): "Map.g" -> "MapParser.hpp"$ */
+/* $ANTLR 2.7.5 (20050613): "Map.g" -> "MapParser.hpp"$ */
 #include <antlr/TokenStream.hpp>
 #include <antlr/TokenBuffer.hpp>
 #include "MapTokenTypes.hpp"
@@ -29,7 +32,7 @@ ANTLR_BEGIN_NAMESPACE(terrainosaurus)
  */
 class CUSTOM_API MapParser : public antlr::LLkParser, public MapTokenTypes
 {
-#line 57 "Map.g"
+#line 61 "Map.g"
 
 /*---------------------------------------------------------------------------*
  | Helper function definitions (these help keep the parser grammar cleaner)
@@ -47,7 +50,7 @@ protected:
     Map * map;
     Map::VertexPtrList vertices;
     TerrainTypePtr currentTT;
-#line 33 "MapParser.hpp"
+#line 36 "MapParser.hpp"
 public:
 	void initializeASTFactory( antlr::ASTFactory& factory );
 protected:
@@ -94,10 +97,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 16;
+	static const int NUM_TOKENS = 36;
 #else
 	enum {
-		NUM_TOKENS = 16
+		NUM_TOKENS = 36
 	};
 #endif
 	

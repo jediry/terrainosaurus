@@ -15,25 +15,6 @@
 using namespace inca::math;
 using namespace terrainosaurus;
 
-// Import our genetic algorithm code
-#include "../genetics/GA.h"
-#undef PI
-
-// Import the Timer, which we'll use to initialize the random number generator
-#include <inca/util/Timer>
-
-// Import STL/Boost algorithms
-using std::for_each;
-
-
-/*---------------------------------------------------------------------------*
- | MapData functions
- *---------------------------------------------------------------------------*/
-// Query the resolution (samples/world-space unit) of the elevation data
-MapData::scalar_t MapData::resolution() const {
-    return 20.0;    // FIXME: garbage!!!
-}
-
 
 /*---------------------------------------------------------------------------*
  | MapData::EdgeData functions
@@ -143,90 +124,31 @@ TerrainSeamConstPtr MapData::EdgeData::terrainSeam() const {
     return edge->mesh()->terrainLibrary()->terrainSeam(tt1, tt2);
 }
 
-// Construct the list of points refining this Edge, using the current envelope
-void MapData::EdgeData::refine() {
+// Add a refinement for this Edge
+void MapData::EdgeData::addRefinement(const PointList & ref) {
+    // Make sure we don't have an old refinement lingering around
+    deleteRefinement();
+
+    // We have to transform these points so that the first and last points
+    // match up with the endpoints of this Edge.
+
+    // 1) Get the geometric properties of the original Edge
     Point start = startPoint();
     Point end   = endPoint();
-    Vector guide = end - start;
-    scalar_t length = magnitude(guide);
-    TerrainSeamConstPtr ts = terrainSeam();
+    Vector edgePath = end - start;
+    scalar_t edgeLength = magnitude(edgePath);
+    scalar_t edgeAngle = signedAngle(edgePath, Vector(1.0, 0.0));
 
+    // 2) Get the geometric properties of the generated Points
+    Vector refPath = ref.back() - ref.front();
+    scalar_t refLength = magnitude(refPath);
+    scalar_t refAngle = signedAngle(refPath, Vector(1.0, 0.0));
 
-    // Construct the envelope (which also tells us the number of segments),
-    // based on the resolution of the elevation data. We don't need any more
-    // segments than half the number of elevation samples covering this length,
-    // since we can view the elevation grid as sampling this edge, and it can't
-    // resolve any boundary features with frequency higher than half its
-    // resolution (God bless you, Mr. Nyquist!).
-    int segments = static_cast<int>(mapData().resolution() * length / 2);
-    if (segments <  2) segments = 2;
-    buildDiamondEnvelope(segments, ts->aspectRatio());
+    // 3) Find how much to transform to make them line up
+    scalar_t scaleFactor = edgeLength / refLength;
+    scalar_t rotationAngle = edgeAngle - refAngle;
 
-
-    // Report what we're about to do to our oh-so-intelligent user
-    // (HAIL TO THEE, USER!)
-    INCA_INFO("Refinement for Edge  " << static_cast<Map::EdgePtr>(this)->id() << endl
-           << "   # of chromosomes: " << ts->numberOfChromosomes() << endl
-           << "   Smoothness:       " << ts->smoothness() << endl
-           << "   Mutation rate:    " << ts->mutationRatio() << endl
-           << "   Crossover rate:   " << ts->crossoverRatio() << endl
-           << "   Selection ratio:  " << ts->selectionRatio() << endl
-           << "   Aspect ratio:     " << ts->aspectRatio() << endl
-           << "   # of cycles:      " << ts->numberOfCycles() << endl
-           << "   Segments:         " << envelope().size() << endl)
-
-
-    // WARNING: now entering Mike's magical world of genetic algorithmic
-    // insanity!!! Who knows what sort of magical creatures you might
-    // encounter within! Enter at your own risk.
-    // Set up our GA with the parameters from the TerrainSeam
-    GA::Population population(ts->numberOfChromosomes(),
-                              ts->smoothness(),
-                              ts->mutationRatio(),
-                              ts->crossoverRatio(),
-                              ts->selectionRatio(), inca::getSystemClocks());
-
-     AngleList angles = population.MakeLine(envelope(),
-                                            startAngle(), endAngle(),
-                                            50);
-//                                            ts->numberOfCycles());
-
-    // Now returning to the relative safety of graphics-world :-)
-    // Decode the angles into points (initially aligned semi-arbitrarily)
-    Point p(0.0, 0.0);
-    Vector path(0.0, 0.0);  // This keeps track of how far this moves us
-    refinement().clear();
-    refinement().push_back(p);
-    for (IndexType i = 0; i < IndexType(angles.size()); ++i) {
-        Vector dp(1.0, tan(angles[i]));   // Find motion in X / Y
-//        Vector dp(cos(angles[i]), sin(angles[i]));   // Find motion in X / Y
-        p += dp;            // Move us by this amound and place a point here
-        refinement().push_back(p);  // Stick it in
-        path += dp;                 // Update our path vector
-        cerr << "Angle[" << i << "]: " << angles[i] << "  p is " << p;
-//        logger.debug();
-    }
-
-
-    /////////////////////////////////////////////////////////////////////////
-    // Transform these points to match up with this Edge's endpoints
-    /////////////////////////////////////////////////////////////////////////
-
-    // Geometric properties of the original Edge
-    scalar_t guideLength = length;
-    scalar_t guideAngle = signedAngle(guide, Vector(1.0, 0.0));
-
-    // Geometric properties of the generated Points
-    scalar_t pathLength = magnitude(path);
-    scalar_t pathAngle = signedAngle(path, Vector(1.0, 0.0));
-//    if (path[1] < 0.0)      // The angle might be negative
-//        pathAngle = -pathAngle;
-
-    // The differences between the two
-    scalar_t scaleFactor = guideLength / pathLength;
-    scalar_t rotationAngle = guideAngle - pathAngle;
-
-    // Build a to-world-space transformation matrix to "set things right"
+    // 4) Build a to-world-space transformation matrix to "set things right"
     inca::math::Matrix<scalar_t, 3, 3, true> T, R, S, X;
     inca::math::loadTranslation<scalar_t,3>(T, start - Point(0.0, 0.0));
     inca::math::loadScaling<scalar_t, 3>(S, Vector(scaleFactor, scaleFactor));
@@ -239,19 +161,18 @@ void MapData::EdgeData::refine() {
 //    cerr << "X: -------------" << endl << X << endl;
 //    logger.info();
 
-    // Now go back and apply the world-space transformation to each point
-    PointList::iterator pt;
-    for (pt = refinement().begin(); pt != refinement().end(); pt++) {
-        Point & p = *pt;
+    // 5) Apply this transformation to each point and insert it into the refinement
+    PointList::const_iterator pt;
+    for (pt = ref.begin(); pt != ref.end(); pt++) {
 //        cerr << "Old p " << p << endl;
 //        p = operator%<scalar_t>(X, p);
-        p = X % p; //FIXME
+        refinement().push_back(X % *pt); //FIXME
 //        cerr << "New p " << p << endl << endl;
 //        cerr << *pt << endl;
     }
 }
 
-void MapData::EdgeData::unrefine() {
+void MapData::EdgeData::deleteRefinement() {
     refinement().clear();   // BOOM!!!...back to the stone age...
 }
 
@@ -290,7 +211,7 @@ void MapData::EdgeData::buildDiamondEnvelope(int segments,
  | Map::Spike functions
  *---------------------------------------------------------------------------*/
 // Equality comparison operator
-bool Map::Spike::operator==(const Spike &s) const {
+bool Map::Spike::operator==(const Spike & s) const {
     return (type == s.type) && (elementID == s.elementID)
         && (snappedPosition == s.snappedPosition);
 }
@@ -300,18 +221,8 @@ bool Map::Spike::operator==(const Spike &s) const {
  | Constructors
  *---------------------------------------------------------------------------*/
 // Default constructor with optional map name
-Map::Map(const string &nm) {
+Map::Map(const std::string & nm) {
     name = nm;
-}
-
-
-/*---------------------------------------------------------------------------*
- | Boundary refinement functions
- *---------------------------------------------------------------------------*/
-void Map::refine() {
-    edge_iterator ei;
-    for (ei = edges().begin(); ei != edges().end(); ++ei)
-        (*ei)->refine();
 }
 
 
@@ -347,8 +258,7 @@ Map::enclosingFaceVertex(VertexConstPtr v, Point p) const {
     }
 
     // This shouldn't happen...
-    cerr << "enclosingFaceVertex(V-" << v->id() << ", " << p
-         << ") failed!" << endl;
+    INCA_ERROR(__FUNCTION__ << "(V-" << v->id() << ", " << p << ") failed!")
     return NULL;
 }
 

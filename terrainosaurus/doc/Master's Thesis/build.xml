@@ -1,0 +1,336 @@
+<?xml version="1.0"?>
+
+<!-- Set the base directory to the location of the xml files -->
+<project name="generate" default="build-xhtml-single">
+  <description>  &gt;&gt; Typeset a DocBook document &lt;&lt;</description>
+
+  <!-- ================================================================ -->
+  <!-- Import project-specific properties                               -->
+  <!-- This should result in the following properties being defined:    -->
+  <!-- ================================================================ -->
+  <property file="project.properties"/>
+
+
+  <!-- ================================================================ -->
+  <!-- Import DocBook tasks and properties                              -->
+  <!-- ================================================================ -->
+  <import file="${dir.docbook-tools}/docbook-ant.xml"/>
+
+  <property name="file.docbook-xsl-fo"
+            value="${dir.docbook-xsl-custom}/fo/docbook.xsl"/>
+
+  <!-- ================================================================ -->
+  <!-- The sets of source files (output files depend on these)          -->
+  <!-- ================================================================ -->
+  <fileset id="fileset.source.docbook" dir="${dir.source.docbook}">
+    <include name="*.xml"/>
+    <exclude name="${file.intermediate.references}"/>
+  </fileset>
+  <fileset id="fileset.source.svg" dir="${dir.source.svg}">
+    <include name="**/*.svg"/>
+  </fileset>
+  <fileset id="fileset.source.image" dir="${dir.source.image}">
+    <include name="**/*.png"/>
+    <include name="**/*.jp?g"/>
+    <include name="**/*.gif"/>
+  </fileset>
+  <fileset id="fileset.source.mathml" dir="${dir.source.mml}">
+    <include name="**/*.mml"/>
+  </fileset>
+
+
+  <!-- ================================================================ -->
+  <!-- The sets of output files                                         -->
+  <!-- ================================================================ -->
+  <fileset id="fileset.intermediate" dir="${dir.intermediate}">
+    <include name="${file.intermediate.references}"/>
+    <include name="**/*"/>
+  </fileset>
+  <fileset id="fileset.output" dir=".">
+    <include name="${dir.output.xhtml}/**/*"/>
+    <include name="${file.output.pdf}"/>
+    <include name="${file.output.postscript}"/>
+  </fileset>
+  <fileset id="fileset.intermediate.image" dir="${dir.intermediate}">
+    <include name="**/*.png"/>
+    <include name="**/*.jp?g"/>
+    <include name="**/*.gif"/>
+    <depend targetdir="${dir.source.image}"/>
+  </fileset>
+
+
+  <!-- ================================================================ -->
+  <!-- Initialization targets                                           -->
+  <!-- ================================================================ -->
+  <target name="generate-timestamp"
+          description="Generate the TSTAMP, DSTAMP, and TODAY properties">
+    <tstamp/>
+  </target>
+
+  <target name="configure-init-phases"
+          depends="generate-timestamp"
+          description="Determine which optional init phases should be run">
+    <configure-init-phases/>
+  </target>
+
+  <target name="generate-sysconfig"
+          depends="configure-init-phases"
+          if="phase.generate-sysconfig.do"
+          description="Determine versions/availability of tools, generating the system.properties file">
+    <echo>Generating sysconfig.properties</echo>
+    <!--delete file="sysconfigproperties"/-->
+    <touch file="sysconfig.properties"/>
+  </target>
+
+  <!-- TODO: generate-xml-catalog -->
+
+  <target name="load-sysconfig"
+          depends="generate-sysconfig"
+          description="Load the previously generated sysconfig properties file">
+    <property file="sysconfig.properties"/>
+  </target>
+
+  <target name="configure-build-phases"
+          depends="load-sysconfig"
+          description="Determine which optional build phases should be run">
+    <configure-build-phases/>
+  </target>
+
+  <target name="check-directories"
+          description="Check source/output directories and create as needed">
+    <!-- Check the validity of all source directories -->
+    <available property="dir.source.docbook.exists" file="${dir.source.docbook}" type="dir"/>
+    <available property="dir.source.svg.exists"     file="${dir.source.svg}"     type="dir"/>
+    <available property="dir.source.image.exists"   file="${dir.source.image}"   type="dir"/>
+    <available property="dir.source.mathml.exists"  file="${dir.source.mathml}"  type="dir"/>
+    <fail unless="dir.source.docbook.exists"
+          message="DocBook source directory ${dir.source.docbook} doesn't exist"/>
+    <fail unless="dir.source.svg.exists"
+          message="SVG source directory ${dir.source.svg} doesn't exist"/>
+    <fail unless="dir.source.image.exists"
+          message="Image source directory ${dir.source.image} doesn't exist"/>
+    <fail unless="dir.source.mathml.exists"
+          message="MathML source directory ${dir.source.mathml} doesn't exist"/>
+
+    <!-- Create any missing intermediate/output directories -->
+    <mkdir dir="${dir.intermediate}"/>
+    <mkdir dir="${dir.output.xhtml}"/>
+    <mkdir dir="${dir.output.pdf}"/>
+    <mkdir dir="${dir.output.postscript}"/>
+  </target>
+
+  <!-- Top-level initialization target (build targets should depend on this) -->
+  <target name="init"
+          description="Initialize the build process"
+          depends="configure-build-phases, check-directories"/>
+
+
+  <!-- ================================================================ -->
+  <!-- Info targets                                                     -->
+  <!-- ================================================================ -->
+  <target name="print-tool-versions"
+          depends="init"
+          description="Print the detected versions of tools used">
+    <print-tool-versions/>
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Cleanup targets                                                  -->
+  <!-- ================================================================ -->
+  <target name="clean"
+          description="Delete all generated files"
+          depends="init">
+    <delete>
+      <fileset refid="fileset.output"/>
+    </delete>
+    <delete>
+      <fileset refid="fileset.intermediate"/>
+    </delete>
+    <!--delete>
+      <fileset refid="Generated Files"/>
+    </delete-->
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Top-level build targets                                          -->
+  <!-- ================================================================ -->
+  <target name="build-all"
+          description="Build all output targets"
+          depends="build-xhtml-single, build-pdf"/>
+
+
+  <!-- ================================================================ -->
+  <!-- Pull only used references from the bibliographic database, and   -->
+  <!-- sort them alphabetically by principal author's last name.        -->
+  <!-- ================================================================ -->
+  <target name="build-references"
+          description="Compile list of references used"
+          depends="init"
+          if="phase.build-references">
+    <build-docbook-references
+        database="${file.bibliography.database}"
+        src="${file.docbook.main}"
+        dest="${file.intermediate.references}"/>
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Merge a modular DocBook document into a single XML file          -->
+  <!-- ================================================================ -->
+  <target name="merge-xincludes"
+          description="Merge modular XIncludes into a single XML file"
+          depends="init"
+          if="phase.xinclude">
+    <dependset>
+      <srcfileset file="${file.docbook.main}"/>
+      <targetfileset file="${file.docbook.merged}"/>
+    </dependset>
+
+    <xinclude in="${file.docbook.main}"
+              out="${file.docbook.merged}"
+              encoding="UTF-8"
+              indent="yes"/>
+  </target>
+
+  <target name="down-convert"
+          description="Substitute backward-compatible DocBook constructs"
+          depends="init"
+          if="phase.down-convert">
+    <dependset>
+      <srcfileset file="${file.docbook.merged}"/>
+      <targetfileset file="${file.docbook.final}"/>
+    </dependset>
+    <xslt in="${file.docbook.merged}"
+          out="${file.docbook.final}"
+          style="${dir.docbook-tools}/down-convert.xsl">
+      <xmlcatalog refid="catalog.docbook"/>
+      <param name="docbook.version"   expression="3.9"/>
+      <param name="ext.svg"           expression="0"/>
+      <param name="ext.mml"           expression="0"/>
+      <param name="file.svg-catalog"  expression="${file.svg-catalog}"/>
+      <param name="file.mml-catalog"  expression="${file.mml-catalog}"/>
+    </xslt>
+  </target>
+
+  <target name="build-final-docbook"
+          description=""
+          depends="init, merge-xincludes, down-convert"/>
+
+
+  <!-- ================================================================ -->
+  <!-- Transform DocBook -> xHTML                                       -->
+  <!-- ================================================================ -->
+  <target name="build-xhtml-single"
+          description="Build single xHTML output file"
+          depends="init, build-final-docbook, build-xhtml-resources">
+
+    <!-- Run the DocBook file thru the appropriate XSLT stylesheet -->
+    <xslt in="${file.docbook.final}"
+          out="${file.xhtml-single}"
+          style="${file.docbook-xsl-xhtml-single}">
+
+      <!-- Use the XML catalog to resolve entity references -->
+      <xmlcatalog refid="catalog.docbook"/>
+
+      <!-- DocBook Stylesheet parameters -->
+      <param name="bibliography.numbered"   expression="1"/>
+    </xslt>
+  </target>
+
+  <target name="build-xhtml-chunked"
+          description="Build chunked xHTML output files"
+          depends="init, build-final-docbook, build-xhtml-resources">
+
+    <!-- Run the DocBook file thru the appropriate XSLT stylesheet -->
+    <xslt in="${file.docbook.final}"
+          style="${file.docbook-xsl-xhtml-chunked}">
+
+      <!-- Use the XML catalog to resolve entity references -->
+      <xmlcatalog refid="catalog.docbook"/>
+
+      <param name="base.dir"            expression="${dir.xhtml}"/>
+      <param name="root.filename"       expression="${file.xhtml-chunked}"/>
+      <param name="use.id.as.filename"  expression="1"/>
+
+      <!-- DocBook Stylesheet parameters -->
+      <param name="bibliography.numbered"   expression="1"/>
+    </xslt>
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Transform DocBook -> XSL-FO                                      -->
+  <!-- ================================================================ -->
+  <target name="build-fo"
+          description="Build XSL-FO intermediate file">
+          <!--depends="init, build-final-docbook"-->
+
+    <xslt in="${file.docbook.final}"
+          out="${file.intermediate.fo}"
+          style="${file.docbook-xsl-fo}">
+
+      <!-- Use the XML catalog to resolve entity references -->
+      <xmlcatalog refid="catalog.docbook"/>
+    </xslt>
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Transform XSL-FO -> PDF                                          -->
+  <!-- ================================================================ -->
+  <target name="build-pdf"
+          description="Build PDF output file"
+          depends="init, build-fo">
+    <fop fofile="${file.intermediate.fo}"
+         outfile="${file.output.pdf}"
+         basedir="${dir.source.resources}"
+         userconfig="fop.conf"
+         format="application/pdf"
+         force="true"/>
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Transform XSL-FO -> PostScript                                   -->
+  <!-- ================================================================ -->
+  <target name="build-postscript"
+          description="Build PostScript output file"
+          depends="init, build-fo">
+    <fop fofile="${file.intermediate.fo}"
+         outfile="${file.output.postscript}"/>
+  </target>
+
+
+  <!-- ================================================================ -->
+  <!-- Rasterize SVG and MathML graphics to PNG                         -->
+  <!-- ================================================================ -->
+  <target name="rasterize-svg"
+          description="Rasterize SVG graphics"
+          depends="init">
+    <rasterize-svg result="image/png" destdir="${dir.temp}">
+      <fileset refid="SVG Sources"/>
+    </rasterize-svg>
+  </target>
+
+  <target name="rasterize-mml"
+          description="Rasterize MathML graphics"
+          depends="init">
+    <rasterize-mml baseDir="${dir.mml}" destDir="${dir.temp}"
+        format="svg" antialiasing="true" font="Math1"
+        inlineFontSize="10" blockFontSize="10" force="no">
+      <include name="*.mml"/>
+    </rasterize-mml>
+  </target>
+
+  <target name="build-xhtml-resources"
+          description="Copy linked-to resources to the xHTML output directory"
+          depends="init, rasterize-svg, rasterize-mml">
+    <copy todir="${dir.output.xhtml}">
+      <fileset refid="${fileset.source.image}"/>
+      <fileset refid="${fileset.intermediate.images}"/>
+    </copy>
+  </target>
+
+</project>

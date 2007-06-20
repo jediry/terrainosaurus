@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo>&isin;</mo>
+  <mfenced open="{" close="}">
+    <mi>&mu;</mi>
+    <mi>&sigma;</mi>
+    <msub>
+      <mi>&gamma;</mi>
+      <mn>1</mn>
+    </msub>
+    <msub>
+      <mi>&gamma;</mi>
+      <mn>2</mn>
+    </msub>
+  </mfenced>
+  <mo>:</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac linethickness="thin">
+    <msub>
+      <mi>A</mi>
+      <mi>i</mi>
+    </msub>
+    <mrow>
+      <munder>
+        <mo>&sum;</mo>
+        <mrow>
+          <mo>&forall;</mo>
+          <mi>j</mi>
+        </mrow>
+      </munder>
+      <msub>
+        <mi>A</mi>
+        <mi>j</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+</math>

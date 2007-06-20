@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+<!--  G(x) = exp((x-&mu;)^2 / (-2 * &sigma;^2)) -->
+  <mi>G</mi>
+  <mfenced>
+    <mi>x</mi>
+  </mfenced>
+  <mo>=</mo>
+  <msup>
+    <mi>e</mi>
+    <mfrac linethickness="thin">
+      <msup>
+        <mfenced separators=" ">
+          <mrow>
+            <mi>x</mi>
+            <mo>&minus;</mo>
+            <msub>
+              <mi>&mu;</mi>
+              <mi>G</mi>
+            </msub>
+          </mrow>
+        </mfenced>
+        <mn>2</mn>
+      </msup>
+      <mrow>
+        <mo>&minus;</mo>
+        <mn>2</mn>
+        <mo>&InvisibleTimes;</mo>
+        <msubsup>
+          <mi>&sigma;</mi>
+          <mi>G</mi>
+          <mn>2</mn>
+        </msubsup>
+      </mrow>
+    </mfrac>
+  </msup>
+</math>

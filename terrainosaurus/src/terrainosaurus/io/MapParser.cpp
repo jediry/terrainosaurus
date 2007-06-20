@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.5 (20050201): "Map.g" -> "MapParser.cpp"$ */
+/* $ANTLR 2.7.5 (20050613): "Map.g" -> "MapParser.cpp"$ */
 #include "MapParser.hpp"
 #include <antlr/NoViableAltException.hpp>
 #include <antlr/SemanticException.hpp>
@@ -35,12 +35,12 @@ void MapParser::terrainMap(
 	Map * m
 ) {
 	
-#line 82 "Map.g"
+#line 86 "Map.g"
 	map = m;
 #line 40 "MapParser.cpp"
 	if (!( map != NULL ))
 		throw antlr::SemanticException(" map != NULL ");
-#line 84 "Map.g"
+#line 88 "Map.g"
 	currentTT = map->terrainLibrary->terrainType(0);
 #line 45 "MapParser.cpp"
 	{ // ( ... )*
@@ -80,7 +80,7 @@ void MapParser::terrainMap(
 void MapParser::vertexRecord() {
 	antlr::RefToken  t = antlr::nullToken;
 	
-#line 92 "Map.g"
+#line 96 "Map.g"
 	scalar_t x, y;
 #line 85 "MapParser.cpp"
 	t = LT(1);
@@ -88,7 +88,7 @@ void MapParser::vertexRecord() {
 	x=scalar();
 	y=scalar();
 	match(EOL);
-#line 94 "Map.g"
+#line 98 "Map.g"
 	createVertex(x, y, t);
 #line 93 "MapParser.cpp"
 }
@@ -96,12 +96,12 @@ void MapParser::vertexRecord() {
 void MapParser::faceRecord() {
 	antlr::RefToken  f = antlr::nullToken;
 	
-#line 98 "Map.g"
+#line 102 "Map.g"
 	IDType id;
 #line 101 "MapParser.cpp"
 	f = LT(1);
 	match(FACE);
-#line 99 "Map.g"
+#line 103 "Map.g"
 	beginFace(f);
 #line 106 "MapParser.cpp"
 	{ // ( ... )+
@@ -109,7 +109,7 @@ void MapParser::faceRecord() {
 	for (;;) {
 		if ((LA(1) == NUMBER)) {
 			id=integer();
-#line 99 "Map.g"
+#line 103 "Map.g"
 			addVertex(id, f);
 #line 114 "MapParser.cpp"
 		}
@@ -122,7 +122,7 @@ void MapParser::faceRecord() {
 	_loop7:;
 	}  // ( ... )+
 	match(EOL);
-#line 100 "Map.g"
+#line 104 "Map.g"
 	endFace();
 #line 127 "MapParser.cpp"
 }
@@ -134,7 +134,7 @@ void MapParser::terrainTypeRecord() {
 	id = LT(1);
 	match(NAME);
 	match(EOL);
-#line 105 "Map.g"
+#line 109 "Map.g"
 	setTerrainType(id->getText(), id);
 #line 139 "MapParser.cpp"
 }
@@ -145,7 +145,7 @@ void MapParser::blankLine() {
 }
 
 scalar_t  MapParser::scalar() {
-#line 115 "Map.g"
+#line 148 "Map.g"
 	scalar_t s;
 #line 150 "MapParser.cpp"
 	antlr::RefToken  sg = antlr::nullToken;
@@ -169,7 +169,7 @@ scalar_t  MapParser::scalar() {
 	}
 	}
 	s=fraction();
-#line 117 "Map.g"
+#line 150 "Map.g"
 	
 	// If we have a sign token and it is negative, then negate 's'
 	if (sg != NULL && sg->getText() == "-")
@@ -180,25 +180,28 @@ scalar_t  MapParser::scalar() {
 }
 
 int  MapParser::integer() {
-#line 143 "Map.g"
+#line 165 "Map.g"
 	int value;
 #line 185 "MapParser.cpp"
 	antlr::RefToken  n = antlr::nullToken;
 	
 	n = LT(1);
 	match(NUMBER);
-#line 143 "Map.g"
+#line 165 "Map.g"
 	value = atoi(n->getText().c_str());
 #line 192 "MapParser.cpp"
 	return value;
 }
 
 scalar_t  MapParser::fraction() {
-#line 125 "Map.g"
+#line 126 "Map.g"
 	scalar_t s;
 #line 199 "MapParser.cpp"
 	antlr::RefToken  w = antlr::nullToken;
 	antlr::RefToken  f = antlr::nullToken;
+	antlr::RefToken  sg = antlr::nullToken;
+	antlr::RefToken  e = antlr::nullToken;
+	antlr::RefToken  p = antlr::nullToken;
 	
 	w = LT(1);
 	match(NUMBER);
@@ -213,8 +216,10 @@ scalar_t  MapParser::fraction() {
 	}
 	case antlr::Token::EOF_TYPE:
 	case EOL:
-	case SIGN:
 	case NUMBER:
+	case LITERAL_e:
+	case SIGN:
+	case PERCENT:
 	{
 		break;
 	}
@@ -224,26 +229,97 @@ scalar_t  MapParser::fraction() {
 	}
 	}
 	}
-#line 127 "Map.g"
-	std::string tmp(w->getText());      // Construct a composite string
-	if (f != NULL) {                    // If we have a fractional part,
-	tmp += '.';                     // then add it in
-	tmp += f->getText();
+	{
+	switch ( LA(1)) {
+	case LITERAL_e:
+	{
+		match(LITERAL_e);
+		{
+		switch ( LA(1)) {
+		case SIGN:
+		{
+			sg = LT(1);
+			match(SIGN);
+			break;
+		}
+		case NUMBER:
+		{
+			break;
+		}
+		default:
+		{
+			throw antlr::NoViableAltException(LT(1), getFilename());
+		}
+		}
+		}
+		e = LT(1);
+		match(NUMBER);
+		break;
 	}
-	s = (scalar_t)atof(tmp.c_str());
+	case antlr::Token::EOF_TYPE:
+	case EOL:
+	case NUMBER:
+	case SIGN:
+	case PERCENT:
+	{
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltException(LT(1), getFilename());
+	}
+	}
+	}
+	{
+	switch ( LA(1)) {
+	case PERCENT:
+	{
+		p = LT(1);
+		match(PERCENT);
+		break;
+	}
+	case antlr::Token::EOF_TYPE:
+	case EOL:
+	case NUMBER:
+	case SIGN:
+	{
+		break;
+	}
+	default:
+	{
+		throw antlr::NoViableAltException(LT(1), getFilename());
+	}
+	}
+	}
+#line 128 "Map.g"
 	
-#line 235 "MapParser.cpp"
+	// First, convert the floating point number
+	std::string tmp(w->getText());          // Whole # part
+	tmp += ".";                             // Decimal point
+	if (f != NULL)  tmp += f->getText();    // Fractional part
+	else            tmp += "0";             // Implicit zero
+	if (e != NULL) {                        // Exponent
+	tmp += "e";
+	if (sg != NULL) tmp += sg->getText();
+	tmp += e->getText();
+	}
+	s = scalar_t(atof(tmp.c_str()));
+	
+	// If this is a percent, convert to normal decimal by dividing by 100
+	if (p != NULL)  s /= 100;
+	
+#line 311 "MapParser.cpp"
 	return s;
 }
 
 scalar_t  MapParser::nFraction() {
-#line 137 "Map.g"
+#line 159 "Map.g"
 	scalar_t s;
-#line 242 "MapParser.cpp"
+#line 318 "MapParser.cpp"
 	
 	s=fraction();
-	if (!( s >= 0.0 && s <= 1.0 ))
-		throw antlr::SemanticException(" s >= 0.0 && s <= 1.0 ");
+	if (!( s >= scalar_t(0) && s <= scalar_t(1) ))
+		throw antlr::SemanticException(" s >= scalar_t(0) && s <= scalar_t(1) ");
 	return s;
 }
 
@@ -260,13 +336,33 @@ const char* MapParser::tokenNames[] = {
 	"\"f\"",
 	"\"tt\"",
 	"name",
-	"SIGN",
 	"number",
-	".",
-	"digit",
-	"letter",
+	"DOT",
+	"\"e\"",
+	"SIGN",
+	"PERCENT",
+	"DIGIT",
+	"LETTER",
+	"WS_CHAR",
+	"EOL_CHAR",
+	"DQUOTE",
+	"SQUOTE",
+	"SPACE",
 	"comment",
 	"WS",
+	"LEFT_ABRACKET",
+	"RIGHT_ABRACKET",
+	"LEFT_SBRACKET",
+	"RIGHT_SBRACKET",
+	"COMMA",
+	"ASSIGN",
+	"COLON",
+	"AMPERSAND",
+	"BACKSLASH",
+	"FORESLASH",
+	"NBSP",
+	"quoted string",
+	"ANTLR_DUMMY_TOKEN",
 	0
 };
 

@@ -34,6 +34,9 @@ namespace terrainosaurus {
 #include "TerrainLibrary.hpp"
 #include "TerrainSample.hpp"
 
+// Import statistical analysis tools
+#include <inca/math/statistics/DistributionMatcher>
+
 
 /*****************************************************************************
  * LOD specialization for TerrainType
@@ -41,6 +44,13 @@ namespace terrainosaurus {
 template <>
 class terrainosaurus::LOD<terrainosaurus::TerrainType>
     : public LODBase<TerrainType> {
+/*---------------------------------------------------------------------------*
+ | Type declarations
+ *---------------------------------------------------------------------------*/
+public:
+    typedef inca::math::DistributionMatcher<scalar_t> DistributionMatcher;
+
+
 /*---------------------------------------------------------------------------*
  | Constructors & fundmental properties
  *---------------------------------------------------------------------------*/
@@ -62,11 +72,48 @@ public:
  | Loading & analysis
  *---------------------------------------------------------------------------*/
 public:
+    // Analysis of constitutent TerrainSamples' statistical properties
+    void analyze();
+
     // Lazy loading & analysis mechanism
     void ensureLoaded()   const;
     void ensureAnalyzed() const;
     void ensureStudied()  const;
 
+
+/*---------------------------------------------------------------------------*
+ | Statistical distribution matching
+ *---------------------------------------------------------------------------*/
+public:
+    const DistributionMatcher & elevationDistribution() const;
+    const DistributionMatcher & slopeDistribution() const;
+    const DistributionMatcher & edgeLengthDistribution() const;
+    const DistributionMatcher & edgeScaleDistribution() const;
+    const DistributionMatcher & edgeStrengthDistribution() const;
+
+    scalar_t elevationWeight() const;
+    scalar_t slopeWeight() const;
+    scalar_t edgeLengthWeight() const;
+    scalar_t edgeScaleWeight() const;
+    scalar_t edgeStrengthWeight() const;
+
+    scalar_t agreement() const;
+
+protected:
+    DistributionMatcher _elevationDistribution,
+                        _slopeDistribution,
+                        _edgeLengthDistribution,
+                        _edgeScaleDistribution,
+                        _edgeStrengthDistribution;
+
+    scalar_t _elevationWeight,
+             _slopeWeight,
+             _edgeLengthWeight,
+             _edgeScaleWeight,
+             _edgeStrengthWeight;
+
+    scalar_t _agreement;
+    
 
 /*---------------------------------------------------------------------------*
  | Access to parent TerrainType properties

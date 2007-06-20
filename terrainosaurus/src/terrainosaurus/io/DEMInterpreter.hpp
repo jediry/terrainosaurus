@@ -62,13 +62,11 @@ namespace terrainosaurus {
     class DEMInterpreter;
 };
 
-// Import IOStream file stream definition
-#include <fstream>
+// Import IOStream input stream definition
+#include <istream>
 
 // Import raster grid definition
 #include <inca/raster.hpp>
-//#include <vigra/basicimage.hxx>
-//typedef vigra::BasicImage<float> VImage;
 
 
 using inca::IndexType;
@@ -87,31 +85,33 @@ public:
     // Constructor
     DEMInterpreter(Heightfield & hf);
 
-    // Destructor
-    ~DEMInterpreter();
-
 //    rw_ptr_property(Handler, handler, /* */);
     rw_property(std::string, filename, "");
-
-    // Parse the file
-    void parse();
 
 //protected:
     // This is where the stuff goes
     Heightfield & raster;
 
-    // These return the # of CHUNK_SIZE blocks consumed by the parsed record
-    void parseRecordTypeA();
-    void parseRecordTypeB(IndexType r, IndexType c);
-    void parseRecordTypeC();
 
-    void warn(const std::string &msg) { std::cerr << msg << '\n'; }
+/*---------------------------------------------------------------------------*
+ | Constructors & properties
+ *---------------------------------------------------------------------------*/
+public:
+    // Parse the file
+    void parse();
+    void parse(std::istream & is);
+
+protected:
+    void parseRecordTypeA(std::istream & is);
+    void parseRecordTypeB(IndexType r, IndexType c, std::istream & is);
+    void parseRecordTypeC(std::istream & is);
 
 
 /*---------------------------------------------------------------------------*
  | Retained fields from the DEM file
  *---------------------------------------------------------------------------*/
 //protected:
+public:
     int horizontalUnits;
     int verticalUnits;
     double deviationAngle;  // How far this grid deviates from horizontal
@@ -126,17 +126,16 @@ public:
  *---------------------------------------------------------------------------*/
 protected:
     // Low-level functions to read data from the file
-    std::size_t readBytes(std::size_t numBytes);
-    bool readBoolean(std::size_t numBytes);
-    int readInteger(std::size_t numBytes);
-    double readDouble(std::size_t numBytes);
-    char readChar();
-    const char * readChars(std::size_t numBytes);
+    std::size_t readBytes(std::size_t numBytes, std::istream & is);
+    bool readBoolean(std::size_t numBytes, std::istream & is);
+    int readInteger(std::size_t numBytes, std::istream & is);
+    double readDouble(std::size_t numBytes, std::istream & is);
+    char readChar(std::istream & is);
+    const char * readChars(std::size_t numBytes, std::istream & is);
 
     static const std::size_t BUFFER_SIZE;   // Size of the char buffer
     static const std::size_t CHUNK_SIZE;
     scoped_array<char> buffer;              // ...the buffer.
-    std::ifstream file;                     // The file we're reading
 };
 
 #endif

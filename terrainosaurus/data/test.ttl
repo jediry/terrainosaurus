@@ -1,23 +1,207 @@
-# This section sets the parameters of the heightfield generation GA
-[Global]
-population size         = 15    # How many chromosomes in our GA?
-evolution cycles        = 15    # How many iterations do we run?
-selection ratio         = 0.75  # What percent survive to the next round?
-elite ratio             = 0.2   # What percent "best" survive to the next round?
-mutation probability    = 0.8   # What are the odds of mutating a chromosome?
-mutation ratio          = 0.5   # What percent of the genes get mutated?
-crossover probability   = 0.5   # What are the odds of crossing a chromosome?
-crossover ratio         = 0.5   # What percentage of the genes get crossed?
+###############################################################################
+# This is a terrain library file, for use with the Terrainosaurus terrain
+# generation engine. This file describes the properties of logical terrain
+# types (in terms of examples) and of seams (boundaries) between them (in terms
+# of smoothness).
+#
+# TerrainType and TerrainSeam records may be interspersed, but any TerrainSeam
+# records must *follow* the TerrainType records they reference, or else a
+# 'non-existent TerrainType' error will occur.
+###############################################################################
 
-max crossover width     = 4     # How wide/long a chunk (measured in genes) can we crossover?
-max scale factor        = 1.1   # How much can we scale the elevations in a single mutation?
-max offset amount       = 50.0  # How much can we vertically offset a gene?
-max jitter pixels       = 0     # How much can we jitter the gene locations?
 
-# These sections define the different, logical "terrain types"
+###############################################################################
+# The [TerrainLibrary] section defines the properties of the whole library.
+# Properties allowed in this section are:
+#   base directory      ??
+#   map directory       ??
+#   elevation directory??
+###############################################################################
+
+
+###############################################################################
+# [TerrainType] sections define different, logical "terrain types". Each
+# TerrainType must have a unique name. The properties allowed in TerrainType
+# sections are:
+#   color       a color used to characterize the terrain type
+#   sample      the base-name of an example of this type of terrain; there
+#               may be arbitrarily many of these, and there must be AT LEAST
+#               one, for each terrain type
+###############################################################################
 [TerrainType: California_Coast_Hills]
-color = <0.6, 0.6, 0.3, 1.0>
-sample = "/mnt/data/scratch/gis/dem/35120e8 - Cypress Mountain, CA (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/35120f8 - Lime Mountain, CA (30m).dem"
-sample = "/mnt/data/scratch/gis/dem/35121f1 - Pebblestone Shut-in, CA (30m).dem"
+#color = <0.6, 0.6, 0.3, 1.0>
+color = <1.0, 1.0, 1.0, 1.0>
+sample = "35120e8 - Cypress Mountain, CA"
+sample = "35120f8 - Lime Mountain, CA"
+sample = "35121f1 - Pebblestone Shut-in, CA"
+sample = "33116b7 - Mesa Grande, CA"
+# sample = "35120d8 - Cayucos, CA"          # 60% water
+# sample = "35121d1 - Cayucos OE W, CA"     # 99% water
+# sample = "35121e1 - Cambria, CA"          # 25% water
+# sample = "35121e2 - Pico Creek, CA"       # Apparently degenerate
+# sample = "35121f2 - San Simeon, CA"       # 15% water
 
+
+[TerrainType: Mojave_Desert]
+color = <0.8, 0.6, 0.3, 1.0>
+sample = "36116c4 - Death Valley Junction, CA"
+
+[TerrainType: Washington_Hills]
+color = <0.2, 0.7, 0.7, 1.0>
+sample = "46118g2 - Hooper, WA"
+
+[TerrainType: Washington_Mountains_Eroded]
+color = <0.1, 0.3, 0.7, 1.0>
+sample = "46121f5 - Ohanapecosh Hot Springs, WA"    # 5% water
+sample = "46121f6 - Tatoosh Lakes, WA"              # 5% water
+sample = "46121g5 - Chinook Pass, WA"
+sample = "46121h5 - White River Park, WA"
+
+[TerrainType: Washington_Mountains_Bumpy]
+color = <0.2, 0.7, 0.7, 1.0>
+sample = "46121g7 - Mount Rainier West, WA"
+sample = "46121h7 - Mowich Lake, WA"
+
+[TerrainType: Florida_Bumpy_Flatland]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "29082d1 - Citra, FL"
+sample = "29082e4 - Arredondo, FL"
+sample = "29082e5 - Archer, FL"
+#sample = "44104d5 - The Rocks, WY"
+
+[TerrainType: Florida_Cracks_n_Crevices]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "29082f3 - Gainesville East, FL"
+sample = "29082h3 - Brooker, FL"
+sample = "30083d4 - Madison, FL"        # 5% flatland
+
+[TerrainType: Florida_Small_Hills]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "29082d3 - Flemington, FL"
+sample = "29082d5 - Bronson NE, FL"
+sample = "29082f4 - Gainesville West, FL"
+# sample = "29082e1 - Hawthorne, FL"    # Transitional to F_B_F
+# sample = "29082g4 - Alachua, FL"      # Transitional to several
+
+[TerrainType: Texas_Hill_Country]
+color = <1.0, 0.0, 0.0, 1.0>
+sample = "30096f3 - Bryan East, TX"
+sample = "30096f4 - Bryan West, TX"
+sample = "30096g3 - Kurten, TX"
+sample = "30096h3 - Edge, TX"
+sample = "30096c3 - Independence, TX"
+# sample = "30096d2 - Millican, TX"       # Transitional
+# sample = "30096d3 - Clay, TX"           # River
+
+[TerrainType: Texas_Flat_w_Rocks]
+color = <0.7, 0.2, 0.2, 1.0>
+sample = "32100e8 - Dunn, TX"
+sample = "30096g2 - Clear Lake, TX"
+sample = "30096h2 - Canary, TX"
+sample = "30096e2 - Ferguson Crossing, TX"
+
+[TerrainType: Texas_Desert]
+color = <1.0, 0.0, 0.0, 1.0>
+sample = "34101f1 - Willow Arroyo, TX"
+sample = "34101f2 - Hardscrabble Creek, TX"
+sample = "34101g1 - Tate Arroyo, TX"
+sample = "34101h1 - Buffalo Arroyo, TX"
+sample = "34101f3 - Big Betty Reservoir, TX"
+sample = "34101g3 - Gip Creek, TX"
+sample = "34101h2 - Blue Hole Springs, TX"
+
+#[TerrainType: Texas]
+#color = <1.0, 0.0, 0.0, 1.0>
+# sample = "29098d5 - San Antonio West, TX"     # Transitional
+# sample = "34101h3 - Luttrell Springs NE, TX"  # Transitional
+
+[TerrainType: Utah_Mountains]
+color = <0.8, 0.0, 0.8, 1.0>
+sample = "39110d1 - Chandler Falls, UT"
+# sample = "39110f1 - Cedar Ridge Canyon, UT"
+
+[TerrainType: Utah_Foothills]
+color = <0.8, 0.2, 0.8, 1.0>
+sample = "39111e2 - Candland Mountain, UT"
+sample = "39110g3 - Currant Canyon, UT"
+# sample = "39111g1 - Colton, UT"
+
+[TerrainType: Wyoming_Mountains]
+color = <0.7, 0.6, 0.1, 1.0>
+sample = "44104d5 - The Rocks, WY"
+sample = "44104d6 - Wonder View, WY"
+sample = "44104e5 - Sherrard Hill, WY"
+sample = "44104e7 - Missouri Buttes, WY"
+sample = "44104d7 - Carlile, WY"
+sample = "44104e6 - Devils Tower, WY"
+sample = "44104f5 - Hulett, WY"
+sample = "44104f6 - Moore Hill, WY"
+
+[TerrainType: Wyoming_Foothills]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "44104f7 - New Haven, WY"          # 20% mountains
+
+[TerrainType: Colorado_Canyon]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "37104c8 - Herlick Canyon, CO"
+
+[TerrainType: Colorado_Large_Mountains]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "38104f8 - Mount Big Chief, CO"
+sample = "38104g8 - Manitou Springs, CO"
+sample = "38105g1 - Pikes Peak, CO"
+
+[TerrainType: Colorado_Small_Mountains]
+color = <0.7, 0.7, 0.0, 1.0>
+sample = "38104h8 - Cascade, CO"
+sample = "38105f1 - Big Bull Mountain, CO"
+sample = "38105g2 - Cripple Creek North, CO"
+
+# [TerrainType: Colorado_Plains]
+# color = <0.7, 0.7, 0.0, 1.0>
+# sample = "38105h2 - Divide, CO"
+# sample = "38105h1 - Woodland Park, CO"          # Transitional
+# sample = "38105f2 - Cripple Creek South, CO"    # Transitional
+# sample = "39105a3 - Hackett Mountain, CO"   # Transitional
+
+# [TerrainType: Misc]
+# color = <1.0, 0.5, 0.0, 1.0>
+# sample = "31112h4 - Chupan Mountain, AZ"  # Multi-type
+# sample = "34086f6 - Madison, AL"
+# sample = "34092e4 - Bryant, AR"
+# sample = "34108c5 - Armstrong Canyon, NM"
+# sample = "41087f1 - Dune Acres, IN"
+# sample = "43102c3 - Evergreen, SD"
+# sample = "43102h6 - Creston, SD"
+# sample = "43116e2 - Boise South, ID"
+# sample = "44068f4 - Beech Hill Pond, ME"
+# sample = "44068g3 - Amherst, ME"
+# sample = "44068h2 - Alligator Lake, ME"
+# sample = "44097e4 - Bryant, SD"
+
+
+###############################################################################
+# [TerrainSeam] sections define the characteristics of the boundaries between
+# terrain types. Seam characteristics may be specified separately for each
+# distinct pair of terrain types (order does not matter, but the TerrainType
+# records for both must already have been seen). All pairs of terrain types
+# for which a [TerrainSeam] section does not exist will use the defaults, which
+# are set by a [TerrainSeam] section without any terrain type names. Properties
+# allowed in [TerrainSeam] sections are:
+#   smoothness      how smooth the boundary is, with 1.0 being 'very smooth'
+#                   and 0.0 being 'very rough'
+###############################################################################
+#[TerrainSeam]       # Default values
+#  smoothness = 0.8
+
+[TerrainSeam: Colorado_Small_Mountains & Colorado_Large_Mountains]
+  smoothness = 0.3
+
+[TerrainSeam: Utah_Foothills & Texas_Flat_w_Rocks]
+  smoothness = 0.5
+
+[TerrainSeam: Wyoming_Mountains & Texas_Flat_w_Rocks]
+  smoothness = 0.0
+
+[TerrainSeam: Utah_Foothills & Wyoming_Mountains]
+  smoothness = 1.0

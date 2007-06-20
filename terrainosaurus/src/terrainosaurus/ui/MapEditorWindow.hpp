@@ -1,3 +1,18 @@
+/** -*- C++ -*-
+ *
+ * \file    MapEditorWindow.hpp
+ *
+ * \author  Ryan L. Saunders
+ *
+ * Copyright 2005, Ryan L. Saunders. Permission is granted to use and
+ *      distribute this file freely for educational purposes.
+ *
+ * Description:
+ *      The MapEditorWindow class is a top-level Window subclass for
+ *      displaying and editing 2D maps.
+ */
+
+#pragma once
 #ifndef TERRAINOAURUS_UI_MAP_EDITOR_WINDOW
 #define TERRAINOAURUS_UI_MAP_EDITOR_WINDOW
 
@@ -16,42 +31,44 @@ namespace terrainosaurus {
 }
 
 // Import superclass definition
-#include <inca/ui.hpp>
+#include <inca/ui/Window.hpp>
 
-// Import rendering object definitions
-#include <terrainosaurus/rendering/MapRendering.hpp>
-#include <terrainosaurus/rendering/GridRendering.hpp>
+// Import data object definitions
+#include <terrainosaurus/data/Map.hpp>
+#include <terrainosaurus/data/MeshSelection.hpp>
 
 
 // Simple window displaying an image
-class terrainosaurus::MapEditorWindow : public WINDOW(GUI_TOOLKIT) {
+class terrainosaurus::MapEditorWindow : public inca::ui::Window {
 public:
     // Constructor taking a map object to edit
-    MapEditorWindow(MapPtr m, const std::string & title = "Map Editor");
+    MapEditorWindow(MapPtr m, const std::string & nm = std::string());
     MapEditorWindow(MapPtr m, MeshSelectionPtr ps, MeshSelectionPtr ts,
-                    const std::string & title = "Map Editor");
+                    const std::string & nm = std::string());
+                    
+    // Second-phase initialization
+    void construct();
 
-    // Setter data objects
-    void load(MapPtr m, MeshSelectionPtr ps, MeshSelectionPtr ts);
-
-    // event handlers
-    void mouseMotion(int x, int y);
-    void passiveMotion(int x, int y);
-    void key(unsigned char k, int x, int y);
-    void special(int k, int x, int y);
-    void reshape(int width, int height);
-    void display();
-    void idle();
+    // Map accessors    
+    MapPtr      map();
+    MapConstPtr map() const;
+    void setMap(MapPtr m);
+    
+    // Persistent selection accessors
+    MeshSelectionPtr      persistentSelection();
+    MeshSelectionConstPtr persistentSelection() const;
+    void setPersistentSelection(MeshSelectionPtr s);
+    
+    // Transient selection accessors
+    MeshSelectionPtr      transientSelection();
+    MeshSelectionConstPtr transientSelection() const;
+    void setTransientSelection(MeshSelectionPtr s);
 
 protected:
+    // References to shareable data objects
     MapPtr              _map;
     MeshSelectionPtr    _persistentSelection,
                         _transientSelection;
-
-    MapRendering                    renderMap;
-    GridRendering                   renderGrid;
-    inca::world::OrthographicCamera camera;
-    Renderer                        renderer;
 };
 
 #endif

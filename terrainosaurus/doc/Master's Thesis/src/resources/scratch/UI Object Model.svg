@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="10.000000cm"
+   width="10.000000cm"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.40+cvs"
+   sodipodi:docname="UI Object Model.svg"
+   sodipodi:docbase="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources">
+  <defs
+     id="defs3">
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;">
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path2201"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(-5,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-y="174"
+     inkscape:window-x="132"
+     inkscape:window-height="541"
+     inkscape:window-width="640"
+     gridtolerance="0.010000000cm"
+     gridoriginx="0.00000000cm"
+     gridoriginy="0.00000000cm"
+     gridspacingx="0.10000000cm"
+     gridspacingy="0.10000000cm"
+     guidetolerance="0.10000000cm"
+     inkscape:guide-points="true"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="px"
+     inkscape:cy="171.23913"
+     inkscape:cx="175.71429"
+     inkscape:zoom="0.80700637"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base" />
+  <metadata
+     id="metadata4">
+    <rdf:RDF
+       id="RDF5">
+      <cc:Work
+         id="Work6"
+         rdf:about="">
+        <dc:format
+           id="format7">image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+           id="type9" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <rect
+       y="51.978706"
+       x="111.52328"
+       height="83.022888"
+       width="149.93686"
+       id="rect1300"
+       style="fill:#c1c1c1;fill-opacity:1.0000000;fill-rule:nonzero;stroke:#000000;stroke-width:1.0000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.0000000;stroke-dashoffset:0.00000000;stroke-opacity:1.0000000" />
+    <rect
+       y="198.19812"
+       x="29.739542"
+       height="68.153114"
+       width="73.109711"
+       id="rect1302"
+       style="fill:#c1c1c1;fill-opacity:1.0000000;fill-rule:nonzero;stroke:#000000;stroke-width:1.0000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.0000000;stroke-dashoffset:0.00000000;stroke-opacity:1.0000000" />
+    <rect
+       y="226.69852"
+       x="156.13260"
+       height="84.262039"
+       width="99.131805"
+       id="rect1304"
+       style="fill:#c1c1c1;fill-opacity:1.0000000;fill-rule:nonzero;stroke:#000000;stroke-width:1.0000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4.0000000;stroke-dashoffset:0.00000000;stroke-opacity:1.0000000" />
+    <text
+       id="text1306"
+       y="85.435692"
+       x="138.78453"
+       style="font-size:12.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:start;writing-mode:lr-tb"
+       xml:space="preserve"><tspan
+         y="85.435692"
+         x="138.78453"
+         id="tspan1308"
+         sodipodi:role="line">Terrainosaurus</tspan><tspan
+         y="97.435692"
+         x="138.78453"
+         id="tspan1310"
+         sodipodi:role="line">Application</tspan></text>
+    <text
+       id="text1312"
+       y="225.45937"
+       x="42.13102"
+       style="font-size:12.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:start;writing-mode:lr-tb"
+       xml:space="preserve"><tspan
+         y="225.45937"
+         x="42.131020"
+         id="tspan1314"
+         sodipodi:role="line">MapEditor</tspan><tspan
+         y="237.45937"
+         x="42.131020"
+         id="tspan1316"
+         sodipodi:role="line">Window</tspan></text>
+    <text
+       id="text1318"
+       y="256.43805"
+       x="178.43726"
+       style="font-size:12.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:start;writing-mode:lr-tb"
+       xml:space="preserve"><tspan
+         y="256.43805"
+         x="178.43726"
+         id="tspan1320"
+         sodipodi:role="line">Terrain</tspan><tspan
+         y="268.43805"
+         x="178.43726"
+         id="tspan1322"
+         sodipodi:role="line">Sample</tspan><tspan
+         y="280.43805"
+         x="178.43726"
+         id="tspan1324"
+         sodipodi:role="line">Window</tspan></text>
+    <path
+       id="path1326"
+       d="M 120.19732,126.32756 L 74.348856,194.48068"
+       style="marker-end:url(#Arrow2Lend);stroke-opacity:1.0000000;stroke-linejoin:miter;stroke-linecap:butt;stroke-width:1.0000000px;stroke:#000000;fill-rule:evenodd;fill-opacity:0.75000000;fill:none" />
+    <path
+       id="path1328"
+       d="M 206.93765,127.56671 L 218.08998,220.50278"
+       style="marker-end:url(#Arrow2Lend);stroke-opacity:1.0000000;stroke-linejoin:miter;stroke-linecap:butt;stroke-width:1.0000000px;stroke:#000000;fill-rule:evenodd;fill-opacity:0.75000000;fill:none" />
+  </g>
+</svg>

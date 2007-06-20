@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<chapter id="Motivation">
+  <title>Motivation</title>
+  <para>
+    The goal of <citetitle>Terrainosaurus</citetitle> is to "build a better 
+    mousetrap", so to speak.  Established terrain generation methodologies have 
+    their own respective strengths and weaknesses, which will be discussed in 
+    <xref linkend="Taxonomy of Methods"/>.  
+    <citetitle>Terrainosaurus</citetitle> is an attempt to address the 
+    shortcomings of these existing methods, yielding a better way of generating 
+    artificial terrain for many applications.
+  </para>
+  <para>
+    In order to elucidate the motivation for something like 
+    <citetitle>Terrainosaurus</citetitle>,  and to establish the context for the 
+    discussion that follows, it is worth spending time addressing some 
+    preliminary questions:
+  </para>
+  <itemizedlist spacing="compact">
+    <listitem>
+      Why generate terrain?
+    </listitem>
+    <listitem>
+      What characteristics would an <emphasis>ideal</emphasis> terrain 
+      generation algorithm have?
+    </listitem>
+    <listitem>
+      What should be the primary objectives for 
+      <citetitle>Terrainosaurus</citetitle>?
+    </listitem>
+  </itemizedlist>
+
+
+  <section>
+    <title>Applications of Terrain Generation</title>
+    <para>
+      Before bothering any further with <emphasis>how</emphasis> to generate 
+      terrain, it is first helpful to establish <emphasis>why</emphasis> it is 
+      worth doing, and who the primary users of terrain generation algorithms 
+      are.
+    </para>
+    <para>
+      Terrain generation has applications in a number of fields, many of which 
+      are entertainment-related, though certainly not all are. Examples include:
+      <itemizedlist spacing="compact">
+        <listitem>
+          Computer-generated art &amp; animation&em;both the commercial variety 
+          and "art for art's sake" often depict the natural world
+        </listitem>
+        <listitem>
+          Video games &amp; virtual reality (VR)&em;many virtual worlds involve 
+          at least some natural terrain. In addition to the entertainment uses 
+          of virtual worlds, they also have applications in military &amp; 
+          non-military simulation
+        </listitem>
+        <listitem>
+          Architectural rendering&em;while the focus of an architectural 
+          rendering is generally the buildings themselves, realistic terrain 
+          can help to provide the larger context for the buildings, contributing 
+          to the overall visual effect
+        </listitem>
+      </itemizedlist>
+    </para>
+  </section>
+
+  <section>
+    <title>Idealized Terrain Generation</title>
+    <para>
+      As is the case in many problem domains, there are a number of traits that 
+      an ideal terrain generation algorithm would have, some of which are in 
+      tension with one another. Such an ideal algorithm is probably a figment of 
+      our collective imagination; nonetheless, having such an ideal in view 
+      provides a yardstick with which to evaluate the strengths and weaknesses 
+      of real algorithms.
+    </para>
+    <para>
+      While this is not an exhaustive list, such an imaginary, ideal algorithm 
+      would:
+      <itemizedlist spacing="compact">
+        <listitem>
+          require a low degree of human input
+        </listitem>
+        <listitem>
+          permit a high degree of human control
+        </listitem>
+        <listitem>
+          be completely intuitive to control
+        </listitem>
+        <listitem>
+          be able to reproduce a wide variety of recognizable terrain types and 
+          features realistically, in believable relationship to one another
+        </listitem>
+        <listitem>
+          produce models at arbitrary levels of detail
+        </listitem>
+        <listitem>
+          run quickly enough to be used in real-time, dynamic applications
+        </listitem>
+        <listitem>
+          be extensible to support new types of terrain
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <section>
+      <title>Requiring a Low Degree of Human Input</title>
+      <para>
+        Digital terrain models typically involve large amounts of data. For 
+        example, a standard 10-meter USGS DEM (digital elevation model) 
+        <biblioref linkend="DEM Specification"/> contains more than 10,000 data 
+        points per square kilometer. If an artist has to place each point 
+        manually, this adds up to an enormous amount of painstaking work for 
+        the artist. Therefore, any terrain construction detail that can be 
+        automated without significantly limiting the artist's control over the 
+        result should yield an increase in productivity. An ideal terrain 
+        generation methodology would accept a command as simple as "give me a 10 
+        km by 5 km area of desert-like terrain with a resolution of 10m per 
+        sample" and produce a believable result.
+      </para>
+      <para>
+        If the inputs required by an algorithm are sufficiently minimal, there 
+        may be a second benefit, in addition to the increase in artist 
+        productivity: the algorithm may be useful for generating unique 
+        terrains automatically (e.g., as a random world generator for a game).
+      </para>
+    </section>
+
+    <section>
+      <title>Permitting a High Degree of Human Control</title>
+      <para>
+        In obvious tension with the previous ideal is the goal of permitting 
+        the artist to exert an arbitrarily fine degree of control over the 
+        features and characteristics of the generated terrain. To give an 
+        artist full creative freedom requires that he be able to control the 
+        behavior of the terrain across all scales, from the macro-scale 
+        features (hills, valleys, mountains, etc.) to the micro-scale details 
+        (cracks, crevices, etc.), with any degree of localization, creating 
+        both global and local effects. An ideal algorithm would permit the 
+        artist to exert whatever amount of control he wishes, where he wishes, 
+        while intelligently filling in the details he doesn't care to specify 
+        directly.
+      </para>
+    </section>
+
+    <section>
+      <title>Intuitively Controllable</title>
+      <para>
+        If a user is required to gain arcane knowledge or specialized skills to 
+        use a tool effectively, that tool will have a correspondingly steep 
+        learning curve. An ideal terrain generation algorithm would be perfectly 
+        intuitive to use&em;a complete "black box" from the user's perspective, 
+        requiring no understanding whatsoever of the algorithm's innards. All of 
+        the inputs available to the user would be easily understood: even an 
+        inexperienced user would have a reasonable idea of how tweaking an input 
+        would affect the generated terrain.
+      </para>
+    </section>
+
+    <section>
+      <title>Capable of Diverse, Believable Features &amp; Terrain Types</title>
+      <para>
+        A terrain generation algorithm that can reproduce only a narrow range 
+        of terrain types and features is inherently limited in its usefulness. 
+        An ideal algorithm would be able to create a wide diversity of terrain 
+        types (e.g., desert, mountains, plains) and features (e.g. ravines, 
+        riverbeds, volcanoes), both from the real world and from the imagination 
+        of the artist.  Additionally, the transitions between different types of 
+        terrain (e.g., from mountains to foothills) would be believable, and the 
+        placement of semantic features would make sense (waterfalls would pour 
+        into pools, rivers would always flow downhill).
+      </para>
+    </section>
+    <section>
+      <title>Arbitrary Level of Detail</title>
+      <para>
+        It is precisely because detailed terrain models involve such large 
+        quantities of data that continuous level of detail (CLOD) algorithms are 
+        necessary for their visualization, at least in the general case where 
+        the viewer is permitted to move about the terrain freely.  However, 
+        full-detail terrain models are not always needed, the requisite level of 
+        detail being determined by their intended use.  For example, a model 
+        meant to act as the setting for a computer-animated film needs highly 
+        realistic detail only in the areas near to which the action is to take 
+        place, and can use relatively simple geometry for distant terrain.  
+        Similarly, the level of detail required of the terrain in a flight 
+        simulation is significantly less than what is needed for ground-level 
+        action. An ideal terrain generation algorithm would permit the creation 
+        of terrain at multiple levels of detail, and the segmentation of large 
+        terrains into regions of differing levels of detail.
+      </para>
+    </section>
+
+    <section>
+      <title>Fast Enough for Real-Time Applications</title>
+      <para>
+        Many terrain-related algorithms are very slow, or else require a 
+        lengthy preprocessing phase <biblioref linkend="Chunked LOD"/> 
+        <biblioref linkend="L3DT"/> before the terrain can be used in a 
+        real-time application.  Intuitively, we would expect all but the most 
+        simplistic terrain generation algorithms to fall into this category.  
+        Nonetheless, an algorithm that could do most or all of its processing 
+        on-the-fly would provide several important advantages, including:
+        <itemizedlist spacing="compact">
+          <listitem>
+            instantaneous feedback to the artist of the effects of a particular 
+            modification
+          </listitem>
+          <listitem>
+            the ability to modify dynamically the terrain in fundamental and 
+            interesting ways (such as transforming a mountain into a crater, or 
+            rapidly eroding a riverbed into a deep gorge)
+          </listitem>
+          <listitem>
+            savings in the amount of memory and disk storage required (if the 
+            full terrain can be (re)generated from a more compact set of 
+            parameters)
+          </listitem>
+          <listitem>
+            the ability to create seamless, infinite worlds, with arbitrarily 
+            fine, dynamic level of detail
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section>
+      <title>Extensible</title>
+      <para>
+        Regardless of how many types of terrain a terrain generation tool can 
+        create, there will always be a user wanting something "just a little 
+        bit different"&em;the set of terrain types is ultimately as limitless 
+        as the human imagination. Thus, an ideal terrain generation algorithm 
+        would be extensible in some way, allowing new types of terrain to be 
+        introduced easily.
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Goals</title>
+    <para>
+      This idealized algorithm has set the standard of perfection fairly high, 
+      and <citetitle>Terrainosaurus</citetitle> most certainly will not possess 
+      all of the traits of our imaginary ideal. So when it becomes necessary to 
+      compromise on one trait in order to improve another, which traits should 
+      be preferred?
+    </para>
+    <para>
+      Different applications have different requirements, and the needs of the 
+      primary user community of terrain generation tools should be used to 
+      answer this question&em;if users demand realism and 
+      <citetitle>Terrainosaurus</citetitle> gives them speedy generation but 
+      mediocre results...it will not be very popular.  Looking back at the above 
+      list of terrain generation applications, one thing that most of them have 
+      in common is that they have time to spare: with the possible exception of 
+      some games &amp; VR applications, none of them need to generate terrain at 
+      interactive speeds. Even in this last case, the terrain is normally 
+      generated once (either by the game designer, or when the program starts) 
+      and never modified afterward. In fact, most CLOD algorithms 
+      <emphasis>depend</emphasis> on the terrain being static).  Thus, real-time 
+      performance, while nice, is not essential.
+    </para>
+    <para>
+      A second, significant observation is that terrain is, by its very nature, 
+      somewhat "sloppy": two mountains might have innumerable, minute 
+      differences between  them, but if some fundamental relationships are 
+      intact, a human will perceive them as similar&em;the differences are 
+      inconsequential. The success of randomized algorithms in imitating 
+      natural phenomena can be largely attributed to this fact.  Because of 
+      this, and because the terrain model being created is often quite large, a 
+      user of a terrain generation tool typically does not care to exercise a 
+      great deal of fine-scale control over the terrain.  Therefore, when 
+      forced to choose between the competing goals of high controllability and 
+      ease of use, we should favor the latter.
+    </para>
+    <para>
+      In the design of <citetitle>Terrainosaurus</citetitle>, the goals 
+      considered to be most important are (in order of decreasing importance):
+      <orderedlist spacing="compact">
+        <listitem>
+          realism
+        </listitem>
+        <listitem>
+          extensibility
+        </listitem>
+        <listitem>
+          ease of use (intuitive control, with low input requirements)
+        </listitem>
+      </orderedlist>
+      By pursuing these as guiding objectives, we can expect that the resulting 
+      algorithm will be of maximal utility to the terrain generation community, 
+      particularly for non-real-time authoring of large-scale virtual 
+      environments.
+    </para>
+  </section>
+</chapter>

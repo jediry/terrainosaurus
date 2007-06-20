@@ -27,14 +27,9 @@ namespace terrainosaurus {
 
 // Import superclass definitions
 #include <inca/ui/BasicWidget.hpp>
-#include <terrainosaurus/TerrainosaurusComponent.hpp>
-
-// Import terrain-specialized renderer definition
-#include <terrainosaurus/TerrainosaurusRenderer.hpp>
 
 
-class terrainosaurus::MapEditWidget : public inca::ui::BasicWidget,
-                                      public TerrainosaurusComponent {
+class terrainosaurus::MapEditWidget : public inca::ui::BasicWidget {
 private:
     // Set up this class to own properties
     PROPERTY_OWNING_OBJECT(MapEditWidget);
@@ -76,10 +71,7 @@ public:
  *---------------------------------------------------------------------------*/
 public:
     // Default constructor with optional component name
-    MapEditWidget(const string &nm = "", bool enableSelect = true);
-
-    // The renderer we use to draw and select stuff
-    rw_ptr_property(TerrainosaurusRenderer, renderer, NULL);
+    MapEditWidget(const string &nm = std::string(), bool enableSelect = true);
 
     // Rendering switches
     rw_property(bool, drawVertices,         true);

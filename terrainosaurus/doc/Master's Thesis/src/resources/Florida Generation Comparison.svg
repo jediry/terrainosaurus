@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="6.0000000cm"
+   width="18.000000cm"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.40+cvs"
+   sodipodi:docname="Florida Generation Comparison.svg"
+   sodipodi:docbase="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     inkscape:guide-bbox="true"
+     showguides="true"
+     inkscape:window-y="27"
+     inkscape:window-x="83"
+     inkscape:window-height="541"
+     inkscape:window-width="774"
+     gridtolerance="0.010000000cm"
+     gridoriginx="0.00000000cm"
+     gridoriginy="0.00000000cm"
+     gridspacingx="0.10000000cm"
+     gridspacingy="0.10000000cm"
+     guidetolerance="0.10000000cm"
+     inkscape:guide-points="true"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="px"
+     inkscape:cy="58.721466"
+     inkscape:cx="307.81330"
+     inkscape:zoom="1.0000000"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base" />
+  <metadata
+     id="metadata4">
+    <rdf:RDF
+       id="RDF5">
+      <cc:Work
+         id="Work6"
+         rdf:about="">
+        <dc:format
+           id="format7">image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+           id="type9" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <g
+       transform="translate(-2.498738,0.000000)"
+       id="g3068">
+      <g
+         transform="translate(15.00000,0.000000)"
+         id="g3063">
+        <image
+           y="32.756203"
+           x="316.06870"
+           id="image3039"
+           height="124.86864"
+           width="271.52286"
+           sodipodi:absref="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources\Florida Flatland generated.png"
+           xlink:href="Florida Flatland generated.png" />
+        <text
+           sodipodi:linespacing="100%"
+           id="text3046"
+           y="187.19247"
+           x="451.95319"
+           style="font-size:14.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:middle;writing-mode:lr-tb"
+           xml:space="preserve"><tspan
+             y="187.19247"
+             x="451.95319"
+             id="tspan3048"
+             sodipodi:role="line">Generated</tspan></text>
+      </g>
+      <g
+         transform="translate(15.00000,0.000000)"
+         id="g3058">
+        <image
+           y="32.832592"
+           x="25.201212"
+           id="image2998"
+           height="124.71586"
+           width="271.19067"
+           sodipodi:absref="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources\Florida Flatland reference.png"
+           xlink:href="Florida Flatland reference.png" />
+        <text
+           sodipodi:linespacing="100%"
+           id="text3042"
+           y="187.19589"
+           x="160.54021"
+           style="font-size:14.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:middle;writing-mode:lr-tb"
+           xml:space="preserve"><tspan
+             y="187.19589"
+             x="160.54021"
+             id="tspan3044"
+             sodipodi:role="line">Reference</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

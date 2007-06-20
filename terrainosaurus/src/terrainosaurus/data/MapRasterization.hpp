@@ -57,7 +57,6 @@ class terrainosaurus::LOD<terrainosaurus::MapRasterization>
  | Type & constant definitions
  *---------------------------------------------------------------------------*/
 public:
-    typedef inca::raster::MultiArrayRaster<IDType, 2>       IDMap;
     typedef inca::raster::MultiArrayRaster<scalar_t, 2>     DistanceMap;
     typedef IDMap::SizeArray                                SizeArray;
     typedef IDMap::IndexArray                               IndexArray;
@@ -109,17 +108,20 @@ public:
     void ensureAnalyzed() const;
     void ensureStudied()  const;
 
+protected:
+    // Analysis steps
+    void _findTerrainTypes();
+    void _findRegions();
+    void _findBoundaryDistances();
+
+    bool _multipleTypes;
+
 
 /*---------------------------------------------------------------------------*
- | Loaded & analyzed data
+ | Raster geometry accessors
  *---------------------------------------------------------------------------*/
 public:
-    // Per-cell data accessors
-    RASTER_PROPERTY_ACCESSORS(IDMap,        terrainTypeID)
-    RASTER_PROPERTY_ACCESSORS(IDMap,        regionID)
-    RASTER_PROPERTY_ACCESSORS(DistanceMap,  boundaryDistance)
-
-    // Raster geometry accessors
+    // Raster geometry getters
     SizeType size() const;
     SizeType size(IndexType d) const;
     IndexType base(IndexType d) const;
@@ -129,18 +131,42 @@ public:
     const IndexArray & extents() const;
     const Region & bounds() const;
 
+    // FIXME Orphaned function (needs other versions)
+    void setSizes(const SizeArray & sz);
+
+
+/*---------------------------------------------------------------------------*
+ | Per-cell properties
+ *---------------------------------------------------------------------------*/
+public:
+    // Fundamental properties (initialized at load-time)
+    RASTER_PROPERTY_ACCESSORS(IDMap,        terrainTypeID)
+
+    // Derived properties (initialized at analysis-time)
+    RASTER_PROPERTY_ACCESSORS(ColorMap,     color)
+    RASTER_PROPERTY_ACCESSORS(IDMap,        regionID)
+    RASTER_PROPERTY_ACCESSORS(DistanceMap,  boundaryDistance)
+
+protected:
+    IDMap               _terrainTypeIDs;
+    ColorMap            _colors;
+    IDMap               _regionIDs;
+    DistanceMap         _boundaryDistances;
+
+
+/*---------------------------------------------------------------------------*
+ | Global and per-region properties
+ *---------------------------------------------------------------------------*/
+public:
     // Region accessors
     SizeType regionCount() const;
-    const TerrainType::LOD & regionTerrainType(IDType regionID) const;
+    const LOD<TerrainType> & regionTerrainType(IDType regionID) const;
     const Region           & regionBounds(IDType regionID) const;
     const Pixel            & regionSeed(IDType regionID) const;
     SizeType                 regionArea(IDType regionID) const;
     GrayscaleImage regionMask(IDType regionID, int border) const;
 
 protected:
-    IDMap               _terrainTypeIDs;
-    IDMap               _regionIDs;
-    DistanceMap         _boundaryDistances;
     RegionList          _regionBounds;
     PixelList           _regionSeeds;
     SizeList            _regionAreas;
@@ -172,7 +198,7 @@ public:
 
     // Create a MapRasterization from a raster of IDs representing a
     // particular LOD
-    explicit MapRasterization(const LOD::IDMap & ids, TerrainLOD forLOD,
+    explicit MapRasterization(const IDMap & ids, TerrainLOD forLOD,
                               TerrainLibraryPtr tl);
 
 

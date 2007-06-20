@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<chapter id="Vita" label="Vita">
+  <title>Vita</title>
+
+  <para>Contact Information</para>
+  <para>
+    Ryan L. Saunders may be reached by mail at PO Box 753, Bellevue, WA 98009, 
+    or by email at saunders@aggienetwork.com.
+  </para>
+
+  <para>Education</para>
+  <para>
+    I received a Bachelor of Science in Computer Engineering from Texas 
+    A&amp;M University in 2002. I continued on to pursue my Master of 
+    Science also at Texas A&amp;M, graduating in December of 2006.
+  </para>
+
+  <para>Professional Experience</para>
+  <para>
+    My professional experience includes:
+  </para>
+  <itemizedlist spacing="compact">
+    <listitem>
+      Hewlett Packard (Richardson, TX) Intern&em;FORTRAN compiler team
+    </listitem>
+    <listitem>
+        Dynetics, Inc. (Huntsville, AL), Intern&em;Industrial automation division
+    </listitem>
+    <listitem>
+      Self-employed (College Station, TX), Independent Contractor&em;Dynamic website development
+  </listitem>
+    <listitem>
+      Microsoft Corporation (Redmond, WA), Software Development Engineer&em;Microsoft Office (current)
+    </listitem>
+  </itemizedlist>
+
+  <para>Publications</para>
+  <para>
+    In the course of my Master's degree studies, I was co-author of a 
+    paper, <citetitle>Terrain Generation Using Genetic Algorithms</citetitle>,
+    which was accepted to the <citetitle>Genetic and Evolutionary 
+    Computation Conference (GECCO) 2005</citetitle>.
+  </para>
+
+</chapter>

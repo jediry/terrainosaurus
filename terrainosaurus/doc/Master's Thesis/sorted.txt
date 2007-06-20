@@ -1,0 +1,131 @@
+Backtracking Boundary.svg
+Boundary GA - Angle Limit Diagram.svg
+Boundary GA - Crossover Operator Diagram.svg
+Boundary GA - Gene Angle Encoding Diagram.svg
+Boundary GA - Mutation Operator Diagram.svg
+Boundary GA - Smoothness Graph.svg
+Boundary Refinement.svg
+California Coast Hills Elevation.png
+Cracked Mud.jpeg
+Florida Flatland generated.png
+Florida Flatland reference.png
+Halo 2 Screenshot.jpeg
+Height Field Cartoon.svg
+Height Field GA - Encoding Diagram.svg
+Height Field GA - Gene Grid Diagram.svg
+Height Field GA - Inputs Diagram.svg
+Height Field Wireframe.jpeg
+Height Field With Boundary Artifacts.jpeg
+Height Field Without Boundary Artifacts.jpeg
+Implementation - Architecture Overview.svg
+Implementation - LOD Breakdown Chart.svg
+Implementation - Map Rasterization.svg
+Implementation - Map.svg
+Implementation - Multi-LOD Object Diagram.svg
+Implementation - Non-rectangular Tile Diagram.svg
+Implementation - Terrain Library.svg
+Implementation - Terrain Sample.svg
+Implementation - Terrain Seam.svg
+Implementation - Terrain Type.svg
+Implementation - Terrain Viewer Window.png
+Map Authoring Interface.jpeg
+Map Refinement - Rough.png
+Map Refinement - Smooth.png
+MapEditorWindow.png
+Overview - Boundary Refinement.svg
+resources/%5B-pi,pi%5D.mml
+resources/%5B0,1%5D.mml
+resources/%5B0,255%5D.mml
+resources/%5B1,N%5D.mml
+resources/%5B1,N^2%5D.mml
+resources/(x,y).mml
+resources/_n.mml
+resources/_r.mml
+resources/1024x1024.mml
+resources/2x2.mml
+resources/3x3.mml
+resources/A_i.mml
+resources/Alpha.mml
+resources/Boundary GA - Nyquist Equation.mml
+resources/Boundary GA - Point Decoding Equation.mml
+resources/Boundary GA - Segment Length Equation.mml
+resources/Boundary GA - Smoothness Equation.mml
+resources/Boundary GA - Transform Equation.mml
+resources/C_g,i.mml
+resources/C_g.mml
+resources/chi^2.mml
+resources/E_i.mml
+resources/G_B.mml
+resources/gamma_1.mml
+resources/gamma_2.mml
+resources/Height Field Equation.mml
+resources/Height Field GA - Fitness Equation.mml
+resources/Height Field GA - Gene Compatibility Equation.mml
+resources/Height Field GA - Mutation Probability Equation.mml
+resources/i.mml
+resources/k_i.mml
+resources/M_i.mml
+resources/m_r.mml
+resources/mu.mml
+resources/mu_G.mml
+resources/N.mml
+resources/N^2.mml
+resources/N+1.mml
+resources/NxN.mml
+resources/P_0.mml
+resources/P_1.mml
+resources/P_m.mml
+resources/P_N.mml
+resources/R Matrix.mml
+resources/Ratio V_o to V_r.mml
+resources/S Matrix.mml
+resources/S.mml
+resources/S_D.mml
+resources/S_i.mml
+resources/S_r.mml
+resources/sigma.mml
+resources/Sigma.mml
+resources/sigma_G.mml
+resources/Statistics - K-statistic Equations.mml
+resources/Statistics - Sample Central Moment Equation.mml
+resources/Statistics - Sample Kurtosis Excess Equation.mml
+resources/Statistics - Sample Mean Equation.mml
+resources/Statistics - Sample Skewness Equation.mml
+resources/Statistics - Sample Standard Deviation Equation.mml
+resources/T Matrix.mml
+resources/Terrain Comparison - Agreement Equation.mml
+resources/Terrain Comparison - Baseline Similarity Sigma Equation.mml
+resources/Terrain Comparison - Distribution Agreement Equation.mml
+resources/Terrain Comparison - Distribution Similarity Equation.mml
+resources/Terrain Comparison - Distribution Weights Equation.mml
+resources/Terrain Comparison - Gaussian Curve Projection Equation.mml
+resources/Terrain Comparison - Terrain Type Similarity Equation.mml
+resources/Terrain Comparison - Terrain Type Weights Equation.mml
+resources/V_o.mml
+resources/V_r.mml
+resources/w_i.mml
+resources/x mu_G.mml
+resources/x.mml
+resources/y.mml
+Self-intersecting Boundary.svg
+Skill Chart - GIS.svg
+Skill Chart - Procedural.svg
+Skill Chart - Sculpting.svg
+Skill Chart - Simulation.svg
+Statistics - Kurtosis Excess Diagram.svg
+Statistics - Mean Diagram.svg
+Statistics - Skewness Diagram.svg
+Statistics - Standard Deviation Diagram.svg
+Super Histogram.svg
+Terrain Comparison - A Useless Statistical Measure.svg
+Terrain Comparison - Agreement Diagram.svg
+Terrain Comparison - GCP Baseline Similarity Sigma Diagram.svg
+Terrain Comparison - GCP Overview Diagram.svg
+Terrain Comparison - The Need for Adaptability.svg
+Terrain Fingers.png
+Terrainosaurus Phases Overview.svg
+Thirds Height Field - 270m.png
+Thirds Height Field - 30m.png
+Thirds Height Field - 90m.png
+Washington Mountains generated.png
+Washington Mountains reference.png

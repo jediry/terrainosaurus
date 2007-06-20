@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <mrow>
+    <mi>F</mi>
+    <mo>=</mo>
+    <mfenced>
+      <mrow>
+        <mn>1</mn>
+        <mo>&minus;</mo>
+        <mi>&alpha;</mi>
+      </mrow>
+    </mfenced>
+    &InvisibleTimes;
+    <msub>
+      <mi>C</mi>
+      <mi>g</mi>
+    </msub>
+    <mo>&plus;</mo>
+    <mi>&alpha;</mi>
+    &InvisibleTimes;
+    <msub>
+      <mi>S</mi>
+      <mi>r</mi>
+    </msub>
+  </mrow>
+</math>

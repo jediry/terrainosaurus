@@ -1,17 +1,18 @@
-/*
+/* -*- antlr -*-
+ *
  * File: TerrainLibrary.g
  *
  * Author: Ryan L. Saunders
  *
- * Copyright 2004, Ryan L. Saunders. Permission is granted to use and
+ * Copyright 2005, Ryan L. Saunders. Permission is granted to use and
  *      distribute this file freely for educational purposes.
  *
  * Description:
  *      This file specifies an ANTLR grammar for the Terrainosaurus
- *      terrain library (.ttl) data file format. This is probably a
- *      to-be-short-lived hack.
+ *      terrain library (.ttl) data file format, which is based on the Windows
+ *      .ini format.
  *
- *      To start the parsing process, the "recordList" rule in the generated
+ *      To start the parsing process, the "sectionList" rule in the generated
  *      parser should be called.
  */
 
@@ -23,31 +24,24 @@ header "pre_include_hpp" {
 
     // Forward declarations
     namespace terrainosaurus {
-        class TerrainLibraryLexer;
         class TerrainLibraryParser;
+        class TerrainLibraryLexer;
     };
+
+    // Import parser superclass and supergrammer definitions
+    #include "INIParser.hpp"
+    #include "CommonParser.hpp"
+
+
+    // Include STL string algorithms
+    #include <algorithm>
+
 
     // Import TerrainLibrary and related object definitions
     #include <terrainosaurus/data/TerrainLibrary.hpp>
 
-    // Import container definitions
-    #include <inca/util/hash_container>
-
     // Import augmented enumeration mechanism
-//    #include <inca/util/Enumeration.hpp>
-
-    // This enumerates all the properties that we can check/set. The
-    // functions that check/set them implicitly work on the "current"
-    // TerrainType or TerrainSeam.
-/*    ENUMV ( TTLPropertyType,
-          ( ( TTColor,             1 ),
-          ( ( TSNumChromosomes,    2 ),
-          ( ( TSSmoothness,        4 ),
-          ( ( TSMutationRatio,     8 ),
-          ( ( TSCrossoverRatio,    16 ),
-          ( ( TSSelectionRatio,    32 ),
-          ( ( TSAspectRatio,       64 ),
-              BOOST_PP_NIL ))))))));*/
+    #include <inca/util/Enumeration.hpp>
 }
 
 // Global options section
@@ -63,7 +57,7 @@ options {
 /**
  * The TerrainLibraryParser class processes tokens from a .ttl file.
  */
-class TerrainLibraryParser extends Parser;
+class TerrainLibraryParser extends Parser("::terrainosaurus::INIParser");
 options {
     exportVocab = TerrainLibrary;
     defaultErrorHandler=false;
@@ -79,30 +73,15 @@ public:
     // This enumerates all the properties that we can check/set. The
     // functions that check/set them implicitly work on the "current"
     // TerrainType or TerrainSeam.
-    enum PropertyType {
-        // Properties for TerrainType
-        TTColor                 = 0x00001,
+    ENUM ( PropertyType,
+        /* Properties for a TerrainType */
+        ( TTColor,
+        ( TTSample,
 
-        // Properties for the TerrainSeam GA
-        TSSmoothness            = 0x00002,
-        TSAspectRatio           = 0x00004,
-
-        // General GA parameters
-        GAEvolutionCycles       = 0x00100,
-        GAPopulationSize        = 0x00200,
-        GAEliteRatio            = 0x00400,
-        GASelectionRatio        = 0x00800,
-        GAMutationRatio         = 0x01000,
-        GACrossoverRatio        = 0x02000,
-        GAMutationProbability   = 0x04000,
-        GACrossoverProbability  = 0x08000,
-
-        // Properties for the heightfield GA
-        HFMaxCrossoverWidth     = 0x10000,
-        HFMaxJitterPixels       = 0x20000,
-        HFMaxScaleFactor        = 0x40000,
-        HFMaxOffsetAmount       = 0x80000,
-    };
+        /* Properties for the TerrainSeam GA */
+        ( TSSmoothness, 
+        ( TSAspectRatio,
+          EOL )))));
 
 
 /*---------------------------------------------------------------------------*
@@ -110,161 +89,59 @@ public:
  | These are implemented in TerrainLibraryParser-functions.cpp.
  *---------------------------------------------------------------------------*/
 protected:
-    // These create new TTs and TSs and set properties on them (implicity
+    // These create new TTs and TSs and assign properties on them (implicity
     // modifying the most recent TT or TS). They will throw exceptions if
-    // an attempt is made to set/create something that has already been
-    // set/created, thus effectively preventing duplicate entries
-    void beginGlobalSection(antlr::RefToken tt);
-    void createTerrainType(antlr::RefToken tt);
-    void createTerrainSeam(antlr::RefToken tt1, antlr::RefToken tt2);
-    void endRecord(antlr::RefToken t);
-    void addTerrainSample(const std::string & path, int line);
-    void setColorProperty(PropertyType p, const Color &c, int line);
-    void setScalarProperty(PropertyType p, scalar_t s, int line);
-    void setIntegerProperty(PropertyType p, int i, int line);
+    // an attempt is made to assign/create something that has already been
+    // assign/created, thus effectively preventing duplicate entries
+    void beginTerrainTypeSection(antlr::RefToken t, const std::string & tt);
+    void beginTerrainSeamSection(antlr::RefToken t, const std::string & tt1,
+                                                    const std::string & tt2);
+    void endSection();
+    void assignColorProperty(antlr::RefToken t, PropertyType p, const Color & c);
+    void assignScalarProperty(antlr::RefToken t, PropertyType p, scalar_t s);
+    void assignIntegerProperty(antlr::RefToken t, PropertyType p, int i);
+    void assignStringProperty(antlr::RefToken t, PropertyType p, const std::string & s);
+    
+    // This provides a symbolic interpretation of integer property IDs
+    const char * propertyName(PropertyID) const;
 
 
-    // The library we're populating, plus the current TT and TS, and a
-    // record of which properties we've set on the current object
-    TerrainLibrary * library;
-    bool inGlobal;
-    TerrainTypePtr currentTT;
-    TerrainSeamPtr currentTS;
-    stl_ext::hash_map<TerrainSeamPtr, bool> initializedTSs;
-    unsigned int setProperties;
+    // The library we're populating, plus the current TT and TS
+    TerrainLibrary * _terrainLibrary;
+    TerrainTypePtr _currentTT;
+    TerrainSeamPtr _currentTS;
+    stl_ext::hash_map<TerrainSeamPtr, bool> _initializedTSs;
 }
 
 
 /*---------------------------------------------------------------------------*
- | Overall file format, record declarations/formats
+ | Overall file format, section declarations/formats
  *---------------------------------------------------------------------------*/
 // Entire file format (call this as the start rule)
-recordList [TerrainLibrary * lib]:
-    { library = lib; }      // Set this as the library we're gonna use
-    { inGlobal = false; }   // Start out NOT in the global section
-    { library != NULL }?    // Make sure it isn't NULL!
-    (blankLine)* ( terrainTypeRecord
-                 | terrainSeamRecord
-                 | globalSectionRecord )* EOF ;
-
-// A globals section declaration, followed by one or more properties
-globalSectionRecord:
-    globalSectionDeclaration ( blankLine
-                             | populationSize
-                             | evolutionCycles
-                             | selectionRatio
-                             | eliteRatio
-                             | mutationProbability
-                             | mutationRatio
-                             | crossoverProbability
-                             | crossoverRatio
-                             | maxCrossoverWidth
-                             | maxJitterPixels
-                             | maxScaleFactor
-                             | maxOffsetAmount )* ;
+sectionList [TerrainLibrary * lib]:
+    { _terrainLibrary = lib; }      // Set this as our TL object
+    { _terrainLibrary != NULL }?    // Make sure it isn't NULL!
+    (blankLine)* ( terrainTypeSection
+                 | terrainSeamSection )* EOF ;
 
 // A TerrainType declaration, followed by one or more properties
-terrainTypeRecord:
-    terrainTypeDeclaration ( blankLine
-                           | terrainColor
-                           | terrainSample )* ;
+terrainTypeSection { std::string tt; }:
+    t:LEFT_SBRACKET TERRAIN_TYPE COLON tt=string RIGHT_SBRACKET EOL
+    { beginTerrainTypeSection(t, tt); }
+            ( blankLine
+            | terrainColor
+            | terrainSample )*
+    { endSection(); } ;
 
 // A TerrainSeam declaration, followed by one or more properties
-terrainSeamRecord:
-    terrainSeamDeclaration  ( blankLine
-                            | smoothness
-                            | aspectRatio
-                            | populationSize
-                            | evolutionCycles
-                            | selectionRatio
-                            | crossoverRatio
-                            | mutationRatio )* ;
-
-// [Global]
-globalSectionDeclaration:
-    n:OPEN_SBRACKET GLOBAL CLOSE_SBRACKET EOL
-    { beginGlobalSection(n); } ;
-
-// [TerrainType: Snow]
-terrainTypeDeclaration:
-    OPEN_SBRACKET TERRAIN_TYPE COLON n:NAME CLOSE_SBRACKET EOL
-    { createTerrainType(n); } ;
-
-// [TerrainSeam: Snow & Grass]
-terrainSeamDeclaration:
-    OPEN_SBRACKET TERRAIN_SEAM COLON n1:NAME AND n2:NAME CLOSE_SBRACKET EOL
-    { createTerrainSeam(n1, n2); } ;
-
-// A line with nothing important on it
-blankLine: EOL ;
-
-
-/*---------------------------------------------------------------------------*
- | Genetic algorithm parameters
- *---------------------------------------------------------------------------*/
-// population size = n
-populationSize { int n; }:
-    t:POPULATION SIZE ASSIGN n=integer EOL
-    { setIntegerProperty(GAPopulationSize, n, t->getLine()); } ;
-
-// evolution cycles = n
-evolutionCycles { int n; }:
-    t:EVOLUTION CYCLES ASSIGN n=integer EOL
-    { setIntegerProperty(GAEvolutionCycles, n, t->getLine()); } ;
-
-// selection ratio = r
-selectionRatio { scalar_t r; }:
-    t:SELECTION RATIO ASSIGN r=fraction EOL
-    { setScalarProperty(GASelectionRatio, r, t->getLine()); } ;
-
-// selection ratio = r
-eliteRatio { scalar_t r; }:
-    t:ELITE RATIO ASSIGN r=fraction EOL
-    { setScalarProperty(GAEliteRatio, r, t->getLine()); } ;
-
-// crossover probability = p
-crossoverProbability { scalar_t p; }:
-    t:CROSSOVER PROBABILITY ASSIGN p=fraction EOL
-    { setScalarProperty(GACrossoverProbability, p, t->getLine()); } ;
-
-// crossover ratio = r
-crossoverRatio { scalar_t r; }:
-    t:CROSSOVER RATIO ASSIGN r=fraction EOL
-    { setScalarProperty(GACrossoverRatio, r, t->getLine()); } ;
-
-// mutation probability = p
-mutationProbability { scalar_t p; }:
-    t:MUTATION PROBABILITY ASSIGN p=fraction EOL
-    { setScalarProperty(GAMutationProbability, p, t->getLine()); } ;
-
-// mutation ratio = r
-mutationRatio { scalar_t r; }:
-    t:MUTATION RATIO ASSIGN r=fraction EOL
-    { setScalarProperty(GAMutationRatio, r, t->getLine()); } ;
-
-
-/*---------------------------------------------------------------------------*
- | Heightfield GA limits
- *---------------------------------------------------------------------------*/
-// max crossover width = n
-maxCrossoverWidth { int n; }:
-    t:MAX CROSSOVER WIDTH ASSIGN n=integer EOL
-    { setIntegerProperty(HFMaxCrossoverWidth, n, t->getLine()); } ;
-
-// max jitter pixels = n
-maxJitterPixels { int n; }:
-    t:MAX JITTER PIXELS ASSIGN n=integer EOL
-    { setIntegerProperty(HFMaxJitterPixels, n, t->getLine()); } ;
-
-// max scale factor = f
-maxScaleFactor { scalar_t f; }:
-    t:MAX SCALE FACTOR ASSIGN f=scalar EOL
-    { setScalarProperty(HFMaxScaleFactor, f, t->getLine()); } ;
-
-// max scale factor = f
-maxOffsetAmount { scalar_t a; }:
-    t:MAX OFFSET AMOUNT ASSIGN a=scalar EOL
-    { setScalarProperty(HFMaxOffsetAmount, a, t->getLine()); } ;
+terrainSeamSection { std::string tt1, tt2; }:
+    t:LEFT_SBRACKET TERRAIN_SEAM COLON
+        tt1=string AMPERSAND tt2=string RIGHT_SBRACKET EOL
+    { beginTerrainSeamSection(t, tt1, tt2); }
+            ( blankLine
+            | smoothness
+            | aspectRatio )*
+    { endSection(); } ;
 
 
 /*---------------------------------------------------------------------------*
@@ -273,32 +150,101 @@ maxOffsetAmount { scalar_t a; }:
 // color = <R, G, B, A>
 terrainColor { Color c; }:
     t:COLOR ASSIGN c=color EOL
-    { setColorProperty(TTColor, c, t->getLine()); } ;
+    { assignColorProperty(t, TTColor, c); } ;
 
-// sample = filename.dem
-terrainSample: { std::string s; }
-    t:SAMPLE ASSIGN s=filename EOL
-    { addTerrainSample(s, t->getLine()); } ;
+// sample = name
+terrainSample { std::string s; }:
+    t:SAMPLE ASSIGN s=string EOL
+    { assignStringProperty(t, TTSample, s); } ;
 
 
 /*---------------------------------------------------------------------------*
  | TerrainSeam properties
  *---------------------------------------------------------------------------*/
 // Smoothness = 0.5
-smoothness { scalar_t n; }:
-    t:SMOOTHNESS ASSIGN n=nFraction EOL
-    { setScalarProperty(TSSmoothness, n, t->getLine()); } ;
+smoothness { scalar_t s; }:
+    t:SMOOTHNESS ASSIGN s=nFraction EOL
+    { assignScalarProperty(t, TSSmoothness, s); } ;
 
 // Aspect Ratio = 1.0
-aspectRatio { scalar_t n; }:
-    t:ASPECT RATIO ASSIGN n=fraction EOL
-    { setScalarProperty(TSAspectRatio, n, t->getLine()); } ;
+aspectRatio { scalar_t s; }:
+    t:ASPECT RATIO ASSIGN s=fraction EOL
+    { assignScalarProperty(t, TSAspectRatio, s); } ;
 
 
 /*---------------------------------------------------------------------------*
- | Complex value types
+ | Dummy rule
  *---------------------------------------------------------------------------*/
-// A real number, specified in standard notation (e.g. -3.42342)
+// This is just to make the generated code compile...thx, Antlr 2.7.5!
+antlrDummyRule: ANTLR_DUMMY_TOKEN ;
+
+// A string (a single word, perhaps with embedded non-breaking spaces, or a
+// quoted string)
+string returns [std::string s]:
+    ( q:QUOTED_STRING       { s += q->getText();  }
+    | ( i1:ID               { s += i1->getText(); }
+      | n1:NUMBER           { s += n1->getText(); }
+        ( NBSP              { s += " ";           }
+            ( i2:ID         { s += i2->getText(); }
+            | n2:NUMBER     { s += n2->getText(); }
+            )
+         )*
+      )+
+    ) ;
+
+
+// An untranslated filesystem path
+path returns [std::string p]:
+    ( s:QUOTED_STRING   { p += s->getText(); }
+    | i:ID              { p += i->getText(); }
+    | n:NUMBER          { p += n->getText(); }
+    | c:COLON           { p += c->getText(); }
+    | d:DOT             { p += d->getText(); }
+    | b:BACKSLASH       { p += b->getText(); }
+    | f:FORESLASH       { p += f->getText(); }
+    | NBSP              { p += " "; }
+    )+ ;
+
+
+// A UNIX-style ('/'-separated) path
+unixPath returns [std::string p]:
+    p=path
+    {   // Transliterate all '\'s into '/'s
+        std::transform(p.begin(), p.end(), p.begin(), DOSToUNIX());
+    } ;
+
+
+// A line with nothing important on it
+blankLine: EOL ;
+
+
+// A positive real number, specified in any of the following formats:
+//      standard decimal notation (1.234)
+//      percent notation (123.4%)
+//      scientific notation (0.1234e1)
+// These may be combined (e.g., 1234.0e-1%)
+fraction returns [scalar_t s]:
+    w:NUMBER ( DOT f:NUMBER )? ( "e" (sg:SIGN)? e:NUMBER )? (p:PERCENT)?
+    {
+        // First, convert the floating point number
+        std::string tmp(w->getText());          // Whole # part
+        tmp += ".";                             // Decimal point
+        if (f != NULL)  tmp += f->getText();    // Fractional part
+        else            tmp += "0";             // Implicit zero
+        if (e != NULL) {                        // Exponent
+            tmp += "e";
+            if (sg != NULL) tmp += sg->getText();
+            tmp += e->getText();
+        }
+        s = scalar_t(atof(tmp.c_str()));
+        
+        // If this is a percent, convert to normal decimal by dividing by 100
+        if (p != NULL)  s /= 100;
+    } ;
+
+
+// A positive or negative real number, with the same format as the 'fraction'
+// type (see preceding 'fraction' rule).
 scalar returns [scalar_t s]:
     (sg:SIGN)? s=fraction
     {
@@ -308,50 +254,29 @@ scalar returns [scalar_t s]:
     } ;
 
 
-// A positive fractional value, >= 0.0
-fraction returns [scalar_t s]:
-    w:NUMBER ( DOT f:NUMBER )?
-    {   std::string tmp(w->getText());      // Construct a composite string
-        if (f != NULL) {                    // If we have a fractional part,
-            tmp += '.';                     // then add it in
-            tmp += f->getText();
-        }
-        s = scalar_t(atof(tmp.c_str()));
-    } ;
-
-
-// A normalized fractional value, within [0.0, 1.0]
+// A positive real number, clamped to the range [0.0, 1.0], with the same
+// format as the 'fraction' type (see preceding 'fraction' rule).
 nFraction returns [scalar_t s]:
     s=fraction
-    { s >= 0.0 && s <= 1.0 }? ; // Enforce s in [0.0, 1.0]
+    { s >= scalar_t(0) && s <= scalar_t(1) }? ; // Enforce s in [0.0, 1.0]
 
 
 // A color specified with RGB components between 0.0 and 1.0
 color returns [Color c]:
     { scalar_t r, g, b, a; }
-    OPEN_ABRACKET
+    LEFT_ABRACKET
         r=nFraction COMMA g=nFraction COMMA b=nFraction COMMA a=nFraction
-    CLOSE_ABRACKET
+    RIGHT_ABRACKET
 
     // Create a Color object from components
     { typedef Color::scalar_t c_scalar_t;
       c = Color(c_scalar_t(r), c_scalar_t(g),
                 c_scalar_t(b), c_scalar_t(a)); } ;
 
+
 // An unsigned integer in decimal notation
 integer returns [int value]: n:NUMBER { value = atoi(n->getText().c_str()); } ;
 
-
-// A file path
-filename returns [std::string path]:
-    ( q:QUOTED_STRING           { path += q->getText(); }
-    | n:NAME                    { path += n->getText(); }
-    | i:NUMBER                  { path += i->getText(); }
-    | c:COLON                   { path += c->getText(); }
-    | d:DOT                     { path += d->getText(); }
-    | ( BACKSLASH | FORESLASH ) { path += "/"; }
-    | NBSP                      { path += " "; }
-    )+ ;
 
 
 /**
@@ -365,46 +290,31 @@ options {
     caseSensitive = false;          // We're not picky...
     caseSensitiveLiterals = false;  // ...about identifiers either
     charVocabulary = '\3'..'\377';  // Stick to ASCII, please
-    k = 30;
+    k = 2;
 }
 
 // Keywords
 tokens {
-    // Record type declarations
+    // Section type declarations
     TERRAIN_TYPE = "terraintype" ;
     TERRAIN_SEAM = "terrainseam" ;
-    GLOBAL       = "global" ;
 
-    // TerrainType property keywords
+    // TerrainType section property keywords
     COLOR       = "color" ;
     SAMPLE      = "sample" ;
 
-    // TerrainSeam property keywords
+    // TerrainSeam section property keywords
     SMOOTHNESS  = "smoothness" ;
     ASPECT      = "aspect" ;
-
-    // Genetic algorithm parameter keywords
-    POPULATION  = "population" ;
-    SIZE        = "size" ;
-    EVOLUTION   = "evolution" ;
-    CYCLES      = "cycles" ;
-    MUTATION    = "mutation" ;
-    CROSSOVER   = "crossover" ;
-    SELECTION   = "selection" ;
-    ELITE       = "elite" ;
     RATIO       = "ratio" ;
-    PROBABILITY = "probability" ;
-
-    // Heightfield cross/mutate limit keywords
-    MAX     = "max" ;
-    WIDTH   = "width" ;
-    SCALE   = "scale" ;
-    FACTOR  = "factor" ;
-    OFFSET  = "offset" ;
-    AMOUNT  = "amount" ;
-    JITTER  = "jitter" ;
-    PIXELS  = "pixels" ;
 }
+
+
+ID options { paraphrase = "id"; testLiterals = true; } :
+            ( LETTER | '_' ) ( LETTER | DIGIT | '_' )* ;
+
+// Dummy lexical token (antlr 2.7.5 won't compile this w/o at least one rule)
+ANTLR_DUMMY_TOKEN : "%#%dummy%#%" ;
 
 // Primitive character classes
 protected DIGIT     : ( '0'..'9' ) ;
@@ -418,32 +328,33 @@ protected SPACE     : ' ' ;
 // Comments and whitespace
 EOL options { paraphrase = "end of line"; } : EOL_CHAR  { newline(); } ;
 COMMENT options { paraphrase = "comment"; } :
-    '#' ( ~('\r' | '\n') )* EOL_CHAR  { $setType(EOL); } ;
+    '#' ( ~('\r' | '\n') )* EOL_CHAR  { newline(); $setType(EOL); } ;
 WS : ( WS_CHAR )+                     { $setType(antlr::Token::SKIP); } ;
 
 // Delimiters
-OPEN_ABRACKET   : "<" ;
-CLOSE_ABRACKET  : ">" ;
-OPEN_SBRACKET   : "[" ;
-CLOSE_SBRACKET  : "]" ;
-COMMA           : "," ;
-ASSIGN          : "=" ;
-COLON           : ":" ;
-AND             : "&" ;
-DOT             : "." ;
+LEFT_ABRACKET   : '<' ;
+RIGHT_ABRACKET  : '>' ;
+LEFT_SBRACKET   : '[' ;
+RIGHT_SBRACKET  : ']' ;
+COMMA           : ',' ;
+ASSIGN          : '=' ;
+PERCENT         : '%' ;
+COLON           : ':' ;
+AMPERSAND       : '&' ;
+DOT             : '.' ;
 BACKSLASH       : '\\' ;
 FORESLASH       : '/' ;
 NBSP            : "\\ " ;
 
-// An unsigned integral number
-NUMBER  options { paraphrase = "number"; } : (DIGIT)+ ;
-
 // A positive or negative sign
 SIGN  : ( '+' | '-' ) ;
 
+// An unsigned integral number
+NUMBER  options { paraphrase = "number"; } : (DIGIT)+ ;
+
 // An identifier
-NAME    options { paraphrase = "name"; testLiterals = true; } :
-            ( LETTER | '_' ) ( LETTER | DIGIT | '_' )* ;
+//ID options { paraphrase = "name"; testLiterals = true; } :
+//            ( LETTER | '_' ) ( LETTER | DIGIT | '_' )* ;
 
 // A string in quotes
 QUOTED_STRING options { paraphrase = "quoted string"; } :

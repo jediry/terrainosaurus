@@ -43,7 +43,7 @@ void MapParser::setTerrainType(const std::string & tt, RefToken pos) {
 }
 
 void MapParser::beginFace(RefToken pos) {
-//    cerr << "Face: ";
+//    std::cerr << "Face: ";
     if (currentTT == NULL) {    // Ensure that a TT has been set
         FileFormatException e(getFilename(), pos->getLine(), pos->getColumn());
         e << "A TerrainType must be selected before faces may be created";
@@ -53,7 +53,7 @@ void MapParser::beginFace(RefToken pos) {
 }
 
 void MapParser::addVertex(IDType id, RefToken pos) {
-//    cerr << id << ' ';
+//    std::cerr << id << ' ';
     // Look up the Vertex with that ID (remember file starts at 1, vector at 0)
     Map::VertexPtr v = map->vertex(id - 1);
     if (v == NULL) {                    // Ensure that the Vertex does exist
@@ -66,6 +66,7 @@ void MapParser::addVertex(IDType id, RefToken pos) {
 
 void MapParser::endFace() {
     // Make a face using the current TT
-//    cerr << endl;
+//    std::cerr << std::endl;
     map->createFace(vertices.begin(), vertices.end(), currentTT);
+//    std::cerr << *map << std::endl;
 }

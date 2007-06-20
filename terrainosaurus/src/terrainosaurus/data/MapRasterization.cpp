@@ -15,7 +15,6 @@
 using namespace terrainosaurus;
 using namespace inca;
 
-typedef MapRasterization::LOD::IDMap        IDMap;
 typedef MapRasterization::LOD::DistanceMap  DistanceMap;
 
 // Import raster operators
@@ -83,7 +82,7 @@ void MapRasterization::LOD::resampleFromLOD(TerrainLOD lod) {
 }
 
 
-// This is a rather dump, brute-force approach to finding the minimum distance to boundaries.
+// This is a rather dumb, brute-force approach to finding the minimum distance to boundaries.
 // It first sweeps across the image along 'dim' in both directions and tracks the distance
 // from boundaries. Then it propagates these values in both directions along the other
 // dimension. The actual minimum distance is found by running this algorithm along each
@@ -163,36 +162,25 @@ void sweep(R0 & dist, const R1 & map, IndexType dim) {
         }
     }
 }
-
-
-// Analyze the contents of an LOD and store the results
-void MapRasterization::LOD::analyze() {
-    // Make sure we have a valid map to start with
-    ensureLoaded();
-
-    Timer<float, false> total, phase;
-    total.start();
-
-    std::stringstream report;
-    report << "Analyzing MapRasterization(" << levelOfDetail() << ")...\n";
-
-    // First, we need to make sure that this LOD has data
-    const IDMap::Region & bounds = _terrainTypeIDs.bounds();
-    if (! (bounds.size() > 0)) {
-        std::cerr << "No data in MR::LOD " << levelOfDetail() << std::endl;
-        ::exit(1);      // FIXME: This should throw a meaningful exception
+void MapRasterization::LOD::_findBoundaryDistances() {
+    if (! _multipleTypes) {
+        fill(_boundaryDistances,
+             std::numeric_limits<DistanceMap::ElementType>::max());
+    } else {
+        DistanceMap tmp(_boundaryDistances.bounds());
+        sweep(tmp, _terrainTypeIDs, 0);
+        sweep(_boundaryDistances, _terrainTypeIDs, 1);
+        _boundaryDistances = min(_boundaryDistances, tmp);
     }
-
-    // Before we do anything else, we need to make sure the IDs in our map
-    // correspond to actual TerrainTypes in the TerrainLibrary. At the same
-    // time, we can also check to make sure that there are actually multiple
-    // TerrainTypes present (if not, we can skip most of the rest of this).
-    report << "\tChecking TerrainType ID validity...";
-    phase.start();
-    Pixel px;
-    SizeType librarySize = terrainLibrary().size();
+}
+void MapRasterization::LOD::_findTerrainTypes() {
+    const TerrainLibrary::LOD & library = terrainLibrary();
+    SizeType librarySize = library.size();
     IDType refCellID = *_terrainTypeIDs.begin();
-    bool multipleTypes = false;
+    _multipleTypes = false;
+
+    Pixel px;
+    const Region & bounds = _terrainTypeIDs.bounds();
     for (px[1] = bounds.base(1); px[1] <= bounds.extent(1); ++px[1]) {
         for (px[0] = bounds.base(0); px[0] <= bounds.extent(0); ++px[0]) {
             IDType cellID = _terrainTypeIDs(px);
@@ -200,35 +188,41 @@ void MapRasterization::LOD::analyze() {
                 INCA_WARNING("Out of bounds TT ID " << cellID << " at " << px)
                 ::exit(1);      // FIXME: This should throw a meaningful exception
             } else if (refCellID != cellID) {
-                multipleTypes = true;
+                _multipleTypes = true;
             }
+            _colors(px) = library.terrainType(_terrainTypeIDs(px)).color();
         }
     }
-
-    phase.stop();
-    report << phase() << " seconds\n";
-
-
-    // Now, we're going to go back and find the regions in the map. This may or
-    // may not correspond exactly to the regions in the vector map used to
-    // generate this rasterization, because regions may be too small to appear,
-    // or may be outside the rasterized region.
-    report << "\tFinding regions...";
-    phase.start();
-
-    _regionIDs.setSizes(sizes());
+}
+void MapRasterization::LOD::_findRegions() {
     IDType nextRegionID = 1;
+    _regionBounds.clear();
+    _regionSeeds.clear();
+    _regionAreas.clear();
 
-    if (! multipleTypes) {
+    const Region & bounds = _regionIDs.bounds();
+    
+    std::cerr << "Stuff: \n";
+    Pixel px;
+    for (px[1] = bounds.base(1); px[1] <= bounds.extent(1); ++px[1]) {
+        for (px[0] = bounds.base(0); px[0] <= bounds.extent(0); ++px[0]) {
+            std::cerr << _terrainTypeIDs(px) << ' ';
+        }
+        std::cerr << '\n';
+    }
+    std::cerr << '\n';
+
+    if (! _multipleTypes) {
         fill(_regionIDs, 1);            // Only one region fills the whole thing
         _regionBounds.push_back(bounds);
         _regionSeeds.push_back(Pixel(bounds.bases()));
         _regionAreas.push_back(bounds.size());
-        std::cerr << "Found only one solid, rectangular region\n";
+        INCA_DEBUG("Found only one solid, rectangular region")
 
     } else {
         fill(_regionIDs, 0);            // Start with no regions marked
 
+        Pixel px;
         for (px[1] = bounds.base(1); px[1] <= bounds.extent(1); ++px[1]) {
             for (px[0] = bounds.base(0); px[0] <= bounds.extent(0); ++px[0]) {
                 IDType currentTTID = _terrainTypeIDs(px);
@@ -238,43 +232,65 @@ void MapRasterization::LOD::analyze() {
                         std::pair<Region, SizeType> result =
                             flood_fill(_regionIDs, px,
                                        EqualsValue<IDMap>(_terrainTypeIDs, currentTTID),
-                                       constant<IDType, 2>(nextRegionID++));
+                                       constant<IDType, 2>(nextRegionID));
                         _regionBounds.push_back(result.first);
                         _regionSeeds.push_back(px);
                         _regionAreas.push_back(result.second);
-                        std::cerr << "Found " << _regionAreas.back()
-                                  << " pixel region spanning "
-                                  << _regionBounds.back() << std::endl;
+                        INCA_DEBUG("Found region #" << nextRegionID << ": "
+                                   << _regionAreas.back()
+                                   << " pixels, spanning "
+                                   << _regionBounds.back())
+                        if (_regionBounds.back().size() == 0)
+                            INCA_DEBUG("Ack!");
+                        ++nextRegionID;
                     }
                 }
             }
         }
 
-        std::cerr << "Found " << (nextRegionID - 1) << " regions\n";
+        INCA_DEBUG("Found " << _regionBounds.size() << " regions")
     }
+}
 
+
+// Analyze the contents of an LOD and store the results
+void MapRasterization::LOD::analyze() {
+    // Make sure we have a valid map to start with
+    ensureLoaded();
+    
+    // Resize all rasters to the correct size
+    setSizes(_terrainTypeIDs.sizes());
+
+    Timer<float, false> total, phase;
+    total.start();
+
+    std::stringstream report;
+    report << "Analyzing MapRasterization(" << levelOfDetail() << ")...\n";
+
+
+    // First, we need to make sure that this LOD has valid terrain types at each
+    // point, and build the color-map
+    phase.start(true);
+        _findTerrainTypes();
     phase.stop();
-    report << phase() << " seconds\n";
+    report << "\tBuilding color map..." << phase() << " seconds\n";
+
+
+    // Now, we're going to go back and find the regions in the map. This may or
+    // may not correspond exactly to the regions in the vector map used to
+    // generate this rasterization, because regions may be too small to appear,
+    // or may be outside the rasterized region.
+    phase.start(true);
+        _findRegions();
+    phase.stop();
+    report << "\tFinding regions..." << phase() << " seconds\n";
 
 
     // Now, we create the boundary distance image.
-    report << "\tCalculating boundary distances...";
-    phase.start();
-
-    _boundaryDistances.setBounds(bounds);
-
-    if (! multipleTypes) {
-        fill(_boundaryDistances,
-             std::numeric_limits<DistanceMap::ElementType>::max());
-    } else {
-        DistanceMap tmp(bounds);
-        sweep(tmp, _terrainTypeIDs, 0);
-        sweep(_boundaryDistances, _terrainTypeIDs, 1);
-        _boundaryDistances = min(_boundaryDistances, tmp);
-    }
-
+    phase.start(true);
+        _findBoundaryDistances();
     phase.stop();
-    report << phase() << " seconds\n";
+    report << "\tCalculating boundary distances..." << phase() << " seconds\n";
 
 
     total.stop();
@@ -368,10 +384,21 @@ const MapRasterization::LOD::Region & MapRasterization::LOD::bounds() const {
     return _terrainTypeIDs.bounds();
 }
 
+void MapRasterization::LOD::setSizes(const SizeArray & sz) {
+    _terrainTypeIDs.setSizes(sz);
+    _colors.setSizes(sz);
+    _regionIDs.setSizes(sz);
+    _boundaryDistances.setSizes(sz);
+}
+
 // Per-cell data accessors
 const IDMap & MapRasterization::LOD::terrainTypeIDs() const {
     ensureLoaded();
     return _terrainTypeIDs;
+}
+const ColorMap & MapRasterization::LOD::colors() const {
+    ensureAnalyzed();
+    return _colors;
 }
 const IDMap & MapRasterization::LOD::regionIDs() const {
     ensureAnalyzed();
@@ -420,6 +447,7 @@ GrayscaleImage MapRasterization::LOD::regionMask(IDType regionID, int borderWidt
     Region bounds = _regionBounds[regionID];        // Get the region bounds
     bounds.expand(borderWidth / 2);                 // Expand to hold fuzzy border
     bounds.clipAgainst(_regionIDs.bounds());        // Keepin' it legal
+    INCA_DEBUG("Bounds are " << bounds)
     GrayscaleImage mask(bounds);
     Pixel px;
     float scale = 2.0f / borderWidth;
@@ -450,7 +478,7 @@ MapConstPtr MapRasterization::LOD::map() const {
 /*---------------------------------------------------------------------------*
  | Constructors
  *---------------------------------------------------------------------------*/
-MapRasterization::MapRasterization(const LOD::IDMap & ids, TerrainLOD forLOD,
+MapRasterization::MapRasterization(const IDMap & ids, TerrainLOD forLOD,
                                    TerrainLibraryPtr tl) {
     setTerrainLibrary(tl);
 

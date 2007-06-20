@@ -1,0 +1,20 @@
+# This is a test Terrainosaurus map
+# The file format is based on a tiny subset of the Alias|Wavefront OBJ format:
+#
+#   v x y           Vertex at (x,y)
+#   tt name         Set TerrainType for subsequent faces to name
+#   f v1 v2 v3...   Create a face from vertices v1, v2, v3...
+#
+# Note that vertices are numbered starting from 1, not 0
+
+# Map intersections (vertices)
+v -1000.0 -1000.0   # 1
+v  1000.0 -1000.0   # 2
+v  1000.0  1000.0   # 3
+v -1000.0  1000.0   # 4
+
+# Map regions (faces)
+tt California_Coast_Hills
+f 1 2 4
+tt Florida_Bumpy_Flatland
+f 2 3 4

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <msub>
+    <mi>&gamma;</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac linethickness="thin">
+    <msub>
+      <mi>k</mi>
+      <mn>4</mn>
+    </msub>
+    <msubsup>
+      <mi>k</mi>
+      <mn>2</mn>
+      <mn>2</mn>
+    </msubsup>
+  </mfrac>
+</math>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   sodipodi:docbase="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources"
+   sodipodi:docname="Washington Generation Comparison.svg"
+   inkscape:version="0.40+cvs"
+   sodipodi:version="0.32"
+   id="svg2"
+   width="18.000000cm"
+   height="6.0000000cm">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.0000000"
+     inkscape:cx="307.81330"
+     inkscape:cy="59.221466"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:guide-points="true"
+     guidetolerance="0.10000000cm"
+     gridspacingy="0.10000000cm"
+     gridspacingx="0.10000000cm"
+     gridoriginy="0.00000000cm"
+     gridoriginx="0.00000000cm"
+     gridtolerance="0.010000000cm"
+     inkscape:window-width="774"
+     inkscape:window-height="541"
+     inkscape:window-x="83"
+     inkscape:window-y="27"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata4">
+    <rdf:RDF
+       id="RDF5">
+      <cc:Work
+         rdf:about=""
+         id="Work6">
+        <dc:format
+           id="format7">image/svg+xml</dc:format>
+        <dc:type
+           id="type9"
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g3068"
+       transform="translate(-2.498738,0.000000)">
+      <g
+         id="g3063"
+         transform="translate(15.00000,0.000000)">
+        <image
+           xlink:href="Washington Mountains generated.png"
+           sodipodi:absref="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources\Washington Mountains generated.png"
+           width="271.52286"
+           height="124.86864"
+           id="image3039"
+           x="316.06870"
+           y="32.756203" />
+        <text
+           xml:space="preserve"
+           style="font-size:14.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:middle;writing-mode:lr-tb"
+           x="451.95319"
+           y="187.19247"
+           id="text3046"
+           sodipodi:linespacing="100%"><tspan
+             sodipodi:role="line"
+             id="tspan3048"
+             x="451.95319"
+             y="187.19247">Generated</tspan></text>
+      </g>
+      <g
+         id="g3058"
+         transform="translate(15.00000,0.000000)">
+        <image
+           xlink:href="Washington Mountains reference.png"
+           sodipodi:absref="C:\Documents and Settings\Taliesen\Desktop\Ry's Stuff\Master's Thesis\xml\resources\Washington Mountains reference.png"
+           width="271.19067"
+           height="124.71586"
+           id="image2998"
+           x="25.201212"
+           y="32.832592" />
+        <text
+           xml:space="preserve"
+           style="font-size:14.000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Arial;text-anchor:middle;writing-mode:lr-tb"
+           x="160.54021"
+           y="187.19589"
+           id="text3042"
+           sodipodi:linespacing="100%"><tspan
+             sodipodi:role="line"
+             id="tspan3044"
+             x="160.54021"
+             y="187.19589">Reference</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<chapter id="Introduction">
+  <title>Introduction</title>
+  <para>
+    <footnote label=" ">
+      <para>
+        This thesis follows the style and format of the <citetitle>Journal of the 
+        ACM</citetitle>.
+      </para>
+    </footnote>
+  </para>
+  <para>
+    Computer-rendered terrain is an important facet of most graphical 
+    applications that attempt to represent the natural world in some way, 
+    including CG-animated feature films, virtual reality systems, computer 
+    games, and art. The ability to synthesize large-scale, realistic terrain 
+    models is of considerable interest for many of these applications.
+  </para>
+  <figure id="Halo Screenshot">
+    <title>An Outdoor Scene from Halo 2&tm;</title>
+    <mediaobject>
+      <caption>
+        Modern graphics hardware is capable of rendering detailed terrain models 
+        in real time, as in this scene captured from <citetitle>Halo 
+          2</citetitle> (<biblioref linkend="Halo 2"/>).
+      </caption>
+      <imageobject>
+        <imagedata scalefit="1" width="5in"
+                   fileref="Halo 2 Screenshot.jpeg"/>
+      </imageobject>
+    </mediaobject>
+  </figure>
+  <para>
+    Much of the recent research in virtual terrain has centered around 
+    accelerating the visualization of large terrains to achieve interactive 
+    frame rates, resulting in a wide array of <firstterm>level of detail (LOD) 
+      algorithms</firstterm>, methods of increasing rendering speed by omitting 
+    details that are too far away or would be otherwise indiscernible to the 
+    viewer <biblioref linkend="ROAM"/> <biblioref linkend="Chunked LOD"/> 
+    <biblioref linkend="Geometry Clipmaps"/> <biblioref linkend="Feature-based 
+      CLOD"/>.  Recent, dramatic advances in the performance and capabilities 
+    of graphics acceleration hardware have enabled the interactive presentation 
+    of richly-detailed terrain models, and have sparked increased interest in 
+    representing outdoor phenomena, as evidenced by the prominence of 
+    nature-related techniques at a recent <citetitle>Game Developer's 
+      Conference</citetitle> <biblioref linkend="GDC 2002"/>. The visually 
+    stunning outdoor scenes in recent game titles, such as <citetitle>Halo 
+      2</citetitle> <biblioref linkend="Halo 2"/> (<xref linkend="Halo 
+      Screenshot"/>), are solid evidence that believable terrain can be 
+    visualized in real-time with current technology.
+  </para>
+  <para>
+    Terrain generation, in contrast, has received comparatively little treatment 
+    in the literature. Fractal-based techniques are the most prevalent, because 
+    they are easily implemented, require relatively little processing time and 
+    human input, and yield at least mediocre results, allowing random, unique 
+    terrains to be generated rapidly.  However, as several authors <biblioref 
+    linkend="Geometry Clipmaps"/> <biblioref linkend="Wavelet Synthesis"/> have 
+    noted, fractal methods for terrain generation are limited in the types of 
+    terrain they can simulate, and one generally has to resort to elevation maps 
+    digitized from the real world to get more interesting and believable terrain 
+    models.
+  </para>
+  <para>
+    In this thesis, I present <citetitle>Terrainosaurus</citetitle>, a new 
+    method of synthesizing realistic, heterogeneous (with respect to type of 
+    terrain) height fields at multiple levels of detail.  This method departs 
+    from current industry-standard approaches to terrain generation in several 
+    important ways, most notably through the use of real-world terrain data as 
+    raw material, and of artificial intelligence methods to control the 
+    generation process.
+  </para>
+  <para>
+    There are a number of desirable characteristics for a terrain generation 
+    algorithm that could be optimized during its design, some of which are in 
+    conflict with one another. However, not all of these characteristics are 
+    equally important for all applications of terrain generation, and so, by 
+    selecting a more narrowly construed problem, it is possible to make some 
+    reasonable decisions as to which characteristics are of the highest 
+    priority. <citetitle>Terrainosaurus</citetitle> is aimed at the needs of 
+    "studio" users: artists, animators, simulation and video game designers, 
+    people who typically have high goals for realism and quality, have powerful 
+    computing resources at their disposal, and do <emphasis>not</emphasis> have 
+    real-time processing constraints. This means that, in order to be maximally  
+    useful to its target user base, <citetitle>Terrainosaurus</citetitle> should 
+    optimize the following characteristics:
+    <itemizedlist>
+      <listitem>
+        realism, such that the terrain models generated by it create a plausible 
+        illusion of the real world
+      </listitem>
+      <listitem>
+        extensibility, such that new types of terrain can be added to its 
+        repertoire on an as-needed basis
+      </listitem>
+      <listitem>
+        ease of use, such that a human user is not burdened with tedious detail 
+        or arcane controls
+      </listitem>
+    </itemizedlist>
+    The motivations and goals of <citetitle>Terrainosaurus</citetitle> are 
+    covered in more depth in <xref linkend="Motivation"/>.
+  </para>
+  <para>
+    The variant of the terrain generation problem most commonly addressed is 
+    that of generating a digital elevation map, in the form of a discrete height 
+    field: i.e., a rectangular grid of elevation values (<xref linkend="Overview 
+    - Height Field"/>).  This formulation of the problem is popular because of a 
+      number of simplifications it makes:
+    <itemizedlist>
+      <listitem>
+        for every <inlineequation><xi:include 
+        href="resources/(x,y).mml"/></inlineequation> coordinate pair within the 
+        bounds of the height field, there is precisely one corresponding 
+        elevation value; thus, the resulting surface is manifold everywhere but 
+        at the height field edges
+      </listitem>
+      <listitem>
+        the horizontal spatial resolution is constant throughout the terrain, 
+        being pre-defined by the resolution of the rectangular grid
+      </listitem>
+    </itemizedlist>
+    The advantages and disadvantages of of height fields, as well as those of 
+    several alternative representations for terrain, are discussed in <xref 
+    linkend="Terrain Representations"/>.
+  </para>
+  <figure id="Overview - Height Field">
+    <title>A Height Field</title>
+    <mediaobject>
+      <caption>
+        <citetitle>Terrainosaurus</citetitle> generates terrain in the form of 
+        <firstterm>height fields</firstterm>, rectangular grids containing one 
+        elevation value for each <inlineequation><xi:include 
+        href="resources/(x,y).mml"/></inlineequation> coordinate pair.
+      </caption>
+      <imageobject>
+        <imagedata scalefit="1" width="5in"
+                   fileref="Height Field Wireframe.jpeg"/>
+      </imageobject>
+    </mediaobject>
+  </figure>
+  <para>
+    To this problem of terrain height field generation, we apply genetic 
+    algorithms. Genetic algorithms are a class of techniques for solving 
+    difficult optimization problems using the metaphor of biological 
+    micro-evolution, and are discussed in further detail in <xref 
+    linkend="Genetic Algorithms Overview"/>. This approach allows the graceful 
+    melding of competing goals, including design objectives specified by the 
+    user and realism constraints largely outside of the user's direct control.
+  </para>
+  <para>
+    From the perspective of a user, <citetitle>Terrainosaurus</citetitle> is 
+    composed of three distinct phases (<xref linkend="Terrainosaurus Phases 
+    Overview"/>):
+    <itemizedlist spacing="compact">
+      <listitem>
+        assembly of a library of <firstterm>terrain types</firstterm>, 
+        collections of GIS elevation data (or <firstterm>terrain 
+        samples</firstterm>) that possess similar characteristics and belong to 
+        the same category of terrain in the user's mind
+      </listitem>
+      <listitem>
+        authoring of a 2D "map" describing the size, shape, and locations of one 
+        or more regions of terrain
+      </listitem>
+      <listitem>
+        generation of a height field conforming to this map, with each region of 
+        terrain evincing similar characteristics to those displayed by the 
+        terrain samples belonging to the corresponding terrain type
+      </listitem>
+    </itemizedlist>
+  </para>
+  <figure id="Terrainosaurus Phases Overview">
+    <title>The Three Phases of <citetitle>Terrainosaurus</citetitle></title>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="Terrainosaurus Phases Overview.svg"/>
+      </imageobject>
+    </mediaobject>
+  </figure>
+  <para>
+    The first of these phases, the construction of the terrain library 
+    (discussed in <xref linkend="Terrain Library Assembly"/>), is essentially a 
+    classification process.  The user (or a third party) provides a number of 
+    sample height fields, presumably from GIS data sources, and sorts them into 
+    separate, logical terrain types. In this way, the user is able to construct 
+    a "palette" of terrain types, with which he will later create his map. In so 
+    doing, the user describes <emphasis>by example</emphasis> the 
+    characteristics he desires to have in the generated terrain.
+  </para>
+  <para>
+    At the moment, this process is entirely manual, and likely to be somewhat 
+    tedious, as it relies on the user to compare terrain samples visually and to 
+    determine terrain type membership on this basis.  Furthermore, not all GIS 
+    elevation maps can be used as example terrains at the present time (the 
+    presence of bodies of water, for example, significantly alters the 
+    statistical characteristics of a height field, making it unsuitable as a 
+    reference example).  In <xref linkend="Future Work"/>, I propose a number of 
+    areas for future work with the potential both to ease the burden on the user 
+    and to relax the restrictions on example height fields. Still, even in 
+    <citetitle>Terrainosaurus</citetitle>'s current state, this is not as 
+    cumbersome as it might seem, as this task need be performed only 
+    infrequently: once assembled, a terrain library can be reused indefinitely.
+  </para>
+  <para>
+    The second phase, the authoring of the map, is where the user will do most 
+    of his work, and is also where he has the most freedom to create. The user 
+    expresses his desired terrain configuration by sketching arbitrary polygonal 
+    regions using a 2D CAD-style interface, and assigning each region a terrain 
+    type from the library constructed in the first phase.
+  </para>
+  <para>
+    Normally, the user will not want the boundaries between adjacent regions of 
+    terrain to be rigidly linear, so in addition to normal polygon editing 
+    operations, we provide a <firstterm>boundary refinement</firstterm> 
+    operation, which is a genetic-algorithm-controlled subdivision operation, 
+    replacing a straight boundary with a series of short linear segments, 
+    forming an irregular, less artificial-looking boundary connecting the same 
+    endpoints as the original (<xref linkend="Overview - Boundary Refinement 
+    Illustration"/>).
+  </para>
+  <figure id="Overview - Boundary Refinement Illustration">
+    <title>Boundary Refinement in the User's Map</title>
+    <mediaobject>
+      <caption>
+        In order to prevent artificial-looking linear boundaries from being 
+        apparent in the generated height field, 
+        <citetitle>Terrainosaurus</citetitle> provides a <firstterm>boundary 
+        refinement</firstterm> operation to subdivide the linear boundaries of 
+        the polygonal regions in the map into irregular boundaries.
+      </caption>
+      <imageobject>
+        <imagedata fileref="Overview - Boundary Refinement.svg"/>
+      </imageobject>
+    </mediaobject>
+  </figure>
+  <para>
+    The third phase, generation of the height field, is almost totally 
+    automated. The user selects a rectangular region of his map, and a target 
+    spatial resolution, and then launches the generation process. A genetic 
+    algorithm is applied repeatedly to generate successively higher resolution 
+    height fields (i.e., successively finer levels of detail). At each LOD, the 
+    task of the genetic algorithm is to find a plausible way of arranging small 
+    patches of height field data taken from the respective terrain types created 
+    by the user. The generated height field is deemed "good" insofar as each 
+    region is similar to the user-provided examples for the terrain type it is 
+    supposed to represent (<xref linkend="Generated Height Field"/>).
+  </para>
+  <para>
+    The details of the <citetitle>Terrainosaurus</citetitle> algorithm are 
+    discussed in much greater depth in <xref linkend="Methods"/>.
+  </para>
+  <para>
+    In contrast to many of the "quick and dirty" algorithms in common practice 
+    today, <citetitle>Terrainosaurus</citetitle> is somewhat more complex, and 
+    is correspondingly more difficult to implement. In the interest of 
+    illuminating the task of implementation somewhat, I discuss some of the 
+    design considerations, hurdles, and lessons learned from the prototype 
+    implementation in <xref linkend="Implementation"/>. An individual interested 
+    in implementing <citetitle>Terrainosaurus</citetitle> may find this 
+    discussion useful, to avoid the problems we encountered during our research.
+  </para>
+  <para>
+    Conceptually, the main results of this work include:
+    <itemizedlist spacing="compact">
+      <listitem>
+        a new, genetic-algorithm-based method for generating terrain at multiple 
+        LODs without the use of fractals
+      </listitem>
+      <listitem>
+        a terrain authoring paradigm for visually designing large-scale height 
+        fields that places a minimal burden on the user in terms of effort and 
+        domain knowledge
+      </listitem>
+      <listitem>
+        a means of comparing terrain height fields for similarity, based on their 
+        features and statistical characteristics
+      </listitem>
+    </itemizedlist>
+  </para>
+  <para>
+    In <xref linkend="Discussion"/>, I discuss the results produced by this 
+    work, as well as some of the significant problems and "wrong turns" 
+    encountered during the research. In the process of this research, we 
+    identified a number of promising avenues for further research, possibly 
+    leading to improvements in the quality of the generated height fields and 
+    streamlining of the user experience. These are discussed in <xref 
+    linkend="Future Work"/>.
+  </para>
+  <figure id="Generated Height Field">
+    <title>A Height Field Generated by <citetitle>Terrainosaurus</citetitle></title>
+    <mediaobject>
+      <caption>
+	The generated terrain may be composed of heterogeneous terrain types 
+	arranged into arbitrary regions.
+      </caption>
+      <imageobject>
+        <imagedata scalefit="1" width="5in"
+                   fileref="Generated Height Field.jpeg"/>
+      </imageobject>
+    </mediaobject>
+  </figure>
+</chapter>

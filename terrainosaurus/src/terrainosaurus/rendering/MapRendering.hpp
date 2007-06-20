@@ -80,7 +80,13 @@ public:
     // Rendering function call operator
     void operator()(Renderer & renderer);
 
+    // HACK!! Need better way of multiplexing modes
+    void renderFacesAsTerrainTypeIDs(bool ttid);
+
 protected:
+    // HACK
+    bool _asTTID;
+
     // Rendering functions for the various map components
     // If 'forSelection' is true, then rather than drawing with texture,
     // selection-IDs will be generated
@@ -88,7 +94,7 @@ protected:
     template <bool forSelection>    void renderFaces(Renderer & renderer);
     template <bool forSelection>    void renderEdges(Renderer & renderer);
     template <bool forSelection>    void renderRefinements(Renderer & renderer);
-
+    
 
     // Color-picking functions (based on selection state and RenderOptions)
     template <class Type> Color pickColor(Type const * e) const;
@@ -98,7 +104,7 @@ protected:
     template <class Type> Color hoverSelectedColor(Type const * e) const;
 
     // GLUtessellator object for rendering concave polygons 'n' stuff XXX
-    void * tesselator;
+    void * _tesselator;
 
 
 /*---------------------------------------------------------------------------*

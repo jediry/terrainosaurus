@@ -1,0 +1,1660 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+<chapter id="Background">
+  <title>Background</title>
+  <para>
+    In this chapter, I cover a number of topics that serve as necessary 
+    background material for understanding the 
+    <citetitle>Terrainosaurus</citetitle> algorithm. First, I survey the history 
+    and state-of-the-art in virtual terrain, and then highlight several previous 
+    works that are especially similar to <citetitle>Terrainosaurus</citetitle>.  
+    Finally, I touch upon several auxiliary topics that are directly relevant to 
+    <citetitle>Terrainosaurus</citetitle>.
+  </para>
+
+  <section id="Previous Work">
+    <title>Previous Work in Virtual Terrain</title>
+    <para>
+      In order to understand the relationship of 
+      <citetitle>Terrainosaurus</citetitle> to the field of terrain generation, 
+      it is helpful to have a grasp of the scope of current terrain generation 
+      literature and praxis. To this end, in this section, I review the 
+      following topics:
+      <itemizedlist spacing="compact">
+        <listitem>
+          a brief discussion of the issues involved in mapping ellipsoid 
+          objects (e.g., the Earth)
+        </listitem>
+        <listitem>
+          a survey of different structures for representing terrain, with their 
+          benefits and drawbacks
+        </listitem>
+        <listitem>
+          a taxonomy of existing methods of generating terrain
+        </listitem>
+        <listitem>
+          a discussion of level of detail issues in terrain generation
+        </listitem>
+        <listitem>
+          a survey of existing terrain generation software
+        </listitem>
+        <listitem>
+          pointers to terrain-related sites on the Internet
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <section id="Geodetic Mapping">
+      <title>Geodetic Mapping</title>
+      <para>
+        The Earth (and the other planets) are (roughly) ellipsoidal objects of 
+        enormous size. In most aspects of our everyday life, it suffices to 
+        think of the Earth simply as an infinite plane, completely flat. Only 
+        when we deal with a planet at larger scales (e.g., for global 
+        positioning and navigation) does it become necessary to account for the 
+        effects of planetary curvature.
+      </para>
+      <para>
+        Researchers in the cartographic and astronomic sciences have been 
+        devising schemes for dealing with these effects for a long time. With 
+        the rise of computing technology, the field of <firstterm>Geographic 
+          Information Systems (GIS)</firstterm>, the application of computers 
+        to mapping and understanding the Earth, has made great use of these 
+        schemes to produce digital maps of most of the Earth's surface. Still, 
+        GIS mapping is not without its difficulties, many of them due to 
+        attempting to "unwrap" the ellipsoidal planet surface to produce a 
+        planar representation of the geography; there appears to be no natural 
+        way of doing this. A full discussion of the difficulties of planetary 
+        mapping, and their work-arounds, is outside of the scope of this 
+        thesis, but to name a few:
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>
+          One way of producing a planar surface from an ellipsoidal surface is 
+          to map the ellipsoid using a spherical coordinate system, and then to 
+          create a rectangular map with the latitude and longitude as the two 
+          axes. The major problem with this approach is that distances become 
+          more and more distorted towards the poles. For a digital terrain 
+          model, this means that if the surface is sampled uniformly in the 
+          latitude/longitude coordinate system, the sample points will not be 
+          uniformly distributed across the surface of the sphere, but will be 
+          denser around the poles.
+        </listitem>
+        <listitem>
+          Another way of producing a planar surface is to "slice" the ellipsoid 
+          like an orange and to flatten each slice of the map with a local 
+          planar projection. This results in less distortion, but causes 
+          discontinuities in the planar map and creates large areas in the map 
+          that do not correspond to any point on the ellipsoid.
+        </listitem>
+      </itemizedlist>
+      For more information on geodetic mapping, projection &amp; coordinate 
+      systems, and GIS in general, the USGS's website is a good place to start 
+      <biblioref linkend="USGS"/>.
+    </section>
+
+    <section id="Terrain Representations">
+      <title>Methods of Representing Terrain</title>
+      <para>
+        One of the most fundamental decisions to be made when working with 
+        virtual terrain is that of how to <emphasis>represent</emphasis> the 
+        terrain. The choice of data structure will affect the set of available 
+        tools in our terrain generation "toolbox", and may also limit the kinds 
+        of terrain features that can be represented or the ways in which the 
+        terrain can be edited and used. Some questions that must be answered 
+        based on the needs of the application include:
+        <itemizedlist spacing="compact">
+          <listitem>
+            Does the terrain need to have infinite precision, such that it can 
+            be viewed at any arbitrary scale, or is it acceptable to have a 
+            finite, maximal resolution?
+          </listitem>
+          <listitem>
+            Is it important to be able to represent terrain structures like 
+            caves and overhangs, in which multiple surfaces have the same 
+            horizontal coordinates, or will the terrain surface obey the 
+            vertical line test at every point?
+          </listitem>
+          <listitem>
+            Are the effects of planetary curvature important, or is a "flat 
+            Earth" approximation good enough?
+          </listitem>
+          <listitem>
+            Will the terrain surface need to be rendered and/or tested for 
+            object collisions in an efficient manner?
+          </listitem>
+        </itemizedlist>
+        In light of these considerations, we can compare the merits and 
+        limitations of several alternative representations for terrain:
+        <itemizedlist spacing="compact">
+          <listitem>
+            height fields
+          </listitem>
+          <listitem>
+            voxel grids
+          </listitem>
+          <listitem>
+            non-uniform meshes
+          </listitem>
+          <listitem>
+            analytic and fractal functions
+          </listitem>
+        </itemizedlist>
+      </para>
+
+      <section id="Height Fields">
+        <title>Height Fields</title>
+        <para>
+          The terrain representation most widely used at the present time is 
+          probably the <firstterm>height field</firstterm>. A height field 
+          represents a surface as a scalar function of two discrete variables, 
+          such that the horizontal coordinate pair
+          <inlineequation><xi:include href="resources/(x,y).mml"/></inlineequation> 
+          determines the elevation at that point. While there is nothing 
+          precluding the use of an infinite, continuous function or a 
+          non-rectangular domain, in usual practice, this function is 
+          discretized at regular intervals in <inlineequation><xi:include 
+              href="resources/x.mml"/></inlineequation> and 
+          <inlineequation><xi:include href="resources/y.mml"/></inlineequation>, 
+          with <inlineequation><xi:include 
+              href="resources/x.mml"/></inlineequation> and 
+          <inlineequation><xi:include href="resources/y.mml"/></inlineequation> 
+          valid over a finite, rectangular domain, the width and height of the 
+          height field (<xref linkend="Height Field Equation"/>).
+        </para>
+        <equation id="Height Field Equation">
+          <title>Height Field Equation</title>
+          <xi:include href="resources/Height Field Equation.mml"/>
+        </equation>
+        <para>
+          This formulation leads to the familiar implementation of the height 
+          field as a 2D array of scalar elevation values (<xref linkend="Height 
+            Field Image"/>).
+        </para>
+        <figure id="Height Field Image">
+          <title>A Discrete Height Field</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata scalefit="1" width="5in"
+                         fileref="Height Field Wireframe.jpeg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+
+        <section>
+          <title>Advantages of Height Fields</title>
+          <para>
+            Once we observe that the discrete form of the height field is 
+            essentially the same thing as a greyscale image, this quickly leads 
+            us to the insight that computer vision and image processing 
+            techniques may be used to construct, modify, analyze, and compress 
+            terrain models represented as height fields (for example, a rough 
+            terrain could be made smoother by applying a standard Gaussian blur 
+            filter to it, and a height field can be stored using an image file 
+            format).
+          </para>
+          <para>
+            A second advantage of the height field is that its regular 
+            structure makes it possible to optimize operations like rendering, 
+            collision-detection and path-finding. The rendering of even very 
+            large height fields in real-time has been made feasible by the 
+            invention of a number of <firstterm>continuous level of detail 
+              (CLOD) algorithms</firstterm>, which render highly visible areas 
+            of the terrain with detailed geometry, using progressively simpler 
+            geometry for obscured or more distant parts of the terrain 
+            <biblioref linkend="ROAM"/> <biblioref linkend="Chunked LOD"/> 
+            <biblioref linkend="Feature-based CLOD"/> <biblioref 
+              linkend="Geometry Clipmaps"/>. Collision detection, an expensive 
+            operation in the general case, can be done cheaply when one of the 
+            objects is a height field since, given an
+            <inlineequation><xi:include href="resources/(x,y).mml"/></inlineequation>
+            location in the height field, only a few surrounding triangles need 
+            to be checked for collision.
+          </para>
+          <para>
+            A third advantage is that significant quantities of real-world 
+            terrain data are available in height field form, making it the 
+            representation of choice for working with GIS data.
+          </para>
+        </section>
+
+        <section>
+          <title>Disadvantages of Height Fields</title>
+          <para>
+            The most fundamental disadvantage of the height field is that, 
+            since surface elevation is a function of an
+            <inlineequation><xi:include href="resources/(x,y).mml"/></inlineequation>
+            coordinate pair, there must be exactly one elevation for every pair 
+            of coordinates. Because of this, a height field is inherently unable 
+            to represent caves, overhangs, vertical surfaces, and other terrain 
+            structures in which multiple surfaces have the same horizontal 
+            coordinates (<xref linkend="Height Field Cartoon"/>). In practice, 
+            this limitation is often inconsequential, since most natural terrain 
+            is fairly "well behaved" in this respect, and the exceptional cases 
+            can be handled by modeling overlapping structures as separate 
+            objects placed atop the terrain (though this solution does have an 
+            undesirable <foreignphrase>ad hoc</foreignphrase> quality to it).
+          </para>
+          <figure id="Height Field Cartoon">
+            <title>The Problem With Height Fields</title>
+            <mediaobject>
+              <caption>
+                One of the main disadvantages of height fields is that they are 
+                inherently limited in the kinds of features that they can 
+                capture; features such as overhangs and caves cannot be 
+                represented in a standard height field.
+              </caption>
+              <imageobject>
+                <imagedata scalefit="1" width="80%"
+                           fileref="Height Field Cartoon.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+          <para>
+            A second disadvantage of the height field, when used in its usual, 
+            discrete form, is that it has a finite, uniform resolution.  This 
+            has two negative implications. First, because the resolution is 
+            <emphasis>finite</emphasis>, this places a firm upper bound on the 
+            degree of fine-scale detail that the height field can represent.  As 
+            a result, when viewed from a too-close viewpoint, the terrain may 
+            appear blocky, featureless and unnatural. Second, because the 
+            resolution is <emphasis>uniform</emphasis> throughout the domain, a 
+            a height field cannot gracefully handle terrains having a highly 
+            variable local level of detail. If the resolution is chosen to match 
+            the average scale of the features in the terrain, then any 
+            finer-scale features will be simplified or eliminated; conversely, 
+            if the resolution is chosen to be high enough to capture the 
+            fine-scale features, areas containing only coarse features will also 
+            be captured at this same high resolution, an undesirable waste of 
+            space and processing time. Ideally, a terrain representation for 
+            terrain generation would either be infinite in resolution, or else 
+            would adaptively increase its resolution to accommodate the addition 
+            of fine scale details, rather than requiring an <foreignphrase>a 
+              priori</foreignphrase> decision about resolution.
+          </para>
+          <para>
+            A third disadvantage of the height field, if used to represent 
+            terrain on a planetary scale, is that rectangular height field 
+            patches do not map onto spheroid objects any better than rectangular 
+            image textures do.  If the standard, two-pole spherical projection 
+            is used to map a height field onto a spherical planet, the density 
+            of height field points will be substantially greater in areas near 
+            the poles than at those near the equator.
+          </para>
+        </section>
+      </section>
+
+      <section>
+        <title>Voxel Grids</title>
+        <para>
+          Another possibility for representing terrain is the height field's 3D 
+          cousin, the <firstterm>voxel grid</firstterm>. A voxel grid is a 
+          discrete, three-dimensional grid of <firstterm>voxels</firstterm> 
+          (the volumetric equivalent of pixels), in which (in the simplest 
+          case) each voxel is either filled or not. By selectively filling 
+          voxels, one can create arbitrary 3D shapes.
+        </para>
+
+        <section>
+          <title>Advantages of Voxel Grids</title>
+          <para>
+            The main advantage that voxel grids have over height fields is that 
+            they are not constrained by the vertical line test, and can 
+            represent vertical surfaces, overhangs, etc.
+          </para>
+        </section>
+
+        <section>
+          <title>Disadvantages of Voxel Grids</title>
+          <para>
+            Voxel grids inherit most of the problems of height fields, and add 
+            several of their own. They share the height field's disadvantages 
+            of having a finite resolution, and of not handling planetary 
+            curvature gracefully. Rendering and collision detection are more 
+            expensive than with height fields, and more data must be pushed to 
+            the graphics card for the same amount of rendered horizontal area.  
+            Additionally, without the use of spatial subdivision techniques 
+            (such as octrees), voxel grids are typically very wasteful of 
+            memory (as large chunks of the grid are either completely empty or 
+            are buried deep underground).
+          </para>
+        </section>
+      </section>
+
+      <section>
+        <title>Non-uniform Meshes</title>
+        <para>
+          A more general way of handling terrain is to represent the surface of  
+          the terrain as an arbitrary mesh of 2D primitives (usually polygons, 
+          but sometimes quadric or cubic Bezier or NURBS patches) embedded in 
+          the 3D space. Such mesh surfaces are popular ways of modeling and 
+          animating characters and other objects, and there are numerous tools 
+          available for working with objects in this form.
+        </para>
+        <para>
+          A <firstterm>triangular irregular network (TIN)</firstterm> 
+          <biblioref linkend="TIN"/> is a special case of a non-uniform mesh.  
+          In a TIN, the surface is represented as a mesh of triangles derived 
+          from a set of 3D points (using, for example, the Delunay 
+          triangulation). TINs are useful ways of creating a mesh 
+          representation from real-world data&em;the points, called 
+          <firstterm>mass points</firstterm>, could be sampled directly from 
+          the terrain surface, or could be derived from the contours of a 
+          topographic map.
+        </para>
+
+        <section>
+          <title>Advantages of Meshes</title>
+          <para>
+            The main benefit of using meshes to model the terrain surface is 
+            that they are extremely general. The surface may have arbitrary 
+            geometry and topology (overhangs, caves, rock arches, etc.), and an 
+            artist working with meshes is free to model even the most bizarre 
+            and heterogeneous terrain structures using a single modeling 
+            paradigm.
+          </para>
+          <para>
+            A second advantage of meshes is that they naturally support variable 
+            level of detail, allowing more vertices in areas of sharp change and 
+            relatively few vertices in flat areas. As a result, a mesh structure 
+            can store some terrain models much more efficiently than regular 
+            grid methods, since it does not require a globally high resolution 
+            in order to achieve fine-scale features in a few places.
+          </para>
+          <para>
+            Furthermore, as most of the tools for computer modeling and 
+            animation support this paradigm, there is a significant user base 
+            that is already comfortable with manipulating objects represented 
+            in this way.
+          </para>
+        </section>
+
+        <section>
+          <title>Disadvantages of Meshes</title>
+          <para>
+            The main difficulty with using meshes for terrain generation is that 
+            it is not clear how to generate them automatically; even though 
+            terrain is almost always tessellated into some sort of polygonal 
+            representation before rendering, I am unaware of any terrain 
+            generation methods (other than manual sculpting) that work directly 
+            on a mesh representation (i.e., without the use of a more 
+            constrained, terrain-specific data structure).
+          </para>
+        </section>
+      </section>
+
+      <section>
+        <title>Continuous Functions</title>
+        <para>
+          A final possibility is to represent the terrain with some sort of 
+          analytic or fractal function. This approach is seldom used in 
+          practice, with the <citetitle>MojoWorld</citetitle> world generator 
+          being a rare, but impressive example <biblioref linkend="MojoWorld"/>.
+        </para>
+
+        <section>
+          <title>Advantages of Continuous Functions</title>
+          <para>
+            Continuous functions (both analytic and fractal) have the advantage 
+            of being viewable at any scale without losing resolution; viewed 
+            close-up, they do not look "faceted" as height fields tend to do.  
+            Beyond this, both analytic and fractal functions have their own 
+            advantages.
+          </para>
+          <para>
+            Certain classes of analytic functions offer mathematical advantages 
+            that make them friendly for rendering and/or collision 
+            detection/response. Many types of analytic functions are 
+            differentiable at most or all points, allowing precise derivatives 
+            to be calculated. Polynomial surfaces of low degree (quartic and 
+            below) have closed-form solutions, allowing ray/surface 
+            intersections to be calculated in a straightforward way.
+          </para>
+          <para>
+            Fractals offer a different advantage: unlike analytic functions, 
+            which typically become more and more linear when viewed at finer and  
+            finer scales, fractal functions continue to produce new details as 
+            they are evaluated at progressively finer scales, meaning that a 
+            fractal terrain can have as much fine-scale detail as the display 
+            system can render.
+          </para>
+        </section>
+
+        <section>
+          <title>Disadvantages of Continuous Functions</title>
+          <para>
+            The main problem of using continuous functions is the difficulty of 
+            modeling with them. If a single, global function is used, it is 
+            difficult to know how to modify the function to achieve a certain 
+            local effect. A more usable approach is to compose a number of 
+            functions, each having a local area of effect (B-spline patches are 
+            example of this), though this has yet to replace polygon-based 
+            techniques as the dominant modeling paradigm.
+          </para>
+          <para>
+            The other drawback of continuous functions is the difficulty of 
+            rendering them. For a polygon-based rendering system, the function 
+            must be transformed into a form that the graphics hardware can 
+            process (e.g., triangles). For a ray tracing system, the first 
+            intersection of a ray with the surface must be evaluated.  In 
+            either case, depending on the complexity and topology of the 
+            function, this process may be quite expensive.
+          </para>
+        </section>
+      </section>
+
+    </section>
+
+    <section id="Taxonomy of Methods">
+      <title>A Taxonomy of Terrain Generation Methods</title>
+      <para>
+        Terrain generation has not received nearly as much attention in the 
+        literature as terrain LOD rendering has, with relatively few 
+        innovations to date. The discussion of terrain generation in the 
+        computer science literature dates back at least as far as 1977, to a 
+        paper in which terrain created from simple mathematical functions is 
+        used to stage simulated military combat scenarios <biblioref 
+          linkend="Combat Simulation"/>. Since that time, a variety of methods  
+        for producing terrain have been proposed, generally falling into four 
+        broad categories:
+        <itemizedlist spacing="compact">
+          <listitem>
+            GIS-based methods
+          </listitem>
+          <listitem>
+            Sculpting methods
+          </listitem>
+          <listitem>
+            Simulation methods
+          </listitem>
+          <listitem>
+            Procedural methods
+          </listitem>
+        </itemizedlist>
+      </para>
+
+      <section id="GIS-based Methods">
+        <title>GIS-based Methods</title>
+        <figure id="GIS-based Methods Skill Chart">
+          <title>Typical Characteristics of GIS-based Methods</title>
+          <mediaobject>
+            <caption>
+              GIS-based methods are simple to implement, and borrow their 
+              realism directly from the real world, but are limited to the 
+              locations and resolutions for which real-world data is available.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Skill Chart - GIS.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The most obvious place to find natural-looking terrain is in nature 
+          itself. While not strictly a method of 
+          <emphasis>generating</emphasis> terrain, the use of GIS data is a 
+          simple and effective way of getting very realistic terrain models 
+          (<xref linkend="GIS-based Methods Skill Chart"/>).  High-quality 
+          elevation maps (height fields) of the entire United States (and some 
+          other parts of the world) can be downloaded or ordered from a variety 
+          of GIS data providers (such as <citetitle>Geo Community</citetitle> 
+          <biblioref linkend="GeoCommunity"/> and the <citetitle>U.S.  
+            Geological Survey (USGS)</citetitle> <biblioref linkend="USGS 
+            Maps"/>).  These data are available in several formats (with older 
+          elevation maps available in the DEM format <biblioref linkend="DEM 
+            Specification"/> and more recent data available only in the more 
+          complex SDTS format <biblioref linkend="SDTS Specification"/>) and at 
+          resolutions as high as 3 meters per sample in some cases (though 
+          resolutions of 10 and 30 meters per sample are much more 
+          commonplace).
+        </para>
+        <para>
+          GIS data is ideal when the overriding concern is realism, and is 
+          often the best or only option when an application needs to represent 
+          actual, real-world locations faithfully. Applications of this sort 
+          include mapping software <biblioref linkend="ArcGIS"/> and 
+          simulations set in real-world locations <biblioref linkend="SimCity 
+            4"/> <biblioref linkend="FS 2004"/>. Using GIS data, a high degree 
+          of realism can be achieved for relatively little human effort.
+        </para>
+        <para>
+          The major drawback to the use of GIS data is the constraint that it 
+          imposes: only real-world locations that are present in a mapping 
+          agency's database can be used. Thus, while little or no effort is 
+          required to <emphasis>use</emphasis> GIS data in an application, 
+          <emphasis>finding</emphasis> suitable data may be time-consuming or 
+          simply impossible. For many applications, this may unacceptably 
+          compromise artistic objectives (e.g., a movie director may want a 
+          particular arrangement of mountains and rivers) or other, more 
+          utilitarian goals (e.g., a particular military combat scenario might 
+          require a particular set of terrain features). A secondary 
+          disadvantage of GIS-based methods is the significant amount of space 
+          required to store large datasets.  Finally, the level of detail 
+          available through GIS sources is limited&em;if a particular 
+          application requires finer-scale detail than that offered by the 
+          mapping agency, one will have to resort to other means for achieving 
+          it.
+        </para>
+      </section>
+
+      <section id="Sculpting Methods">
+        <title>Sculpting Methods</title>
+        <figure id="Sculpting Methods Skill Chart">
+          <title>Typical Characteristics of Sculpting Methods</title>
+          <mediaobject>
+            <caption>
+              Sculpting methods allow the terrain author to construct virtually 
+              anything imaginable, but require significant effort and skill.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Skill Chart - Sculpting.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          At the opposite end of the spectrum, in terms of human effort, is the 
+          use of artistic tools to "paint" or "sculpt" the features of the 
+          terrain (<xref linkend="Sculpting Methods Skill Chart"/>).  In most 
+          cases, this means using computer-based modeling and painting tools 
+          (such as <citetitle>Adobe Photoshop</citetitle>, <citetitle>Bryce 
+            3D</citetitle>, or <citetitle>Maya</citetitle>) or specialized 
+          "level editors" (such as those shipped with the recent game titles 
+          <citetitle>SimCity 4</citetitle> <biblioref linkend="SimCity 4"/> and 
+          <citetitle>Unreal Tournament 2004</citetitle> <biblioref linkend="UT 
+            2004"/>). Less commonly, an artist might create a model using 
+          traditional, physical media and then digitize it using laser scanning 
+          techniques, as was done to create the terrain for the video game 
+          title <citetitle>Trespasser</citetitle> <biblioref 
+            linkend="Trespasser Postmortem"/>.
+        </para>
+        <para>
+          The primary advantage of sculpting methods is the enormous freedom 
+          given to the artist. Anything the artist can conceive, he can 
+          achieve, given sufficient skill and effort.
+        </para>
+        <para>
+          This strength is also its main drawback&em;achieving a desired result 
+          with this method typically requires a large investment of human time 
+          and effort, and the quality of the results is heavily dependent on 
+          the skill of the artist. As the size of the virtual environment 
+          increases, so does the cost of sculpting it, making this method of 
+          terrain generation less and less feasible as projects increase in 
+          scope.
+        </para>
+      </section>
+
+      <section id="Simulation Methods">
+        <title>Simulation Methods</title>
+        <figure id="Simulation Methods Skill Chart">
+          <title>Typical Characteristics of Simulation Methods</title>
+          <mediaobject>
+            <caption>
+              Simulation methods have high potential for realism, but are 
+              computationally expensive and difficult to control.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Skill Chart - Simulation.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          Another family of terrain generation methods involves the evolution 
+          of terrain by simulating the effects of physical processes such as 
+          plate tectonics or erosion by wind or water <biblioref 
+            linkend="Stream Erosion"/> <biblioref linkend="Eroded Fractal 
+            Terrains"/> <biblioref linkend="Area51"/> <biblioref 
+            linkend="Erosion 3D"/> (<xref linkend="Simulation Methods Skill 
+            Chart"/>).  Simulation techniques for terrain generation have been 
+          explored to a much smaller extent than other methods.
+        </para>
+        <para>
+          These methods have the potential to produce highly realistic results,  
+          to the extent that they accurately model the physical processes they 
+          are intended to simulate. They can also be very hands-off, requiring 
+          little input from the user.
+        </para>
+        <para>
+          One drawback of simulation methods is the amount of processing time 
+          required. In order for the simulation to produce realistic results, it 
+          must run at sufficiently fine resolutions in both space and time to 
+          adequately capture the effects of these processes; as the resolution 
+          of the simulation increases, so does the time required to run it. A 
+          second drawback of such methods is the relative lack of user control: 
+          since a simulation is intended to capture the effects of natural 
+          processes, the role of the human user is limited to setting up the 
+          initial conditions for the simulation and kicking it off&em;achieving 
+          specific, user-specified effects may be difficult.
+        </para>
+      </section>
+
+      <section id="Procedural Methods">
+        <title>Procedural Methods</title>
+        <figure id="Procedural Methods Skill Chart">
+          <title>Typical Characteristics of Procedural Methods</title>
+          <mediaobject>
+            <caption>
+              Procedural methods are often simple to implement, relatively fast 
+              to run, somewhat difficult to control, and limited in realism.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Skill Chart - Procedural.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          The term "procedural methods" describes a broad family of terrain 
+          generation techniques whose unifying factor is that they produce a 
+          terrain model through the application of some sort of automatic 
+          "procedure" (<xref linkend="Procedural Methods Skill Chart"/>). While 
+          the aforementioned simulation methods (<xref linkend="Simulation 
+            Methods"/>) fit this description, I consider them separately 
+          because, unlike true simulation methods, most procedural generation 
+          methods do not attempt to simulate any physical processes, and use 
+          techniques that are quite different from the numeric integration that 
+          is typical of simulations.  In most cases, procedural generation 
+          methods are simply "hacks" that have been found to work acceptably for 
+          generating certain types of terrain and rely heavily on random number 
+          generation to produce irregular variations in the terrain surface.  
+          Some of the earliest discussions in the literature focus on procedural 
+          methods for approximating terrain <biblioref linkend="Combat 
+            Simulation"/> <biblioref linkend="Procedure Models"/>.
+        </para>
+        <para>
+          Some of the most popular procedural techniques are fractal in nature, 
+          such as the midpoint displacement method (MPD) <biblioref 
+            linkend="MPD Method"/> and Perlin Noise <biblioref linkend="Perlin 
+            Noise"/>.  These techniques exhibit the fractal property of 
+          self-similarity at different scales, and generally involve randomly 
+          perturbing the height values of the terrain by increasingly smaller 
+          amounts at increasingly finer scales.  Prusinkiewicz &amp; Hammel 
+          describe a method for generating mountains with an integrated river 
+          network that is entirely fractal in nature <biblioref 
+            linkend="Mountains and Rivers"/>.
+        </para>
+        <para>
+          A similar class of procedural techniques in current practice is known 
+          as <firstterm>collaging</firstterm> or <firstterm>faulting</firstterm> 
+          methods <biblioref linkend="Area51"/>.  In these techniques, an 
+          irregular height field is created through the random superposition of 
+          simple shapes, such as spheres, cones, half-planes, or 2D 
+          trigonometric functions.  After several hundred to several thousand 
+          iterations, the result is a random height field possessing similar 
+          curvature and smoothness characteristics to the primitive shape, but 
+          without any of the primitive shapes directly apparent in the terrain.
+        </para>
+        <para>
+          Less frequently used are a family of <firstterm>spectral 
+            synthesis</firstterm> techniques, which involve randomly or 
+          semi-randomly constructing a frequency-spectrum (Fourier- or 
+          wavelet-space) representation of a terrain and then performing the 
+          inverse transform to produce the spatial representation of the 
+          terrain <biblioref linkend="Wavelet Synthesis"/> <biblioref 
+            linkend="Spectral Synthesis"/>.
+        </para>
+        <para>
+          Procedural methods for terrain generation are popular among artists 
+          and game designers <biblioref linkend="Lighthouse 3D"/> <biblioref 
+            linkend="Fluid Simulation"/>, largely because they are easy to 
+          understand and implement. They also generate unique and (ideally) 
+          interesting results each time, and can run with little or no human 
+          input in many cases, making them useful for generating random game 
+          worlds. If used in this way, the application need not store any 
+          height field data on disk, since a new, unique terrain environment 
+          can be constructed each time the application runs.
+        </para>
+        <para>
+          The principal drawback of these methods is that they generally have 
+          no causal connection to the real-world terrain they try to emulate, 
+          instead bearing only an incidental resemblance (in other words, they 
+          only happen to <emphasis>look</emphasis> terrain-like rather than 
+          being somehow <emphasis>derived from</emphasis> the same principles 
+          and processes that cause the formation of real terrain).  Because of 
+          this, most procedural methods are only useful for simulating a limited 
+          range of terrain types. In addition, since the procedural parameters 
+          do not typically correspond to real-world terrain characteristics (and 
+          are often rather unintuitive), achieving a desired effect is likely to 
+          be an exercise in trial and error.
+        </para>
+      </section>
+    </section>
+
+    <section id="Level of Detail Considerations">
+      <title>Level of Detail Considerations</title>
+      <para>
+        Another way of classifying terrain generation methods, essentially 
+        orthogonal to the taxonomy of the previous section (<xref 
+          linkend="Taxonomy of Methods"/>), is with respect to how they handle 
+        level of detail.  In terrain rendering, LOD considerations are 
+        important for handling large terrain models efficiently. In terrain 
+        <emphasis>generation</emphasis>, however, LOD acquires a whole new 
+        level of importance. In rendering, LOD may be thought of simply as an 
+        upper limit on the amount of detail to be shown; in generation, LOD has 
+        (or <emphasis>should</emphasis> have) an enormous impact on the shape 
+        and features of the generated terrain. Terrain features occur across a 
+        variety of scales, ranging from entire mountain ranges down to small 
+        cracks in the ground. As the LOD of a terrain is reduced, the finer 
+        details are lost, leaving only the larger features; because of this, we 
+        may consider those details that disappeared as <emphasis>belonging 
+          to</emphasis> the finer LOD, and we may design our algorithms to 
+        exploit this. At least three classes of generation methods can be 
+        distinguished with respect to LOD:
+        <itemizedlist spacing="compact">
+          <listitem>
+            methods that are LOD-agnostic, and generate the full spectrum of 
+            detail in one shot
+          </listitem>
+          <listitem>
+            methods that generate detail at different scales, and combine 
+            them via superposition
+          </listitem>
+          <listitem>
+            methods that work from coarse to fine, progressively introducing 
+            finer and finer modifications to the terrain
+          </listitem>
+        </itemizedlist>
+        In the following sections, I describe these three classes of methods, 
+        concluding with a discussion of the applicability of fractals to terrain 
+        generation.
+      </para>
+
+      <section id="LOD-agnostic Methods">
+        <title>LOD-agnostic Methods</title>
+        <para>
+          The most simplistic approach to LOD is, of course, to ignore it as 
+          much as possible. A number of generation methods follow this course, 
+          considering LOD only when initially selecting the resolution of the 
+          height field (or other structure).
+        </para>
+        <para>
+          Many of the procedural methods discussed in <xref linkend="Procedural 
+          Methods"/> fit this description.  Collaging/faulting methods 
+          <biblioref linkend="Area51"/> are a good example: the resolution of 
+          the height field is fixed at the start of the algorithm, and the 
+          collaging process runs to completion without explicit consideration 
+          for the LOD of generated features.  The features produced, whether 
+          large or small, are simply the consequence of the random overlapping 
+          of hundreds or thousands of simple shapes.
+        </para>
+        <para>
+          Another class of methods that is typically LOD-agnostic is the class  
+          of simulation methods discussed in <xref linkend="Simulation 
+            Methods"/>.  Since simulation is usually done using numerical 
+          integration techniques on a regular grid structure, the initial 
+          choices of grid resolution and simulation time-step are normally the 
+          only points at which LOD considerations are consciously applied.  
+          Thereafter, the physical features of the terrain emerge through the 
+          approximation of physical processes, without further reference to LOD 
+          (though the initial choice of LOD will certainly affect the accuracy 
+          of the simulation).
+        </para>
+        <para>
+          These examples are sufficient to illustrate the principal weakness of 
+          most LOD-agnostic algorithms: because they do "everything at once", 
+          with many overlapping effects, the effects of any individual step in 
+          the generation process are difficult or impossible for the human user 
+          to distinguish, making the generation process inscrutable, 
+          unpredictable&hellip;and uncontrollable. As was mentioned in <xref 
+          linkend="Simulation Methods"/>, physically-based simulations have the 
+          drawback of being difficult for a user to guide towards a desired 
+          result. This is partially attributable to the LOD-agnostic nature of 
+          the simulation: a tweak to the initial conditions of the simulation 
+          may (or may not) produce the desired effect at a certain scale, but 
+          may also have undesired side-effects at larger or smaller scales.  
+          Non-physically-based methods of the LOD-agnostic sort share this 
+          characteristic of being opaque to the human user, and carry the 
+          additional liability of tending to generate physically incorrect 
+          shapes. It is difficult to see how such methods could ever rise above 
+          the level of simple "hacks" to become controllable, realistic terrain 
+          generators.
+        </para>
+      </section>
+
+      <section id="Superposition Methods">
+        <title>Superposition Methods</title>
+        <para>
+          A second approach to LOD is to construct detail in separate "layers" 
+          of different scales, and then to combine these layers by adding them 
+          together (employing <firstterm>superposition</firstterm>, to borrow 
+          signal theory terminology). To understand the distinction between 
+          these methods and the following class (<xref linkend="Progressive 
+            Refinement Methods"/>), it is important to grasp that these 
+          different layers are not <emphasis>themselves</emphasis> the LODs of 
+          the terrain, but only the details belonging to a finite "slice" of the 
+          frequency spectrum. The actual LODs can be reconstituted by summing 
+          together all of the layers up to the requisite degree of fineness.
+        </para>
+        <para>
+          Spectral synthesis methods <biblioref linkend="Wavelet Synthesis"/> 
+          <biblioref linkend="Spectral Synthesis"/> take precisely this 
+          approach: by setting the values of the various frequency-domain 
+          coefficients, one can control the presence and importance of details 
+          at different scales. The recombination of these different scales into 
+          a spatial-domain height field is done by applying the appropriate 
+          inverse transform (Fourier or wavelet) to the frequency-domain 
+          representation.
+        </para>
+        <para>
+          Another example of a superposition method is Perlin Noise <biblioref 
+            linkend="Perlin Noise"/>, in which random noise layers of different 
+          frequencies and amplitudes are added together; the choice of 
+          frequency and amplitude for each of the layers gives some measure of 
+          control over the overall characteristics of the resulting height 
+          field.
+        </para>
+        <para>
+          The practical success of Perlin Noise in computer graphics can be 
+          largely attributed to its versatility. Compared to the LOD-agnostic 
+          methods previously discussed (<xref linkend="LOD-agnostic 
+            Methods"/>), Perlin Noise (and similar superposition methods) allow 
+          a user to achieve a greater variety of effects, by allowing him to 
+          exert some degree of predictable control over the behavior of the 
+          surface at different scales.
+        </para>
+      </section>
+
+      <section id="Progressive Refinement Methods">
+        <title>Progressive Refinement Methods</title>
+        <para>
+          A third approach to LOD in terrain generation is to refine the terrain 
+          surface progressively, starting from a coarse LOD and adding finer and 
+          finer details until the desired LOD is reached.  These methods differ 
+          from those in the previous section (<xref linkend="Superposition 
+            Methods"/>) in that they construct new, fine-scale details as 
+          modifications to the coarser LODs.
+        </para>
+        <para>
+          These methods often work by recursive subdivision: given a complete,  
+          coarse LOD of the terrain, the next-finer LOD is constructed by 
+          subdividing the coarse LOD and, at the same time, introducing new, 
+          small-scale modifications to the terrain. The <citetitle>Midpoint 
+            Displacement Method (MPD)</citetitle> <biblioref linkend="Area51"/> 
+          is, perhaps, the prototypical example of this.  
+          <citetitle>Terrainosaurus</citetitle> also takes a progressive 
+          refinement approach, though with a bit more sophistication in how it 
+          introduces new details.
+        </para>
+        <para>
+          A main advantage of progressive refinement methods over superposition 
+          methods is that they can make use of the previously constructed, 
+          coarse detail in deciding where and how to introduce the new, 
+          fine-scale detail.  While no previously existing method of which I am 
+          aware exploits this at all (and 
+          <citetitle>Terrainosaurus</citetitle>, in its current incarnation, 
+          does so only to a limited degree), I believe that this family of 
+          methods holds the most promise for generating realistic terrain 
+          containing recognizable, coherent features, such as rivers, volcanoes, 
+          and ravines.
+        </para>
+      </section>
+
+      <section id="Fractals and Not">
+        <title>Fractals &amp; Non-fractals</title>
+        <para>
+          All terrain generation methods that are not agnostic with respect to 
+          LOD must decide how to handle the different LODs: what kinds of 
+          features will appear in each LOD, how large they will be, and how 
+          they will relate to one another.  A physically correct solution to 
+          this problem is difficult (perhaps the "Holy Grail" of terrain 
+          generation), and as a result, many researchers and practitioners have 
+          turned to fractals as an approximate solution.
+        </para>
+        <para>
+          In his seminal work, <citetitle>The Fractal Geometry of 
+            Nature</citetitle> <biblioref linkend="Mandelbrot"/>, Benoit 
+          Mandelbrot observed that many objects in nature display the fractal 
+          characteristic of <firstterm>self-similarity</firstterm>, having 
+          essentially the same structure when viewed at a variety of scales.  
+          For example, the small-scale variations in elevation across a 
+          1-meter-square piece of mountainous terrain might,  if one zooms back 
+          far enough, happen to resemble the large-scale variations across the 
+          entire mountain range.  This observation has been applied to great 
+          effect in computer graphics, with fractal algorithms being used as 
+          reasonable approximations of a number of natural structures, both 
+          regular (e.g., plants and trees) and irregular (e.g., terrain).
+        </para>
+        <para>
+          Randomized fractal algorithms are a convenient method of creating 
+          irregular shapes across an entire range of LODs. Because each 
+          successively finer LOD has a defined relationship to the one 
+          preceding it (modulo the effects of the random number generator), 
+          fractal algorithms offer effectively unlimited amounts of detail: 
+          when rendering a fractal surface, one can evaluate the fractal to 
+          whatever degree of fineness the display system is able to show.
+        </para>
+        <para>
+          Still, as useful as the fractal approximation for terrain is, it 
+          cannot tell the whole story&em;not all types of terrain exhibit 
+          conveniently self-similar properties across all the levels of detail 
+          at which we experience them. To see that this must be the case, one 
+          need only consider the diverse array of physical forces that interact 
+          to create real-world terrain&em;plate tectonics, erosion due to wind 
+          &amp; water, earthquakes, avalanches, floods &amp; volcanic eruptions, 
+          dehydration &amp; thermal expansion (to name a few)&em;it is 
+          intuitively obvious that each of these forces acts more noticeably at 
+          some scales than at others.  <xref linkend="Cracked Mud"/> is a 
+          photograph, taken close-up, of cracked, dried mud formed at the bottom 
+          of a volcanic crater in the Death Valley area in California; if a 
+          fractal relationship held between this bit of terrain and its 
+          surrounding macro-environment, we would expect to find it in the 
+          context of an area characterized by broad, flat mesas, separated by 
+          narrow, severe ravines. As it turns out, this photo was taken at the 
+          bottom of a relatively shallow, sloping crater. Obviously, in this 
+          example, no fractal relationship holds between these two scales.
+        </para>
+        <figure id="Cracked Mud">
+          <title>Cracked Mud</title>
+          <mediaobject>
+            <caption>
+              A photograph taken close-up of cracked mud. The physical process 
+              predominantly responsible for this effect does not manifest in the 
+              same way in the surrounding larger-scale environment. As a result, 
+              while a fractal relationship does appear to exist in the terrain 
+              in this photo, we would not expect this local effect to be 
+              co-reducible, along with its surrounding environment, to a single 
+              fractal function.  (Photo courtesy of 
+              <citetitle>www.freenaturepictures.com</citetitle>.)
+            </caption>
+            <imageobject>
+              <imagedata scalefit="1" width="4in"
+                         fileref="Cracked Mud.jpeg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <para>
+          Therefore, since fractal relationships cannot be trusted to hold in 
+          the general case, any terrain generation algorithm that relies on 
+          fractal behavior is inherently limited&em;there will be types of 
+          terrain (probably <emphasis>many</emphasis> types of terrain) that it 
+          will be unable to reproduce. Any terrain generation algorithm that 
+          aims to support a broad range of terrain types at various scales must 
+          allow for the possibility of non-self-similar terrain.
+        </para>
+        <para>
+          This leads to the observation that multi-scale, 
+          <emphasis>fractal</emphasis> terrain generation algorithms are simply 
+          a special case of a more general class of multi-scale, 
+          <emphasis>not-necessarily-fractal</emphasis> terrain generation 
+          algorithms. Fractal algorithms answer the question, "What should the 
+          terrain look like at this scale?", with, "Just like it did at the 
+          larger scale, but smaller." This is a straightforward way of 
+          generating terrain across multiple LODs, but it is probably not 
+          sufficient for many types of terrain.  Part of the goal of 
+          <citetitle>Terrainosaurus</citetitle> is to provide an alternative 
+          answer to this question, leading to a terrain generation methodology 
+          that is more general and controllable.
+        </para>
+      </section>
+    </section>
+
+    <section id="Existing Tools">
+      <title>Existing Tools for Terrain Generation</title>
+      <para>
+        While the list of terrain generation software is too large to be 
+        reviewed exhaustively in this section, it is worthwhile to make note of 
+        a representative sampling. Most of these applications permit the use of 
+        more than one of the above techniques as a way of mitigating the 
+        weaknesses of each.
+      </para>
+
+      <section>
+        <title>Terragen</title>
+        <para>
+          <citetitle>Terragen</citetitle> <biblioref linkend="Terragen"/> is a 
+          well-known terrain generation and rendering tool, developed by 
+          Planetside Software, free for non-commercial use. It provides several 
+          fractal algorithms for generating terrains and also provides a simple 
+          set of sculpting tools for modifying the resultant height fields. It 
+          offers an integrated ray tracing engine including some very nice 
+          cloud, water, and atmospheric lighting effects, and has a significant 
+          artistic community.
+        </para>
+      </section>
+
+      <section>
+        <title>MojoWorld</title>
+        <para>
+          <citetitle>MojoWorld</citetitle> <biblioref linkend="MojoWorld"/> is 
+          a set of applications for creating and exploring fractal worlds. 
+          <citetitle>MojoWorld Transporter</citetitle> is a free program for 
+          exploring the worlds created by the commercial product, 
+          <citetitle>MojoWorld Generator</citetitle>.  Unlike most hybrid 
+          fractal/sculpting terrain generators, 
+          <citetitle>MojoWorld</citetitle> handles fractal objects in symbolic 
+          form, allowing entire worlds to be viewed at any level of detail and 
+          stored in relatively small files.
+        </para>
+      </section>
+
+      <section>
+        <title>Bryce 3D</title>
+        <para>
+          <citetitle>Bryce 3D</citetitle> <biblioref linkend="Bryce 3D"/> is a 
+          general-purpose 3D modeling and animation tool, but is perhaps best 
+          known for its terrain modeling capabilities. It offers a full set of 
+          painting/sculpting tools for generating and editing 
+          height-field-based terrain objects, including the ability to use Adobe 
+          <citetitle>Photoshop</citetitle> image filters.
+        </para>
+      </section>
+
+      <section>
+        <title>World Machine</title>
+        <para>
+          <citetitle>World Machine</citetitle> <biblioref linkend="World 
+            Machine"/> is a procedural height field generation tool, free for 
+          non-commercial use. Its most interesting aspect is that it treats the 
+          terrain creation process as composed of simple "device" primitives 
+          (e.g., 2D Perlin noise generator, Gaussian blur filter, etc.) which 
+          the user connects to form a "machine", a directed acyclic graph (DAG) 
+          that will produce the height field when evaluated.  The main benefit 
+          of this approach over a more traditional fractal/sculpting approach is 
+          that, since the series of operations is preserved in the DAG, the user 
+          is free to tweak the parameters of any stage of the generation 
+          process, rather than having to commit to a particular filter size, 
+          random seed, etc. at the outset.
+        </para>
+      </section>
+
+      <section>
+        <title>Erosion 3D</title>
+        <para>
+          <citetitle>Erosion 3D</citetitle> <biblioref linkend="Erosion 3D"/> 
+          is an application for simulating the effects of water erosion on 
+          height field terrain. Developed at the Department of Soil Science and 
+          Water Protection of the Institut fÃ¼r Geographische Wissenschaften 
+          (Institute for Geographic Sciences) in Germany, <citetitle>Erosion 
+            3D</citetitle> is intended primarily as an analysis tool, not as a 
+          terrain creation tool.
+        </para>
+      </section>
+
+    </section>
+
+    <section id="Other Terrain Sources">
+      <title>Other Sources for Terrain Information</title>
+      <para>
+        There also exist a number of community hubs and information portals on 
+        the Internet that focus partially or exclusively on the synthesis and 
+        use of virtual terrain. These sites are good places to go to find 
+        mature, free software, tutorials, technical specifications, and links 
+        to other resources.
+      </para>
+
+      <section>
+        <title>United States Geological Survey</title>
+        <subtitle><ulink url="http://www.usgs.gov"/></subtitle>
+        <para>
+          The <citetitle>U.S. Geological Survey</citetitle> <biblioref 
+            linkend="USGS"/> is a U.S.  government organization dedicated to 
+          geographic, environmental and biological research. The USGS maintains 
+          standards (i.e., file format specifications) for GIS data interchange, 
+          offers downloadable GIS data, and provides a wealth of GIS-related 
+          information.
+        </para>
+      </section>
+
+      <section>
+        <title>GeoCommunity</title>
+        <subtitle><ulink url="http://www.geocomm.com"/></subtitle>
+        <para>
+          <citetitle>GeoCommunity</citetitle> <biblioref 
+            linkend="GeoCommunity"/> is a portal site for the GIS community, 
+          and provides information, software, and freely downloadable GIS data 
+          for the entire United States, and some other parts of the world.
+        </para>
+      </section>
+
+      <section>
+        <title>The Virtual Terrain Project</title>
+        <subtitle><ulink url="http://www.vterrain.org"/></subtitle>
+        <para>
+          The <citetitle>Virtual Terrain Project (VTP)</citetitle> <biblioref 
+            linkend="VTP"/> is an online repository containing a wealth of 
+          information and free, cross-platform software, as well as a portal to 
+          additional resources.  The stated goal of VTP is "to foster the 
+          creation of tools for easily constructing any part of the real world 
+          in interactive, 3D digital form."
+        </para>
+      </section>
+
+      <section>
+        <title>Gamasutra</title>
+        <subtitle><ulink url="http://www.gamasutra.com"/></subtitle>
+        <para>
+          <citetitle>Gamasutra</citetitle> <biblioref linkend="Gamasutra"/> is 
+          one of the premiere websites of the game developer community, 
+          tracking game industry news and providing tutorials on useful 
+          techniques for real-time interactive games, including techniques for 
+          generating and visualizing terrain.
+        </para>
+      </section>
+
+      <section>
+        <title>NeHe</title>
+        <subtitle><ulink url="http://www.nehe.gamedev.net"/></subtitle>
+        <para>
+          <citetitle>Neon Helium Productions (NeHe)</citetitle> <biblioref 
+            linkend="NeHe"/> is another game developer community site, focused 
+          on largely on OpenGL, providing articles, tutorials and sample code.  
+          It has a number of tutorials on terrain rendering and generation.
+        </para>
+      </section>
+
+    </section>
+
+  </section>
+
+  <section>
+    <title>Other Similar Works</title>
+    <para>
+      In the course of reviewing the existing terrain generation literature, 
+      several papers were encountered that were especially similar to aspects of 
+      <citetitle>Terrainosaurus</citetitle> (in spirit, at least, if not in 
+      application).
+    </para>
+
+    <section>
+      <title><citetitle>Procedural Modeling of Cities</citetitle></title>
+      <para>
+        This paper <biblioref linkend="Procedural Cities"/> by Parish &amp; 
+        Müller describes <citetitle>CityEngine</citetitle>, a procedural 
+        approach to city generation (buildings, roads, etc.) using L-systems.  
+        The user provides raster maps of the land elevation, bodies of water, 
+        and population density, and <citetitle>CityEngine</citetitle> constructs 
+        a plausible road network and a set of buildings matching these maps, 
+        using L-system rules derived from studying actual cities.
+      </para>
+      <para>
+        <citetitle>CityEngine</citetitle> is similar to 
+        <citetitle>Terrainosaurus</citetitle> in a number of ways; in fact, 
+        parts of <citetitle>Terrainosaurus</citetitle>'s generation pipeline 
+        are inspired by that of <citetitle>CityEngine</citetitle>. In a sense, 
+        they are "sister systems", attacking different problems (terrain vs.  
+        cities), using different techniques (genetic algorithms vs. L-systems), 
+        but with the same objective: extensible, realistic synthesis of 
+        large-scale constructs, incorporating both human-designed layouts and 
+        realism constraints derived from real-world observations.
+      </para>
+    </section>
+
+    <section>
+      <title><citetitle>Towards an Understanding of Landscape Scale and 
+      Structure</citetitle></title>
+      <para>
+        This paper <biblioref linkend="Positive Wavelet"/> by Gallant &amp; 
+        Hutchinson investigates the relationship between the resolution of a 
+        height field and the kinds of physical features that can be detected 
+        within that height field. As their analysis tool, they use a 
+        <firstterm>positive wavelet decomposition</firstterm> of the height 
+        field (intuitively, the inverse of the aforementioned collaging methods 
+        (<xref linkend="Procedural Methods"/>), although the positive wavelet 
+        decomposition does not technically have an inverse operation) to break 
+        it into features of different scales, from which they draw their 
+        conclusions.
+      </para>
+      <para>
+        While their objective is quite different (they are interested in 
+        hydrological analysis), their work bears a resemblance to 
+        <citetitle>Terrainosaurus</citetitle> in that they are seeking to 
+        decompose terrain height fields into features of different scales in 
+        order to characterize and understand them.
+      </para>
+    </section>
+
+    <section>
+      <title><citetitle>SAR Surface Ice Cover Discrimination Using Distribution 
+      Matching</citetitle></title>
+      <para>
+        This paper <biblioref linkend="Ice Cover Discrimination"/> by Gill 
+        describes an algorithm for computer-aided discrimination between sea 
+        ice and open water from synthetic aperture radar (SAR) imagery. In this 
+        algorithm, a human identifies a region he believes to be "ice" and 
+        another he believes to be "water", and then the computer categorizes 
+        the rest of the image as "ice" or "water" using the Kolmogorov-Smimov 
+        (KS) and <inlineequation><xi:include href="resources/chi^2.mml"/></inlineequation> 
+        statistical distribution matching tests.
+      </para>
+      <para>
+        This is similar to <citetitle>Terrainosaurus</citetitle> in that the 
+        statistical characteristics of human-identified terrain types are used 
+        to compare samples of terrain for similarity, though 
+        <citetitle>Terrainosaurus</citetitle> uses a different means of 
+        determining the degree of similarity.
+      </para>
+    </section>
+
+    <section>
+      <title><citetitle>Flexible Generation and Lightweight View-Dependent 
+      Rendering of Terrain</citetitle></title>
+      <para>
+        This technical report <biblioref linkend="Wavelet Synthesis"/> by 
+        Pelton &amp; Atkinson describes a spectral synthesis technique for 
+        terrain generation based on real-world GIS example data:
+      </para>
+      <procedure>
+        <step>
+          Compute a wavelet transform of the example height field
+        </step>
+        <step>
+          From this, construct a frequency histogram of the example height 
+          field
+        </step>
+        <step>
+          Generate a new wavelet-space representation of a height field by 
+          stochastically sampling the frequency histogram from the example 
+          height field
+        </step>
+        <step>
+          Create the spatial representation of the height field by performing 
+          the inverse wavelet transform
+        </step>
+      </procedure>
+      <para>
+        In this way, they are able to create new height fields similar to a 
+        reference height field. They note that their approach is successful at 
+        creating unique results with similar roughness characteristics to the 
+        original, but that it fails to capture semantic features, specifically 
+        riverbeds.
+      </para>
+      <para>
+        Their approach is similar to <citetitle>Terrainosaurus</citetitle> in 
+        that both derive new, unique terrain models using example GIS elevation 
+        maps.
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Other Topics</title>
+    <para>
+      Having surveyed the landscape of terrain-related literature, there still 
+      remain a few auxiliary topics that must be covered to set the stage 
+      adequately for the <citetitle>Terrainosaurus</citetitle> algorithm:
+      <itemizedlist spacing="compact">
+        <listitem>
+          genetic algorithms
+        </listitem>
+        <listitem>
+          computer vision
+        </listitem>
+        <listitem>
+          descriptive statistics
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <section id="Genetic Algorithms Overview">
+      <title>Genetic Algorithms</title>
+      <para>
+        Unfortunately, many of the more interesting problems in computer 
+        science fall into the class of <firstterm>NP hard</firstterm> problems 
+        (for which there are no known polynomial-time solutions), meaning that 
+        they become intractably difficult to solve optimally as the size of the 
+        problem increases <biblioref linkend="Algorithms"/>. In many cases, it 
+        is not feasible to find a perfect solution, and approximation 
+        techniques must be used. The <firstterm>genetic algorithm 
+          (GA)</firstterm> is one of these techniques.
+      </para>
+      <para>
+        Genetic algorithms are used in several places in 
+        <citetitle>Terrainosaurus</citetitle> as a way of replacing the role of 
+        human intelligence with a form of artificial intelligence. By pushing 
+        the burden of constructing a believable terrain model onto the 
+        computer, the human user is relieved of most of the work of terrain 
+        generation.
+      </para>
+      <para>
+        Conceptually, a genetic algorithm is a parallel search algorithm that 
+        tries to find better and better solutions to its problem through a 
+        process analogous to the Darwinian theory of biological micro-evolution.  
+        Single possible solutions within the solution space of the problem are 
+        called <firstterm>chromosomes</firstterm> (or, alternatively,  
+        <firstterm>individuals</firstterm>). A <firstterm>fitness 
+          function</firstterm> provides an evaluation of how good of a solution 
+        any particular chromosome is, expressed as a scalar value. As the GA 
+        iterates, new potential solutions to the problem are explored by taking 
+        the more "fit" of the existing chromosomes and recombining some of their 
+        sub-parts (their <firstterm>genes</firstterm>) to create new chromosomes 
+        having characteristics of both "parents". By iteratively evolving a 
+        <firstterm>population</firstterm> of chromosomes (generally of some 
+        fixed size), the GA explores the solution space in a parallel fashion.  
+        Hopefully, after some reasonable number of iterations, the most "fit" of 
+        the chromosomes in the final population will be fairly close to an 
+        optimal solution to the problem <biblioref linkend="Genetic 
+          Algorithms"/>.
+      </para>
+      <para>
+        In order to adapt a GA to solve a particular problem, we must define 
+        three basic things:
+        <itemizedlist spacing="compact">
+          <listitem>
+            a modular, genetic encoding for describing candidate solutions
+          </listitem>
+          <listitem>
+            crossover and mutation operators to work on this genetic 
+            representation
+          </listitem>
+          <listitem>
+            a fitness function for evaluating the "goodness" of a particular 
+            candidate solution
+          </listitem>
+        </itemizedlist>
+      </para>
+      <para>
+        The meaning and implementation of these things will vary according to 
+        the problem domain to which the GA is applied.
+      </para>
+    </section>
+
+    <section>
+      <title>Computer Vision</title>
+      <para>
+        <firstterm>Computer vision</firstterm> is the branch of computer 
+        science concerned with processing images to recover conceptual 
+        representations of the objects present within those images. Computer 
+        vision techniques are useful in a number of areas, especially robotics 
+        and augmented reality (AR) applications.
+      </para>
+      <para>
+        In <citetitle>Terrainosaurus</citetitle>, feature detection techniques 
+        are used in the analysis of terrain models, to find the location, size, 
+        and scale of geometric features of the terrain (such as edges, ridges, 
+        and peaks).
+      </para>
+
+      <section>
+        <title>Single-scale Feature Detection</title>
+        <para>
+          The normal method of feature detection is to design a 
+          <firstterm>detector</firstterm> for the desired feature, a function 
+          that, given a pixel location within the image, returns a scalar 
+          <firstterm>response</firstterm> indicating how much the pixels in that 
+          vicinity resemble the desired feature. The stronger the resemblance, 
+          the higher the response will be. This detector is then passed over 
+          every pixel in the image, and its response recorded.  Pixels 
+          containing local maxima of the detector response are kept, and the 
+          other pixels are zeroed, a technique called <firstterm>non-maximal 
+            suppression</firstterm>. The result is a greyscale image with grey 
+          or white pixels wherever the feature was found and black elsewhere.
+        </para>
+        <para>
+          Feature detectors are highly sensitive to the scale of the feature 
+          being detected. For example, an edge detector optimized for finding 
+          sharp edges between regions will perform poorly if the edges in the 
+          image are diffuse (i.e., blurry), especially in the presence of noise.  
+          Thus, it is important to tune the detector to the scale of feature 
+          being sought.
+        </para>
+      </section>
+
+      <section>
+        <title>Scale-space Feature Detection</title>
+        <para>
+          Unfortunately, in many computer vision applications, the scales at 
+          which features will appear are unknown.  If this is the case, then 
+          <firstterm>scale-space</firstterm> feature detection may be used to 
+          search for features across a range of scales <biblioref 
+            linkend="Scale-space Blob"/> <biblioref linkend="Scale-space 
+            Edge/Ridge"/>.
+        </para>
+        <para>
+          Scale-space feature detection is a relatively straightforward 
+          extension of single-scale feature detection, in which locally maximal 
+          detector responses are looked for, not only across the 
+          <inlineequation><xi:include 
+              href="resources/(x,y).mml"/></inlineequation> domain of the image, 
+          but also across adjacent scales.  Because the algorithm is independent 
+          of the actual feature detector matrix used, virtually any single-scale 
+          detector may be adapted to work in scale-space, including "blob" 
+          detectors, "edge" detectors, "ridge" detectors, etc.
+        </para>
+        <procedure>
+          <para>
+            The major steps in scale-space feature detection are:
+          </para>
+          <step>
+            Generate the scale-space representation of the image by convolving 
+            the image with successively larger Gaussian blobs. This produces a 
+            3-dimensional image "cube", in which the added dimension represents 
+            scale; as the scale parameter increases, fine-scale image details 
+            disappear, leaving only the larger-scale shapes.
+          </step>
+          <step>
+            Calculate the feature detector response at every pixel in the 
+            scale-space image.
+          </step>
+          <step>
+            Find the locations within the scale-space image at which the 
+            detector response is maximal. Finding the maxima in the 
+            <inlineequation><xi:include 
+            href="resources/x.mml"/></inlineequation> and             
+            <inlineequation><xi:include 
+            href="resources/y.mml"/></inlineequation> dimensions yields the 
+            locations of the detected features, while finding the scale at which 
+            each is maximized gives an estimate of the size of the feature.
+          </step>
+        </procedure>
+        <para>
+          In this way, features present in the image may be recovered and, 
+          additionally, classified according to the scale at which they appear.  
+          For example, when ridge detection is performed on an image of a 
+          crumpled piece of cloth, a tiny wrinkle in the fabric will yield a 
+          maximal detector response at a fine scale, and will completely 
+          disappear as the scale is increased. In contrast, a gentle fold in the 
+          fabric will give some small response at the finest scale, and a much 
+          higher response as the scale approaches that of the fold.
+        </para>
+        <para>
+          If the only benefit of scale-space detectors over single-scale 
+          detectors were that features are detectable at multiple scales, this 
+          would not be much of an improvement over single-scale detectors 
+          (since the same thing can be accomplished by running a single-scale 
+          detector multiple times, at several different scales), and not worth 
+          the additional cost in memory and computation time.  However, since 
+          scale-space detectors are able to examine multiple scales 
+          <emphasis>simultaneously</emphasis>, a "long" feature (such as an edge 
+          or ridge) can be recognized as a single feature, even if it varies 
+          dramatically in scale along its length. In contrast, a multi-pass, 
+          single-scale detector would register multiple, partially overlapping 
+          features in this case, rather than a single feature of varying scale.  
+          As a result, a scale-space detector will report fewer features (and 
+          generally, more meaningful ones).
+        </para>
+      </section>
+    </section>
+
+    <section id="Descriptive Statistics">
+      <title>Descriptive Statistics</title>
+      <para>
+        <firstterm>Descriptive statistics</firstterm> is the branch of 
+        statistics dealing with identifying patterns and trends within 
+        collected samples of data. In <citetitle>Terrainosaurus</citetitle>, 
+        measured statistics are used as a basis for comparing terrains for 
+        similarity: intuitively, the more similar the statistical 
+        characteristics of two terrains, the more "alike" they are. In 
+        particular, we are interested in the following four statistics:
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>the sample mean</listitem>
+        <listitem>the sample standard deviation</listitem>
+        <listitem>the sample skewness</listitem>
+        <listitem>the sample kurtosis excess</listitem>
+      </itemizedlist>
+      <para>
+        The following diagrams of these statistics depict distributions similar 
+        in shape to a Gaussian (normal) distribution.  This is because some of 
+        these measures (the skewness and kurtosis excess) are defined with 
+        reference to the Gaussian distribution, such that the Gaussian 
+        distribution has a value of zero. Thus, Gaussian-like distributions are 
+        convenient for conveying an intuitive sense of the statistic.  This 
+        should not be taken to mean that these measures apply only to the 
+        Gaussian distribution; they are defined wholly in terms of raw moments 
+        and central moments of the distribution, and can be applied to any 
+        distribution. The degree to which these measures deviate from zero gives 
+        an indication of how non-Gaussian the distribution is.
+      </para>
+
+      <section>
+        <title>The Sample Mean</title>
+        <para>
+          The best-known statistic is the <firstterm>sample mean</firstterm>, or 
+          unweighted average (<xref linkend="Sample Mean Equation"/>).  
+          Intuitively, this is the "center" value of a sample distribution 
+          (<xref linkend="Mean Illustration"/>) <biblioref linkend="Mean"/>.
+        </para>
+        <figure id="Mean Illustration">
+          <title>Mean</title>
+          <mediaobject>
+            <caption>
+              The mean of a statistical distribution is a first-order measure 
+              and is the value around which the distribution is centered.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Statistics - Mean Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <equation id="Sample Mean Equation">
+          <title>The Sample Mean</title>
+          <xi:include href="resources/Statistics - Sample Mean Equation.mml"/>
+        </equation>
+      </section>
+
+      <section>
+        <title>The Sample Standard Deviation</title>
+        <para>
+          A second useful statistic is the <firstterm>sample standard 
+          deviation</firstterm>, <inlineequation><xi:include 
+          href="resources/sigma.mml"/></inlineequation>, a non-negative value 
+          measuring the degree of variability of a sample distribution (<xref 
+          linkend="Sample Standard Deviation Equation"/>). A low standard 
+          deviation indicates that the sample values are tightly clustered about 
+          the mean (<xref linkend="Standard Deviation Illustration"/>) 
+          <biblioref linkend="Standard Deviation"/>.
+        </para>
+        <figure id="Standard Deviation Illustration">
+          <title>Standard Deviation</title>
+          <mediaobject>
+            <caption>
+              The standard deviation of a statistical distribution is a 
+              second-order measure describing the degree to which the 
+              distribution is "spread out".
+            </caption>
+            <imageobject>
+              <imagedata fileref="Statistics - Standard Deviation Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <equation id="Sample Standard Deviation Equation">
+          <title>The Sample Standard Deviation</title>
+          <xi:include href="resources/Statistics - Sample Standard Deviation Equation.mml"/>
+        </equation>
+      </section>
+
+      <section>
+        <title>The Sample Skewness</title>
+        <para>
+          A third, lesser-known statistic is the <firstterm>sample 
+            skewness</firstterm>, <inlineequation><xi:include 
+              href="resources/gamma_1.mml"/></inlineequation>, which measures 
+          the degree of asymmetry of a sample distribution (<xref 
+            linkend="Sample Skewness Equation"/>). A skewness of zero indicates 
+          that the distribution is perfectly symmetrical about the  mean, 
+          whereas a positive or negative skewness indicates that the 
+          distribution is skewed to the left or right of the mean, respectively 
+          (<xref linkend="Skewness Illustration"/>) <biblioref 
+            linkend="Skewness"/>.
+        </para>
+        <figure id="Skewness Illustration">
+          <title>Skewness</title>
+          <mediaobject>
+            <caption>
+              The skewness of a statistical distribution is a third-order 
+              measure describing the amount of asymmetry of the distribution.  
+              Values less than zero indicate that the distribution is skewed to 
+              the left of the mean, and values greater than zero indicate that 
+              the distribution is skewed to the right.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Statistics - Skewness Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <equation id="Sample Skewness Equation">
+          <title>The Sample Skewness</title>
+          <xi:include href="resources/Statistics - Sample Skewness Equation.mml"/>
+        </equation>
+        <para>
+          This formulation of the skewness is in terms of the second and third 
+          <firstterm>k-statistics</firstterm>. The first four k-statistics are 
+          given in <xref linkend="k-Statistic Equations"/> <biblioref 
+          linkend="k-Statistic"/>.
+        </para>
+        <equation id="k-Statistic Equations">
+          <title>The First Four k-Statistics</title>
+          <xi:include href="resources/Statistics - K-statistic Equations.mml"/>
+        </equation>
+        <para>
+          where <inlineequation><xi:include 
+          href="resources/_n.mml"/></inlineequation> is the sample size and the 
+          <inlineequation><xi:include 
+          href="resources/m_r.mml"/></inlineequation>'s are the 
+          <inlineequation><xi:include href="resources/_r.mml"/></inlineequation>
+          <superscript>th</superscript> sample central moments, given by <xref 
+          linkend="Sample Central Moment Equation"/> <biblioref linkend="Sample 
+          Central Moment"/>.
+        </para>
+        <equation id="Sample Central Moment Equation">
+          <title>Sample Central Moment</title>
+          <xi:include href="resources/Statistics - Sample Central Moment Equation.mml"/>
+        </equation>
+      </section>
+
+      <section>
+        <title>The Sample Kurtosis Excess</title>
+        <para>
+          A fourth statistic is the <firstterm>sample kurtosis 
+          excess</firstterm>, <inlineequation><xi:include 
+          href="resources/gamma_2.mml"/></inlineequation>, often simply called 
+          the <firstterm>sample kurtosis</firstterm>, which measures the degree 
+          of peakedness of a sample distribution (<xref linkend="Sample Kurtosis 
+            Equation"/>).  The normal distribution has a kurtosis of zero, 
+          whereas a more peaked distribution  has a positive kurtosis and a 
+          flattened distribution has a negative kurtosis (<xref 
+            linkend="Kurtosis Illustration"/>) <biblioref linkend="Kurtosis"/>.
+        </para>
+        <figure id="Kurtosis Illustration">
+          <title>Kurtosis</title>
+          <mediaobject>
+            <caption>
+              The kurtosis excess of a statistical distribution is a 
+              fourth-order measure describing the amount of "peakedness" of the 
+              distribution. Values less than zero indicate that the distribution 
+              is more "flat" than a normal distribution, and values greater than 
+              zero indicate that the distribution is more peaked than a normal 
+              distribution.
+            </caption>
+            <imageobject>
+              <imagedata fileref="Statistics - Kurtosis Excess Diagram.svg"/>
+            </imageobject>
+          </mediaobject>
+        </figure>
+        <equation id="Sample Kurtosis Equation">
+          <title>The Sample Kurtosis Excess</title>
+          <xi:include href="resources/Statistics - Sample Kurtosis Excess Equation.mml"/>
+        </equation>
+      </section>
+      <para>
+        The <inlineequation><xi:include 
+        href="resources/k_i.mml"/></inlineequation>'s are the second and fourth 
+        k-statistics, as defined above in <xref linkend="k-Statistic 
+        Equations"/>.
+      </para>
+    </section>
+
+  </section>
+
+</chapter>

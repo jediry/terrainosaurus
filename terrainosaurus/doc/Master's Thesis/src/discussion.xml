@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+<!--
+Running times
+  270m: 34 seconds
+  Fitness func: O(# genes) + O(# pixels) + O(pixels * scales)
+Terrains analyzed
+Feature weights
+
+Why Pattern analysis ultimately didn't help us.
+  TTs could be identical!!
+
+            single, new distribution to a set of reference distributions. These 
+            reference distributions must be similar to one another in some way 
+            for this comparison to be meaningful (i.e., if the user classifies a 
+            mountain example and a plains example as the same terrain 
+            type...garbage in, garbage out!).  In this section, I describe a 
+            similarity measure based on Gaussian curve projection that adapts to 
+            the similarities of the reference distributions and ignores their 
+            differences.  Additionally, I discuss a method of calculating the 
+
+
+            Expand discussion of empircal anal. Mention how I classified, and 
+            what other things could be done to validate this.
+
+Runtime complexity!
+-->
+<chapter id="Discussion">
+  <title>Results &amp; Discussion</title>
+  <para>
+    In this chapter, I will discuss the results achieved with 
+    <citetitle>Terrainosaurus</citetitle>, both successes and problems, and 
+    with running times and generated images. The sequence of topics will 
+    parallel that of the previous chapters:
+  </para>
+  <itemizedlist spacing="compact">
+    <listitem>
+      the boundary refinement algorithm
+    </listitem>
+    <listitem>
+      the terrain comparison algorithm
+    </listitem>
+    <listitem>
+      the height field construction algorithm
+    </listitem>
+  </itemizedlist>
+
+  <section id="Boundary GA Discussion">
+    <title>Boundary Refinement</title>
+    <para>
+      The boundary refinement operation offers the user a simple means of 
+      creating irregular boundaries between regions of terrain, without having 
+      to draw every bend in the curve by hand (<xref linkend="Map Refinement 
+        (Smooth)"/>, <xref linkend="Map Refinement (Rough)"/>).  In many (if 
+      not most) cases, this amount of control is sufficient for the user's 
+      needs.  It is also a very fast computation (refining the boundaries for 
+      an entire map is virtually instantaneous from the user's point of view, 
+      using 20 evolution cycles and a population size of 5 for the GA).
+    </para>
+    <figure id="Map Refinement (Smooth)">
+      <title>Map Boundaries Refined With S = 0.9</title>
+      <mediaobject>
+        <imageobject>
+          <imagedata scalefit="1" width="4in"
+                     fileref="Map Refinement - Smooth.png"/>
+        </imageobject>
+      </mediaobject>
+    </figure>
+    <figure id="Map Refinement (Rough)">
+      <title>Map Boundaries Refined With S = 0.1</title>
+      <mediaobject>
+        <imageobject>
+          <imagedata scalefit="1" width="4in"
+                     fileref="Map Refinement - Rough.png"/>
+        </imageobject>
+      </mediaobject>
+    </figure>
+    <para>
+      There are, however, several aspects that deserve some additional 
+      discussion.
+    </para>
+
+    <section id="Accumulated Angle Discussion">
+      <title>The Accumulated Angle Constraint</title>
+      <para>
+       One item of interest regarding this operation is the global constraint 
+       we impose, that the absolute angle is not allowed to exceed a certain 
+       threshold at any point. This was found to be necessary in order to force 
+       the boundary to make progress in the direction of the end point.   
+       Without this constraint it is very possible for the curve to double back 
+       on itself, especially if the smoothness parameter is low (thus allowing 
+       sharper turns with each segment). This is problematic for a number of 
+       reasons.
+      </para>
+      <para>
+        First of all, it is easy for the curve to intersect itself, producing 
+        loops in the boundary. We consider this behavior to be undesirable, 
+        since it effectively creates additional regions, and it is not 
+        completely clear which of the two adjacent terrain types should fill 
+        the new regions (<xref linkend="Self-intersecting Boundary"/>).
+      </para>
+      <figure id="Self-intersecting Boundary">
+        <title>A Self-intersecting Boundary</title>
+        <caption>
+          If no constraints are placed on the boundary GA, it can generate 
+          boundaries that loop back on themselves.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="Self-intersecting Boundary.svg"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <para>
+        Second, it is possible for the generated start and end points to be 
+        very near to each other (i.e., the boundary wanders far away, but ends 
+        up back near the place from which it started). Such a boundary is a very 
+        poor approximation of the original. Worse still, a generated boundary 
+        with this characteristic will have to be scaled enormously in order to 
+        get the start and end points to line up with the original boundary. The 
+        result of this is that the boundary will be magnified to  absurd 
+        proportions, as compared to the rest of the map, and will probably also 
+        intersect several nearby boundaries (<xref linkend="Backtracking 
+          Boundary"/>).
+      </para>
+      <figure id="Backtracking Boundary">
+        <title>A Badly Scaled, Backtracking Boundary</title>
+        <caption>
+          If a boundary's end point is too close to its start, then the scale 
+          factor required to place the generated end points on top of the 
+          original end points is huge, causing the boundary to be scaled to 
+          absurd proportions.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="Backtracking Boundary.svg"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <para>
+        A third problem, related to the previous two, is that as the refined 
+        boundary becomes less linear, the scale factor needed to bring the end 
+        points into alignment increases. As the scale factor increases, so do 
+        the lengths of the line segments that make up the boundary, thereby 
+        thwarting one of the objectives of the boundary refinement operation 
+        (i.e., to keep the lengths of individual segments small).
+      </para>
+      <para>
+        These problems are all prevented or minimized by the global constraint 
+        on accumulated angle. Unfortunately, this simplification also excludes 
+        certain, valid boundary shapes, in much the same way that height fields 
+        cannot represent certain, valid terrain features. Thus, it would be 
+        nice to be able to lift this restriction, but in order to do this, we 
+        would need some other way of avoiding the aforementioned problems; this 
+        is an area for future work.
+      </para>
+    </section>
+
+    <section>
+      <title>Smoothness and Level of Detail</title>
+      <para>
+        Another topic worth discussing is the effect of the smoothness 
+        parameter. In order to keep the curve well-behaved, both locally and at  
+        larger scales, we evaluate its fitness at several levels of detail, 
+        using the same smoothness value. Thus, the generated curves will 
+        display similar behavior at several scales (i.e., they are 
+        fractal-like). As a result, the operation is somewhat limited in the 
+        kinds of boundaries it can produce: rough, meandering boundaries and 
+        smooth, straight boundaries are both possible, but smooth, meandering 
+        boundaries are not (since this would imply sharper turns at larger 
+        scales and softer turns at finer scales). This behavior could be made 
+        more controllable with the introduction of additional smoothness 
+        parameters for coarser levels of detail, though the additional benefit  
+        might not be worth the added complexity.
+      </para>
+    </section>
+
+    <section>
+      <title>Additional Constraints</title>
+      <para>
+        As mentioned previously, one of the benefits of a genetic algorithm is 
+        its flexibility. While the only constraint currently imposed on the 
+        generated boundaries is that they have a user-specified, characteristic 
+        smoothness, it would be relatively straightforward to incorporate 
+        additional constraints into the fitness evaluation, such as:
+        <itemizedlist spacing="compact">
+          <listitem>
+            In addition to matching the locations of the endpoints of the 
+            original boundary, the refined boundary should also match specific 
+            angles at the endpoints. This would make it possible to eliminate 
+            sharp "corners" from regions.
+          </listitem>
+          <listitem>
+            The refined boundary should not intersect other, nearby boundaries.
+          </listitem>
+          <listitem>
+            The refined boundary should not have any self-intersections, nor 
+            should it end near to where it began. This would help to address 
+            the problems discussed in the previous section about the global 
+            constraint on the accumulated angle.
+          </listitem>
+          <listitem>
+            The refined boundary should remain within a user-defined 
+            "envelope". This would provide the user with additional control 
+            over the shape of the boundary.
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+  </section>
+
+  <section>
+    <title>Terrain Library Analysis</title>
+    <section id="Empirical Analysis">
+      <title>Empirical Analysis</title>
+      <para>
+        In order to validate the claim that the statistics used are suitable 
+        for establishing similarity, we examined 56 terrains taken from 7 US 
+        states. The terrains were grouped into 18 terrain types, the smallest 
+        of which contained only one example, and the largest of which contained 
+        8 examples. Classification was done based on visual inspection by one 
+        user.
+      </para>
+      <para>
+        Visual comparison of histograms in <citetitle>Matlab</citetitle> 
+        revealed a high degree of similarity between the histograms of the same 
+        terrain type, when compared to those of other terrain types. In most 
+        cases, the mean values were fairly close, and the histogram had the 
+        same approximate shape (the example in <xref linkend="Terrain Type 
+          Elevation Histograms"/> is fairly typical).  Because of this, we 
+        conclude that these statistics <emphasis>are</emphasis> meaningful in 
+        evaluating similarity.
+      </para>
+      <figure id="Terrain Type Elevation Histograms">
+        <title>Elevation Histograms from the California Coast Hills</title>
+        <caption>
+          The elevation histograms for several samples of similar terrain, taken 
+          from a region of southern California. The overall histogram shapes 
+          correspond fairly well to one another.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="4in"
+                       fileref="California Coast Hills Elevation.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <para>
+        The terrain library also scored well against the similarity function.  
+        Of course, every terrain sample received a self-fitness score above 
+        90%&em;this is true by definition, so it means nothing. What is 
+        significant is that agreement measurements were also high, typically 
+        above 90% for most measurements.  In contrast, when a sample of steep, 
+        Wyoming mountains was "misclassified" among samples of Florida flatland, 
+        many of the agreement measurements dropped from 97%&en;99% to under 60% 
+        (and in once case, nearly to 0%). This agrees with conclusions drawn 
+        from visual inspection of the histograms.
+      </para>
+    </section>
+
+    <section>
+      <title>The Similarity Function</title>
+      <para>
+        The most difficult part of <citetitle>Terrainosaurus</citetitle> was 
+        constructing an effective terrain type similarity measurement.  While 
+        there is certainly room for improvement, the function described in 
+        <xref linkend="Terrain Library Analysis"/> does a reasonably good job of 
+        favoring more realistic terrain, at least with the terrain types used to 
+        test it (e.g.,
+        <xref linkend="Florida Comparison Reference"/>,
+        <xref linkend="Florida Comparison Generated"/>,
+        <xref linkend="Washington Comparison Reference"/>,
+        <xref linkend="Washington Comparison Generated"/>).
+        This success can be attributed to several desirable characteristics:
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>
+          it scores all of the reference height fields highly (similarity of 90% 
+          or better) without over-fitting the data; this allows it to generalize 
+          effectively in order to accept new data
+        </listitem>
+        <listitem>
+          it is able to detect when a particular measurement is useless for 
+          evaluating a particular terrain type and ignore that measurement; 
+          furthermore, it can also detect when its overall discriminating power 
+          is weak due to bad input data
+        </listitem>
+        <listitem>
+          it is not sensitive to any similarity between terrain samples 
+          belonging to different terrain types; this allows it to be tolerant 
+          of overlapping (or even identical) terrain types created by the user
+        </listitem>
+      </itemizedlist>
+      <figure id="Florida Comparison Reference">
+        <title>A Reference Height Field from Florida</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Florida Flatland reference.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <figure id="Florida Comparison Generated">
+        <title>A Generated Height Field Based on the Florida Reference</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Florida Flatland generated.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <figure id="Washington Comparison Reference">
+        <title>A Reference Height Field from Washington</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Washington Mountains reference.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+      <figure id="Washington Comparison Generated">
+        <title>A Generated Height Field Based on the Washington Reference</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Washington Mountains generated.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <section id="Classifying Well">
+        <title>On the Importance of Classifying Well</title>
+        <para>
+          The user's only job in the terrain library analysis process is to 
+          segregate the example terrains into meaningful terrain types. It is not 
+          important for these terrain types to be <emphasis>disjoint</emphasis> 
+          with respect to one another (i.e., no overlap in measured statistics); 
+          to require this of the user would be overly taxing, and is not 
+          reflective of the real world either (many diverse terrain types share 
+          similar mean elevations, for example). One of the strengths of this 
+          algorithm is that the user is allowed to create as many, 
+          finely-distinguished terrain types as he needs to suit his purposes.
+        </para>
+        <para>
+          It <emphasis>is</emphasis> important, however, that each terrain type 
+          be <emphasis>coherent</emphasis>. The similarity function is designed 
+          to adapt itself to whatever patterns it is able to discover within the 
+          examples given to it&em;if the examples given to it are essentially 
+          unrelated, the function will be unable to learn anything meaningful, 
+          and will, accordingly, produce garbage. When the similarity function 
+          described in this paper was originally implemented, it produced 
+          initially poor results; this turned out to be the result of several 
+          badly-classified examples.
+        </para>
+        <para>
+          A related issue that also poses problems for the similarity analysis is 
+          the presence of <emphasis>multiple</emphasis> terrain types within a 
+          single terrain sample, such as a lake in the midst of mountainous 
+          terrain, or mountains trailing off into a flat plain. These situations 
+          can yield statistical distributions that are uncharacteristic of 
+          <emphasis>any</emphasis> of the terrain types involved, often 
+          significantly skewed or multi-modal. Because 
+          <citetitle>Terrainosaurus</citetitle> does not currently detect these 
+          conditions, such example terrains cannot be used.
+        </para>
+        <para>
+          Addressing these issues would go a long way towards improving the 
+          overall user experience in this phase, and is an area for future 
+          work (<xref linkend="Computer-aided Classification"/>).
+        </para>
+      </section>
+
+      <section id="Failures">
+        <title>Things that Didn't Work</title>
+        <para>
+          In arriving at this similarity function, a number of things were 
+          attempted that turned out not to work effectively. I mention a few of 
+          them here in the hopes of providing guidance and inspiration to future 
+          researchers in this area: guidance&em;that the dead-ends of the past 
+          need not be revisited&em;and inspiration&em;that one of these failed 
+          ideas might be the seed that one day sprouts into an idea that 
+          <emphasis>does</emphasis> work.
+        </para>
+        
+        <section>
+          <title>Direct Height Field to Height Field Comparison</title>
+          <para>
+            Early in the research process, we attempted to use the RMS (root mean 
+            square) difference between the generated height field and a reference 
+            example as an estimate of their similarity. This was never intended 
+            to be the final similarity function, but only a temporary, partial 
+            solution. Just the same, it is instructive to consider the problems 
+            from which it suffers, as similar pixel-wise approaches will likely 
+            have many of the same failings:
+          </para>
+          <itemizedlist spacing="compact">
+            <listitem>
+              it is quite sensitive to the precise placement of features in  the 
+              terrain; as such, it is too restrictive to be the basis for a real 
+              similarity function, as it cannot even relate similar 
+              <emphasis>example</emphasis> terrains to one another; consider 
+              comparing a sloping terrain to its mirror image&em;this would 
+              receive a low similarity score even though it is comparing a 
+              terrain <emphasis>to itself</emphasis>!
+            </listitem>
+            <listitem>
+              it is not clear how to generalize a pixel-by-pixel comparison such 
+              as this to handle multiple example terrains in a terrain type
+            </listitem>
+            <listitem>
+              it is extremely sensitive to the mean elevation of the terrains: a 
+              large difference in mean elevations will inordinately penalize two 
+              otherwise very similar terrains
+            </listitem>
+            <listitem>
+              it is not even clear how to compare two rectangular terrains of 
+              different dimensions, much less two non-rectangular regions
+            </listitem>
+            <listitem>
+              as the RMS difference between two terrains is effectively 
+              unbounded, this value cannot, by itself serve as a similarity 
+              measure, and it is unclear how to adequately transform this 
+              unbounded value into a bounded value (this is only an issue if 
+              fitness-proportional selection is used in the GA; an unbounded 
+              fitness function can still work if tournament selection is used in 
+              the GA)
+            </listitem>
+          </itemizedlist>
+        </section>
+
+        <section id="Failures - Fourier Transform">
+          <title>Comparing the Fourier Transform</title>
+          <para>
+            Another idea we attempted was to compare the Fourier transforms of 
+            terrains. This gets around the problem of the previous idea, that the 
+            height fields needed to be of the same size, since the Fourier 
+            transforms can be resampled to the same size and compared directly.  
+            However, attempting to compare the FFTs magnitudes of apparently 
+            similar terrains did not yield promising results, and so we abandoned 
+            this approach.
+          </para>
+        </section>
+
+        <section>
+          <title>Linear Pattern Analysis</title>
+          <para>
+            As a third approach, we tried to apply standard pattern analysis 
+            tools to discover automatically the relationships between examples 
+            of the same terrain type. The main difficulty motivating this 
+            approach was that of identifying which characteristics of a set of 
+            terrains are most important. In order to choose which terrain 
+            chromosomes to keep and which to "recycle" during the GA, a good 
+            means of ranking them is needed...but given the wide variety of 
+            possible characteristics that could be used, it is hard to see 
+            which should be given preference (or whether all should be weighted 
+            equally).
+          </para>
+          <para>
+            <firstterm>Fisher's linear discriminant (FLD)</firstterm> <biblioref
+              linkend="Pattern Recognition"/> is a common pattern recognition 
+            technique for <firstterm>dimensionality reduction</firstterm>, in 
+            which a large number of characteristics can be projected down to a 
+            smaller set. FLD chooses the projection that maximizes separation 
+            between the different classes of data (i.e., in our case, the 
+            terrain types). It also calculates a separability ratio, which can 
+            be used as a relative measurement of how well a set of 
+            characteristics separates the classes. Using this separability 
+            ratio, we thought to find an optimal set of characteristics (and 
+            weights for those characteristics) with which to compare and 
+            evaluate terrain height fields.
+          </para>
+          <para>
+            While this approach initially showed some promise, it turned out to 
+            have some serious problems. The fatal flaw with using FLD is that 
+            it solves the wrong problem: it produces the combination of 
+            characteristics that <emphasis>show the biggest 
+              difference</emphasis> between the terrain types in the library.  
+            This has the effect of ignoring characteristics that all terrain  
+            types have in common, even if those characteristics turn out to be 
+            important for producing that terrain type. What we actually want is 
+            the set of characteristics that <emphasis>most strongly 
+              characterize</emphasis> each terrain type&em;this set might be 
+            different for each terrain type. Given a terrain height field, FLD 
+            would be useful for helping to answer the question "To which of 
+            terrain type does it most likely belong?", whereas the 
+            <emphasis>real</emphasis> question we want to answer is "How much 
+            like its reference terrain type is it?".
+          </para>
+          <para>
+            A strange consequence of using a similarity function based on FLD 
+            is that the similarity between two height fields of the same 
+            terrain type cannot be determined <emphasis>except through 
+              opposition to every other terrain type</emphasis>. This is wildly 
+            counter-intuitive: adding new terrain types or adding new examples 
+            to an existing terrain type should have no effect on the 
+            <emphasis>other</emphasis> terrain types.
+          </para>
+          <para>
+            Related to this, in order for an FLD-based similarity function to 
+            work, all terrain types must be significantly different from one 
+            another. This places an extra burden on the user: he must ensure, 
+            not only that the examples in each terrain type are similar to each 
+            other, but also that they are different from all of the other 
+            terrain types. Furthermore, such a similarity function is 
+            conceptually opposite to what is really wanted: a classifier-based 
+            system attempts to maximize separability; that is, 
+            <emphasis>differences</emphasis> between terrain types are made more 
+            important than the <emphasis>similarities</emphasis> within a 
+            terrain type.
+          </para>
+          <para>
+            A final problem with FLD is that it requires a significant number 
+            of examples in each class to work (if there are too few samples, a 
+            matrix becomes singular and thus cannot be inverted). As the number 
+            of characteristics under consideration increases, the requisite 
+            number of examples increases as well. Because of this, FLD is not a 
+            good candidate for a similarity fitness function: it doesn't work 
+            at all with too few samples.
+          </para>
+        </section>
+
+        <section>
+          <title>Histogram Aggregation</title>
+          <para>
+            A fourth approach, which bears a stronger resemblance to the
+            similarity function we ultimately used, but still turned out to be
+            fatally flawed was to create one giant, terrain-type-wide
+            <firstterm>super histogram</firstterm> (<xref linkend="Super
+            Histogram"/>) for each statistic (e.g., elevation, slope) used in
+            the comparison.  These would be computed by adding together the
+            individual histograms from each sample in the terrain type, and
+            normalizing the super histogram to have an area of 1.  In theory
+            this composite histogram would be smoother than those of the
+            individual examples, and would better represent the terrain type as
+            a whole.  Then, to evaluate the similarity of a generated height
+            field to this terrain type, one need only calculate the RMS
+            difference between the height field's normalized histogram and the
+            terrain type's super histogram.
+          </para>
+          <para>
+            While this idea led to the similarity function described earlier, it 
+            has several problems. The first problem is the difficulty of 
+            combining histograms with different bucket sizes, though this might 
+            be solved by resampling the histogram. The more serious problem is 
+            that, unless the distribution means are very close, the resulting 
+            super histogram will be multi-modal. Obviously, such a distribution 
+            will not compare well to the (usually) unimodal distributions that 
+            produced it.
+          </para>
+          <figure id="Super Histogram">
+            <title>A "Super Histogram"</title>
+            <caption>
+              Concatenating the histograms of multiple terrain samples turned 
+              out to be a fatally flawed approach.
+            </caption>
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="Super Histogram.svg"/>
+              </imageobject>
+            </mediaobject>
+          </figure>
+        </section>
+
+      </section>
+    </section>
+  </section>
+
+  <section>
+    <title>Height Field Construction</title>
+    <para>
+      The height field construction algorithm is able to create a reasonably 
+      good imitation of the example terrains given to it, providing a 
+      computationally-expensive, but low effort means of generating terrain.
+    </para>
+
+    <section id="Runtime Complexity">
+      <title>Performance of the GA</title>
+      <para>
+        The height field GA is, without a doubt, the most computationally 
+        intensive part of the application. As the LOD increases, so does the 
+        computation time (see <xref linkend="Running Times Table"/>).
+      </para>
+      <table id="Running Times Table">
+        <title>Height field generation running times</title>
+        <tgroup cols="2" align="left">
+          <colspec colname="Level of Detail"/>
+          <colspec colname="Generation Time"/>
+          <thead>
+            <row>
+              <entry>LOD</entry>
+              <entry>Time (s)</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>270m</entry>
+              <entry>40 s</entry>
+            </row>
+            <row>
+              <entry>90m</entry>
+              <entry>270 s</entry>
+            </row>
+            <row>
+              <entry>30m</entry>
+              <entry>2070 s</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para>
+        These numbers are for one run on a 1.2 GHz Pentium III with 256 MB of 
+        RAM.  The running time ratios between successive LODs are unsurprising:   
+        each successive LOD takes between 6 and 8 times as long as the one 
+        before. The GA itself (ignoring the fitness function) is linear in the 
+        number of genes in a chromosome.  Similarly,the fitness function is 
+        linear in the number of pixels in the height field. Since each 
+        successive LOD is approximately 9 times larger than the previous, it 
+        makes sense that the running times would scale similarly.
+      </para>
+      <para>
+        Obviously, scalability is an issue with this algorithm. As it is now, 
+        the 30m LOD is at least reachable. Unfortunately, the 10m LOD can be 
+        expected to take a 6 to 8 times as long again. Before the algorithm can 
+        be pushed to these higher LODs, it must be accelerated somehow, whether 
+        via a GPU implementation, or some other form of parallelism.
+      </para>
+    </section>
+
+    <section>
+      <title>Successfulness of the GA</title>
+      <para>
+        From the figures in this section, it is obvious that the algorithm 
+        works fairly well, at least at the 270m (<xref linkend="Thirds Map 
+        Height Field (270m)"/>) and 90m (<xref linkend="Thirds Map Height Field 
+        (90m)"/>) LODs.  The terrain types bear a significant resemblance to 
+        their reference examples, and the transitions between regions work well 
+        too.  Unfortunately, when going to the 30m LOD (<xref linkend="Thirds 
+        Map Height Field (30m)"/>), this does not hold true.  According to 
+        several GA researchers with whom I spoke at a recent conference on 
+        evolutionary programming, as the size of the problem increases, the GA 
+        population size should increase accordingly. This is problematic, as the 
+        running time for the 30m LOD is already quite large.
+      </para>
+
+      <figure id="Thirds Map Height Field (270m)">
+        <title>"Thirds" at 270m</title>
+        <caption>
+          At the 270m resolution, the terrain types display characteristically 
+          different elevation patterns.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Thirds Height Field - 270m.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <figure id="Thirds Map Height Field (90m)">
+        <title>"Thirds" at 90m</title>
+        <caption>
+          At the 90m resolution, the terrain types still look fairly reasonable, 
+          though it would be nice to see larger, more coherent features in the 
+          hilly terrain (yellow).
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Thirds Height Field - 90m.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <figure id="Thirds Map Height Field (30m)">
+        <title>"Thirds" at 30m</title>
+        <caption>
+          At the 30m resolution, the size of the terrain has exceeded the 
+          ability of the GA to bring it all together.
+        </caption>
+        <mediaobject>
+          <imageobject>
+            <imagedata scalefit="1" width="3.5in"
+                       fileref="Thirds Height Field - 30m.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>
+        Further research into tuning the GA parameters is likely to yield 
+        better results; still, there are some other ways in which the 
+        construction process could be improved as well. Probably the most 
+        noticeable flaw in the 30m height field (<xref linkend="Thirds Map 
+          Height Field (30m)"/>) is the "tiling" effect visible in the flatter 
+        areas. This effect can also be seen in the mountainous, yellow area, 
+        though it is a bit less glaring due to the already rugged terrain in 
+        that area. This effect is the result of the genes not aligning well 
+        with one another. One possible way of dealing with this issue would be 
+        to subdivide the genes into smaller patches (<inlineequation><xi:include 
+            href="resources/2x2.mml"/></inlineequation> or <inlineequation><xi:include 
+            href="resources/3x3.mml"/></inlineequation> would be a good start) for the 
+        purpose of calculating gene compatibility. This would yield a more 
+        accurate estimate of the shape of a gene, and would hopefully lead to 
+        finding genes that naturally fit well to the pattern height field, 
+        which would reduce or eliminate the tiling effect.
+      </para>
+    </section>
+  </section>
+
+</chapter>

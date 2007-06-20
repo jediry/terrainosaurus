@@ -54,6 +54,7 @@ namespace terrainosaurus {
 
 // Import the TerrainDescriptor definition
 #include "TerrainLibrary.hpp"
+#include "TerrainSeam.hpp"
 
 // Import the STL function object classes
 #include <functional>
@@ -95,9 +96,6 @@ public:
 
     // The library of available terrain types
     rw_ptr_property(TerrainLibrary, terrainLibrary, NULL);
-
-    // Query the resolution (samples/world-space unit) of the elevation data
-    scalar_t resolution() const;
 
     // The extra data that goes into a vertex:
     class VertexData {
@@ -161,8 +159,8 @@ public:
               RangeList & envelope()         { return _envelope; }
 
         // (Un)refine this Edge
-        void refine();
-        void unrefine();
+        void addRefinement(const PointList & p);
+        void deleteRefinement();
         bool isRefined() const;
 
         // Construct the envelope for this Edge
@@ -244,13 +242,6 @@ protected:
 public:
     // Default constructor with optional map name
     explicit Map(const std::string & nm = "");
-
-
-/*---------------------------------------------------------------------------*
- | Boundary refinement functions
- *---------------------------------------------------------------------------*/
-public:
-    void refine();
 
 
 /*---------------------------------------------------------------------------*

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mfenced>
+    <mi>x</mi>
+    <mi>y</mi>
+  </mfenced>
+  <mfenced open="{" close="">
+    <mfrac linethickness="0">
+      <mrow>
+        <mi>x</mi>
+        <mo>&isin;</mo>
+        <mfenced open="[" close=")">
+          <mn>0</mn>
+          <mi>w</mi>
+        </mfenced>
+      </mrow>
+      <mrow>
+        <mi>y</mi>
+        <mo>&isin;</mo>
+        <mfenced open="[" close=")">
+          <mn>0</mn>
+          <mi>h</mi>
+        </mfenced>
+      </mrow>
+    </mfrac>
+  </mfenced>
+</math>

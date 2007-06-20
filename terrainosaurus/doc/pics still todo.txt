@@ -1,0 +1,5 @@
+Pix:
+	Intro slide: perspective map -> HF process
+	First algo slide: two or three pics of terrains (perhaps faded between wire and shaded)
+	4th algo slide: spliced HF
+	5th: Better resample/replace pic

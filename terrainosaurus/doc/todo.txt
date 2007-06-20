@@ -1,0 +1,20 @@
+Must do:
+    Do variable mutation PMF
+        How to distribute PMF when these 3 aren't the only ops?
+        What to do when all are zero? Pick one? Throw exception?
+    Fixing mean height for HF rendering
+
+Future:
+    GA listener again
+    Multi facet compat
+    Incorporate feature analysis
+    Soft mutation (cross-boundary)
+    Merge/splice TS & MR
+    Fuzzy (i.e., multi-TT genes & ops)
+
+'d be nice:
+    Threads
+    User selection & alteration of stuff...
+    QT UI
+    Text in display
+    texture

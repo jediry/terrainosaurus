@@ -10,12 +10,8 @@
  */
 
 
-// Import application class
-#include <terrainosaurus/MapExplorer.hpp>
-
 // Import function prototypes and class definitions
 #include "terrain-operations.hpp"
-#include "terrain-ga.hpp"
 
 // Import raster operations
 #include <inca/raster/operators/arithmetic>
@@ -24,160 +20,116 @@
 #include <inca/raster/operators/linear_map>
 #include <inca/raster/operators/rotate>
 
+// Import Timer definition
+#include <inca/util/Timer>
+
 using namespace inca;
 using namespace inca::math;
 using namespace inca::raster;
 using namespace terrainosaurus;
 
 
-// Generate a heightfield corresponding to the rasterized chunk of map
-// specified by 'map', by repeatedly scaling up low-resolution data and
-// applying the GA to refine it, up to 'targetLOD'.
-TerrainSamplePtr terrainosaurus::generateTerrain(MapRasterizationConstPtr map,
-                                                 TerrainLOD startLOD,
-                                                 TerrainLOD targetLOD) {
-    Timer<float, false> total, loading, pass, generation, refinement;
-    total.start();
+void terrainosaurus::naiveBlend(TerrainSample::LOD & tsl, int borderWidth) {
+    const MapRasterization::LOD & map = tsl.mapRasterization();
 
-    // Preload all of the TerrainTypes we'll be using, for every LOD we'll be
-    // using.
-    loading.start();
-    INCA_DEBUG("Preloading terrain sample data")
-    TerrainLibraryConstPtr tl = map->terrainLibrary();
-    const MapRasterization::LOD & maxMap = (*map)[targetLOD];
-    for (IndexType i = 0; i < maxMap.regionCount(); ++i)
-        maxMap.regionTerrainType(i).object().ensureLoaded(startLOD, targetLOD);
-    loading.stop();
+    Heightfield elevations(map.sizes());
 
+#if 0
+    // If there is only one region, then this is cinch-y
+    if (tsl.regionCount() == 1) {
+        const TerrainType::LOD & tt = map.terrainType(0, 0);
+        const TerrainSample::LOD & ex = tt.randomTerrainSample();
+        elevations =
 
-    std::stringstream report;
-    report << "Terrain generation at " << (int(targetLOD - startLOD) + 1) << " LODs\n";
-    report << "Loading terrain data took " << loading() << " seconds\n";
-    report << "\t-------------------------------------------------------------\n";
-    report << "\tLOD\t"
-           << std::setw(15) << "gen. time (s)"
-           << std::setw(15) << "ref. time (s)"
-           << std::setw(15) << "total time (s)"
-           << std::setw(15) << "target size"
-           << std::setw(15) << "actual size"
-           << std::endl;
+    
+    
+    // Otherwise, we have to blend 'n' stuff
+    } else {
+#endif
+        Heightfield maskBlend(map.sizes());
+        inca::raster::fill(maskBlend, 0.0f);
+        
+        // Start with an empty elevation raster
+        inca::raster::fill(elevations, 0.0f);
 
-    // We're trying to build a TerrainSample containing all the LODs of our terrain
-    TerrainSamplePtr result(new TerrainSample());
+        // Blend in a random chunk for each region in the map
+        RandomUniform<IndexType> randomIndex;
+        for (IDType rID = 0; rID < IDType(map.regionCount()); ++rID) {
+            GrayscaleImage mask = map.regionMask(rID, borderWidth);
+            maskBlend += mask;
 
-    // Run the GA for every LOD from the coarsest up to the requested
-    for (TerrainLOD lod = startLOD; lod <= targetLOD; ++lod) {
-        pass.reset();
-        pass.start();
+            // Choose a sample from the appropriate TerrainType
+            const TerrainType::LOD & tt = map.terrainType(map.regionSeed(rID));
+            const TerrainSample::LOD & ex = tt.randomTerrainSample();
 
-        // Create the low-rez pattern we want the GA to refine
-        generation.reset();
-        generation.start();
-        if (lod == startLOD) {      // Build something crappy from scratch
-            const int borderWidth = int(samplesPerMeterForLOD(lod) * 1000);
-            (*result)[lod].createFromRaster(naiveBlend((*map)[lod], borderWidth));
-        } else {                                // Just scale up the previous LOD
-            (*result)[lod].resampleFromLOD(lod - 1);
+            // Choose a random starting point in the sample
+            // FIXME ???
+            Pixel maxStart;
+            Pixel exSz(ex.sizes());
+            Pixel mkSz(mask.sizes());
+            maxStart[0] = ex.size(0) - mask.size(0);
+            maxStart[1] = ex.size(1) - mask.size(1);
+            INCA_DEBUG("Max is " << maxStart)
+            INCA_DEBUG("Ex is " << exSz)
+            INCA_DEBUG("Mask is " << mkSz)
+            if (maxStart[0] < 0 || maxStart[1] < 0) {
+                INCA_DEBUG("Argh! TerrainSample " << ex.index()
+                        << " (sizes " << ex.size(0) << "-" << ex.size(1) << ") of TerrainType "
+                        << tt.name() << " is too small to supply data for "
+                        << "region " << rID << " with sizes " << mask.size(0) << "-" << mask.size(1)
+                        << " (" << maxStart << ")")
+                continue;
+            }
+            Pixel start;
+            if (maxStart[0] > 0)
+                start[0] = randomIndex(0, maxStart[0]);
+            else
+                start[0] = 0;
+            if (maxStart[1] > 0)
+                start[1] = randomIndex(0, maxStart[1]);
+            else
+                start[1] = 0;
+
+            // Blend in this chunk
+            INCA_DEBUG("Blending in region " << rID << " from sample "
+                    << ex.index() << " of TerrainType " << tt.name()
+                    << " from " << start)
+            elevations += mask * selectBS(ex.elevations(), start, mask.sizes());
+//            GrayscaleImage ones(mask.sizes());
+//            fill(ones, 1.0f);
+//            elevations += mask * select(ones, mask.sizes());
         }
-        generation.stop();
+//    }
+    fill(elevations, 0.0f);
 
-        // Now, make a better version at this LOD using the GA
-        refinement.reset();
-        refinement.start();
-        if (lod != startLOD) {
-            (*result)[lod].createFromRaster(refineHeightfield((*result)[lod],
-                                                              (*map)[lod]));
-        }
-        refinement.stop();
-        pass.stop();
-
-        // Report on what we did
-        report << "\t[" << lod << "]:\t"
-               << std::setw(15) << generation()
-               << std::setw(15) << refinement()
-               << std::setw(15) << pass()
-               << std::setw(15) << (*map)[lod].sizes().stringifyElements("x")
-               << std::setw(15) << (*result)[lod].sizes().stringifyElements("x")
-               << std::endl;
-    }
-    total.stop();
-
-    report << "\t-------------------------------------------------------------\n"
-              "\tTotal elapsed time: " << total() << " seconds\n";
-
-    // Return the finished product
-    INCA_DEBUG(report.str())
-    return result;
+    // Initialize the elevations in the TerrainSample
+    tsl.createFromRaster(elevations);
+//    tsl.createFromRaster(maskBlend);
 }
 
 
-Heightfield terrainosaurus::naiveBlend(const MapRasterization::LOD & map,
-                                       int borderWidth) {
-    Heightfield result(map.sizes());
-    fill(result, 0.0f);
-
-    // Blend in a random chunk for each region
-    RandomUniform<IndexType> randomIndex;
-    for (IndexType i = 0; i < map.regionCount(); ++i) {
-        GrayscaleImage mask = map.regionMask(i, borderWidth);
-
-        // Choose a sample from the appropriate TerrainType
-        const TerrainType::LOD & tt = map.terrainType(map.regionSeed(i));
-        const TerrainSample::LOD & ts = tt.randomTerrainSample();
-
-        // Choose a random starting point in the sample
-        Pixel maxStart(ts.size(0) - mask.size(0),
-                       ts.size(1) - mask.size(1));
-        if (maxStart[0] < 0 || maxStart[1] < 0) {
-            std::cerr << "Argh! TerrainSample " << ts.index()
-                      << " (sizes " << ts.sizes() << ") of TerrainType "
-                      << tt.name() << " is too small to supply data for "
-                      << "region " << i << " with sizes " << mask.sizes()
-                      << std::endl;
-            continue;
-        }
-        Pixel start;
-        if (maxStart[0] > 0)
-            start[0] = randomIndex(0, ts.size(0) - mask.size(0));
-        else
-            start[0] = 0;
-        if (maxStart[1] > 0)
-            start[1] = randomIndex(0, ts.size(1) - mask.size(1));
-        else
-            start[1] = 0;
-
-        // Blend in this chunk
-        std::cerr << "Blending in region " << i << " from sample "
-                  << ts.index() << " of TerrainType " << tt.name()
-                  << " from " << start << std::endl;
-        result += mask * selectBS(ts.elevations(), start, mask.sizes());
-    }
-    return result;
-}
-
-
-void terrainosaurus::renderChromosome(Heightfield & hf,
+void terrainosaurus::renderChromosome(TerrainSample::LOD & tsl,
                                       const TerrainChromosome & c) {
     // Augment the heightfield with an alpha channel
-    Heightfield sum;
+    Heightfield elevations, sum;
 
-    // Make the output heightfield the correct size
-    hf.setSizes(c.heightfieldSizes());
-    sum.setSizes(hf.sizes());
+    // Make the heightfields the correct size
+    elevations.setSizes(c.heightfieldSizes());
+    sum.setSizes(c.heightfieldSizes());
 
     // Start from empty
-    fill(hf, 0.0f);
+    fill(elevations, 0.0f);
     fill(sum, 0.0f);
 
     // Splat each gene into the augmented heightfield
     for (int i = 0; i < c.size(0); ++i)
         for (int j = 0; j < c.size(1); ++j)
-            renderGene(hf, sum, c.gene(i, j));
+            renderGene(elevations, sum, c.gene(i, j));
 
     // Divide out the alpha channel to produce a blended heightfield
-    hf /= sum;
+    elevations /= sum;
 
-    // Go back and clean up any NaN's that appeared due to divide-by-zero
+//    // Go back and clean up any NaN's that appeared due to divide-by-zero
 //    scalar_t m_hf = mean(hf),
 //             m_s = mean(sum),
 //             mn = m_hf / m_s;
@@ -185,9 +137,11 @@ void terrainosaurus::renderChromosome(Heightfield & hf,
 //        for (int j = 0; j < hf.size(1); ++j)
 //            if (sum(i, j) == scalar_t(0))
 //                hf(i, j) = mn;
+
+    tsl.createFromRaster(elevations);
 }
 
-void terrainosaurus::renderGene(Heightfield & hf,
+void terrainosaurus::renderGene(Heightfield & elevations,
                                 Heightfield & sum,
                                 const TerrainChromosome::Gene & g) {
     // Select the source region and apply the gene's transformation to it
@@ -201,12 +155,13 @@ void terrainosaurus::renderGene(Heightfield & hf,
     // Add the transformed, masked pixels to the HF and the mask itself to sum
     const TerrainSample::LOD & sample = g.terrainSample();
     scalar_t mean = sample.localElevationMean(g.sourceCenter());
-    selectBE(hf, stT, edT)  += mask * selectBE(
-                                            linear_map(
-                                                rotate(sample.elevations(), g.rotation()),
-                                                g.scale(), g.offset() + mean * (1 - g.scale())
-                                            ),
-                                            stS, edS);
+    selectBE(elevations, stT, edT) += mask *
+            selectBE(
+                linear_map(
+                    rotate(sample.elevations(), g.rotation(), g.sourceCenter()),
+                    g.scale(), g.offset() + mean * (1 - g.scale())
+                ),
+                stS, edS);
     selectBE(sum, stT, edT) += mask;
 
 #if 0
@@ -217,6 +172,127 @@ void terrainosaurus::renderGene(Heightfield & hf,
     cerr << "ElevationRange of sum: " << range(selectBE(sum, stT, edT)) << endl;
     cerr << "Rendering gene from " << g.sourceCoordinates << " to " << g.targetCoordinates << endl;
 #endif
+}
+
+// Compute the aggregate fitness of a TerrainLibrary LOD
+scalar_t terrainosaurus::terrainLibraryFitness(const TerrainLibrary::LOD & tl,
+                                               bool print) {
+    TerrainLOD lod = tl.levelOfDetail();
+
+    if (print) {
+        INCA_INFO("")
+        INCA_INFO("================================================")
+        INCA_INFO("Evaluating fitness of TL(" << lod << ")")
+    }
+
+    // Compute the average fitness of all terrain types
+    scalar_t libraryFitness = 0;
+    for (IDType ttid = 1; ttid < IDType(tl.size()); ++ttid)
+        libraryFitness += terrainTypeFitness(tl.terrainType(ttid), print);
+    libraryFitness /= (tl.size() - 1);
+
+    if (print) {
+        INCA_INFO("Fitness of TL(" << lod << ") is " << libraryFitness)
+        INCA_INFO("================================================")
+        INCA_INFO("")
+    }
+    
+    return libraryFitness;
+}
+
+// Compute the aggregate fitness of a TerrainType LOD
+scalar_t terrainosaurus::terrainTypeFitness(const TerrainType::LOD & tt,
+                                            bool print) {
+    if (print) {
+        INCA_INFO("")
+        INCA_INFO("  ++++++++++++++++++++++++++++++++++++++++++++")
+        INCA_INFO("  Evaluating fitness of TT(" << tt.name() << ")")
+    }
+
+    // Compute the average fitness of all terrain samples
+    scalar_t typeFitness = 0;
+    for (IDType tsid = 0; tsid < IDType(tt.size()); ++tsid)
+        typeFitness += terrainSampleFitness(tt.terrainSample(tsid), print);
+    typeFitness /= tt.size();
+
+    if (print) {
+        INCA_INFO("  Fitness for TT " << tt.name() << " is " << typeFitness)
+        INCA_INFO("  ++++++++++++++++++++++++++++++++++++++++++++")
+        INCA_INFO("")
+    }
+    
+    return typeFitness;
+}
+
+// Compute the aggregate fitness of a TerrainSample LOD
+scalar_t terrainosaurus::terrainSampleFitness(const TerrainSample::LOD & ts,
+                                              bool print) {
+    if (print) {
+        INCA_INFO("")
+        INCA_INFO("    ----------------------------------------")
+    }
+
+    // Compute the average fitness of all regions, weighted by area
+    scalar_t sampleFitness = 0;
+    for (IDType rid = 0; rid < IDType(ts.regionCount()); ++rid) {
+        RegionSimilarityMeasure fitness = terrainRegionSimilarity(ts, rid, print);
+        sampleFitness += fitness.overall() * ts.regionArea(rid);
+    }
+    sampleFitness /= ts.size();
+
+    if (print) {
+        INCA_INFO("    Fitness for TS " << ts.name() << " is " << sampleFitness)
+        INCA_INFO("    ----------------------------------------")
+        INCA_INFO("")
+    }
+    
+    return sampleFitness;
+}
+
+
+// Compute the similarity between a region within a TerrainSample
+// and a reference TerrainType
+RegionSimilarityMeasure
+terrainosaurus::terrainRegionSimilarity(const TerrainSample::LOD & ts,
+                                        IDType regionID, bool print) {
+    // The multi-valued fitness measure we're calculating
+    RegionSimilarityMeasure values, ref, fitness;
+
+    // Find the measurements for the reference TT
+    const TerrainType::LOD & tt = ts.regionTerrainType(regionID);
+
+    // Compute aggregate region fitness
+    fitness.elevation()    = tt.elevationDistribution().match(ts.regionElevationStatistics(regionID));
+    fitness.slope()        = tt.slopeDistribution().match(ts.regionSlopeStatistics(regionID));
+    fitness.edgeLength()   = tt.edgeLengthDistribution().match(ts.regionEdgeLengthStatistics(regionID));
+    fitness.edgeScale()    = tt.edgeScaleDistribution().match(ts.regionEdgeScaleStatistics(regionID));
+    fitness.edgeStrength() = tt.edgeStrengthDistribution().match(ts.regionEdgeStrengthStatistics(regionID));
+    fitness.overall() = tt.elevationWeight() * fitness.elevation()
+                      + tt.slopeWeight() * fitness.slope();
+
+    fitness.overall() += tt.edgeLengthWeight() * (std::isnan(fitness.edgeLength())
+                                                    ? 0.5f
+                                                    : fitness.edgeLength());
+    fitness.overall() += tt.edgeScaleWeight() * (std::isnan(fitness.edgeScale())
+                                                    ? 0.5f
+                                                    : fitness.edgeScale());
+    fitness.overall() += tt.edgeStrengthWeight() * (std::isnan(fitness.edgeStrength())
+                                                    ? 0.5f
+                                                    : fitness.edgeStrength());
+        
+    // Barf out the fitness thingy
+    if (print) {
+        INCA_INFO("      Region " << regionID
+                  << "  fitness(" << fitness.overall() << ')'
+                  << "  area(" << ts.regionArea(regionID) << ')')
+        INCA_INFO("        Elevation     " << fitness.elevation())
+        INCA_INFO("        Slope         " << fitness.slope())
+        INCA_INFO("        Edge Length   " << fitness.edgeLength())
+        INCA_INFO("        Edge Scale    " << fitness.edgeScale())
+        INCA_INFO("        Edge Strength " << fitness.edgeStrength())
+    }
+
+    return fitness;
 }
 
 

@@ -54,7 +54,8 @@ public:
     void operator()(Renderer & renderer) const;
 
 protected:
-    PrimitiveArray  _primitives;
+    mutable bool _displayListValid;
+    mutable int _displayList;
 };
 
 #endif

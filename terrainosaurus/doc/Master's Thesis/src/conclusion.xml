@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE chapter PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<chapter id="Conclusion">
+  <title>Conclusion</title>
+  <para>
+    Terrain generation is a topic of interest to practitioners in a number of 
+    fields, some of which are entertainment- and art-related, with others being 
+    more utilitarian in nature. This topic has received significantly less 
+    treatment in the literature than has the related topic of real-time terrain 
+    visualization. Terrain generation methods currently in practice are usually  
+    fractal in nature, and are often difficult to control.
+  </para>
+  <para>
+    <citetitle>Terrainosaurus</citetitle> is a new, user-friendly method of 
+    generating an effectively unlimited diversity of 3D terrain models. It 
+    differs from current state-of-the-art methods for terrain generation in a 
+    number of ways, in particular:
+    <itemizedlist>
+      <listitem>
+        it uses user-provided, real-world elevation data as raw material.  
+        Because of this, a user can extend the capabilities of the system 
+        without changing the fundamental algorithm, simply by adding examples of 
+        new types of terrain.
+      </listitem>
+      <listitem>
+        it follows a user-centric design paradigm, where types of terrain are 
+        described by example, and the desired arrangement of these terrain types 
+        is specified in an intuitive manner (i.e., by drawing a map). In this 
+        paradigm, the user is freed from nearly all of the manual labor that 
+        characterizes manual "sculpting" methods for height field creation, and 
+        is not required to learn esoteric skills in order to get a desired 
+        result, as in many procedural methods.
+      </listitem>
+      <listitem>
+        it uses artificial intelligence techniques, specifically genetic 
+        algorithms, to generate a height field approximating the user's design 
+        and manifesting the appropriate terrain characteristics in each distinct 
+        region. To my knowledge, this is the first significant attempt to apply 
+        artificial intelligence techniques to the problem of terrain 
+        generation.
+      </listitem>
+    </itemizedlist>
+  </para>
+  <para>
+    The second contribution of <citetitle>Terrainosaurus</citetitle> is a 
+    paradigm for terrain generation in which the user is freed from almost all 
+    of the burden of constructing the terrain, while at the same time still 
+    retaining some control over the shape of the terrain. All of the inputs 
+    expected of the user are intuitive to grasp. Furthermore, it is not 
+    necessary for the user to understand how 
+    <citetitle>Terrainosaurus</citetitle> works in order to use it effectively.  
+    These characteristics will become increasingly important in the future as 
+    the scale of virtual worlds continues to increase&em;development teams 
+    simply will not have the time to design the terrain manually.
+  </para>
+  <para>
+    The third contribution of <citetitle>Terrainosaurus</citetitle> is a new 
+    method of performing approximate comparisons of terrain height fields using 
+    a variation on statistical distribution matching. This comparison method is 
+    adaptive, is not highly sensitive to differences in the size or shape of 
+    the terrains being compared, and has a built-in measure of how well it is 
+    performing in any given case.
+  </para>
+  <para>
+    <citetitle>Terrainosaurus</citetitle>, while not as trivial to implement as 
+    more simplistic algorithms, could be of enormous use in a studio authoring 
+    environment, especially when integrated with 3D modeling tools for manual 
+    fine-tuning. Towards this end, it would be useful to implement this 
+    algorithm as a plugin for one or more currently popular 3D modeling 
+    packages.
+  </para>
+  <para>
+    Obviously, terrain generation is not yet a solved problem. The positive 
+    results produced by <citetitle>Terrainosaurus</citetitle> suggest that even 
+    more promising results will emerge with additional research. It is my 
+    belief that future research in this field ought to pursue a course similar 
+    to <citetitle>Terrainosaurus</citetitle>'s&em;the use of artificial 
+    intelligence techniques seems a promising road (and perhaps the 
+    <emphasis>most</emphasis> promising) for doing terrain generation in a way 
+    that is both realistic and user-friendly.
+  </para>
+</chapter>

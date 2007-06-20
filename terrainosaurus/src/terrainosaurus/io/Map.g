@@ -1,4 +1,5 @@
-/*
+/* -*- antlr -*-
+ *
  * File: Map.g
  * 
  * Author: Ryan L. Saunders
@@ -31,6 +32,9 @@ header "pre_include_hpp" {
 
     // Import Map and related object definitions 
     #include "../data/Map.hpp"
+
+    // Import parser superclass and supergrammer definitions
+    #include "CommonParser.hpp"
 }
 
 // Global options section
@@ -87,13 +91,13 @@ terrainMap [Map * m]:
     | terrainTypeRecord
     | blankLine )* EOF ;
 
-// A single-line vertex (vertex) declaration with x and y coordinates
+// A single-line vertex declaration with x and y coordinates
 vertexRecord:
     { scalar_t x, y; }
     t:VERTEX x=scalar y=scalar EOL
     { createVertex(x, y, t); } ;
 
-// A single-line face (face) declaration with the list of vertices
+// A single-line face declaration with the list of vertices
 faceRecord:
     { IDType id; }
     f:FACE { beginFace(f); } ( id=integer { addVertex(id, f); } )+ EOL
@@ -104,14 +108,43 @@ terrainTypeRecord:
     TERRAIN_TYPE id:NAME EOL
     { setTerrainType(id->getText(), id); } ;
 
+
+/*---------------------------------------------------------------------------*
+ | Dummy rule
+ *---------------------------------------------------------------------------*/
+
+
 // A line with nothing important on it
 blankLine: EOL ;
 
 
-/*---------------------------------------------------------------------------*
- | Complex value types
- *---------------------------------------------------------------------------*/
-// A real number, specified in standard notation (e.g. -3.42342)
+// A positive real number, specified in any of the following formats:
+//      standard decimal notation (1.234)
+//      percent notation (123.4%)
+//      scientific notation (0.1234e1)
+// These may be combined (e.g., 1234.0e-1%)
+fraction returns [scalar_t s]:
+    w:NUMBER ( DOT f:NUMBER )? ( "e" (sg:SIGN)? e:NUMBER )? (p:PERCENT)?
+    {
+        // First, convert the floating point number
+        std::string tmp(w->getText());          // Whole # part
+        tmp += ".";                             // Decimal point
+        if (f != NULL)  tmp += f->getText();    // Fractional part
+        else            tmp += "0";             // Implicit zero
+        if (e != NULL) {                        // Exponent
+            tmp += "e";
+            if (sg != NULL) tmp += sg->getText();
+            tmp += e->getText();
+        }
+        s = scalar_t(atof(tmp.c_str()));
+        
+        // If this is a percent, convert to normal decimal by dividing by 100
+        if (p != NULL)  s /= 100;
+    } ;
+
+
+// A positive or negative real number, with the same format as the 'fraction'
+// type (see preceding 'fraction' rule).
 scalar returns [scalar_t s]:
     (sg:SIGN)? s=fraction
     {
@@ -121,22 +154,11 @@ scalar returns [scalar_t s]:
     } ;
 
 
-// A positive fractional value, >= 0.0
-fraction returns [scalar_t s]:
-    w:NUMBER ( DOT f:NUMBER )?
-    {   std::string tmp(w->getText());      // Construct a composite string
-        if (f != NULL) {                    // If we have a fractional part,
-            tmp += '.';                     // then add it in
-            tmp += f->getText();
-        }
-        s = (scalar_t)atof(tmp.c_str());
-    } ;
-
-
-// A normalized fractional value, within [0.0, 1.0]
+// A positive real number, clamped to the range [0.0, 1.0], with the same
+// format as the 'fraction' type (see preceding 'fraction' rule).
 nFraction returns [scalar_t s]:
     s=fraction
-    { s >= 0.0 && s <= 1.0 }? ; // Enforce s in [0.0, 1.0]
+    { s >= scalar_t(0) && s <= scalar_t(1) }? ; // Enforce s in [0.0, 1.0]
 
 
 // An unsigned integer in decimal notation
@@ -166,25 +188,51 @@ tokens {
 }
 
 // Primitive character classes
-protected DIGIT  options { paraphrase = "digit"; }  : ( '0'..'9' ) ;
-protected LETTER options { paraphrase = "letter"; } : ( 'a'..'z' ) ;
+protected DIGIT     : ( '0'..'9' ) ;
+protected LETTER    : ( 'a'..'z' ) ;
+protected WS_CHAR   : ( ' ' | '\t' ) ;
+protected EOL_CHAR  : ( "\r\n" | '\r' | '\n' ) ;
+protected DQUOTE    : '"'   { $setText(""); } ;
+protected SQUOTE    : '\''  { $setText(""); } ;
+protected SPACE     : ' ' ;
 
 // Comments and whitespace
-EOL options { paraphrase = "end of line"; } :
-    ( "\r\n" | '\r' | '\n' )          { newline(); } ;
+EOL options { paraphrase = "end of line"; } : EOL_CHAR  { newline(); } ;
 COMMENT options { paraphrase = "comment"; } :
-    '#' (~('\r' | '\n'))* EOL         { $setType(EOL); } ;
-WS : ( ' ' | '\t' )                   { $setType(antlr::Token::SKIP); } ;
+    '#' ( ~('\r' | '\n') )* EOL_CHAR  { newline(); $setType(EOL); } ;
+WS : ( WS_CHAR )+                     { $setType(antlr::Token::SKIP); } ;
 
 // Delimiters
-DOT options { paraphrase = "."; } : "." ;
-
-// An unsigned integral number
-NUMBER  options { paraphrase = "number"; } : (DIGIT)+ ;
+LEFT_ABRACKET   : '<' ;
+RIGHT_ABRACKET  : '>' ;
+LEFT_SBRACKET   : '[' ;
+RIGHT_SBRACKET  : ']' ;
+COMMA           : ',' ;
+ASSIGN          : '=' ;
+PERCENT         : '%' ;
+COLON           : ':' ;
+AMPERSAND       : '&' ;
+DOT             : '.' ;
+BACKSLASH       : '\\' ;
+FORESLASH       : '/' ;
+NBSP            : "\\ " ;
 
 // A positive or negative sign
 SIGN  : ( '+' | '-' ) ;
 
+// An unsigned integral number
+NUMBER  options { paraphrase = "number"; } : (DIGIT)+ ;
+
 // An identifier
-NAME    options { paraphrase = "name"; testLiterals = true; } :
+NAME options { paraphrase = "name"; testLiterals = true; } :
             ( LETTER | '_' ) ( LETTER | DIGIT | '_' )* ;
+
+// A string in quotes
+QUOTED_STRING options { paraphrase = "quoted string"; } :
+          ( DQUOTE (~'"')* DQUOTE )
+        | ( SQUOTE (~'\'')* SQUOTE ) ;
+//          ( DQUOTE s:(~S)* DQUOTE ) { $setText(s->getText()); }
+//        | ( SQUOTE t:(.)* SQUOTE ) { $setText(t->getText()); } ;
+
+// Dummy lexical token (antlr 2.7.5 won't compile this w/o at least one rule)
+ANTLR_DUMMY_TOKEN : "%#%dummy%#%" ;

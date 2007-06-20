@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <msub>
+    <mi>P</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>&InvisibleTimes;</mo>
+  <mfenced>
+    <mrow>
+      <mfrac linethickness="thin">
+        <mn>1</mn>
+        <mn>2</mn>
+      </mfrac>
+      <mo>&plus;</mo>
+      <mfrac linethickness="thin">
+        <mrow>
+          <mn>1</mn>
+          <mo>&minus;</mo>
+          <msub>
+            <mi>S</mi>
+            <mi>r</mi>
+          </msub>
+        </mrow>
+        <mn>4</mn>
+      </mfrac>
+      <mo>&plus;</mo>
+      <mfrac linethickness="thin">
+        <mrow>
+          <mn>1</mn>
+          <mo>&minus;</mo>
+          <msub>
+            <mi>C</mi>
+            <mi mathvariant="italic">g,i</mi>
+          </msub>
+        </mrow>
+        <mn>4</mn>
+      </mfrac>
+    </mrow>
+  </mfenced>
+</math>

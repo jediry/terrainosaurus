@@ -54,28 +54,38 @@
 // via a 2D genetic algorithm
 namespace terrainosaurus {
 
-    // Generate a heightfield corresponding to the rasterized chunk of map
-    // specified by 'map', by repeatedly scaling up low-resolution data and
-    // applying the GA to refine it, up to 'targetLOD'.
-    TerrainSamplePtr generateTerrain(MapRasterizationConstPtr map,
-                                     TerrainLOD startLOD,
-                                     TerrainLOD targetLOD);
-
-
-    // Create a heightfield corresponding to an LOD from the MapRasterization
+    // Initialize the elevations in the LOD, using the map of TerrainType IDs,
     // by picking chunks at random from the appropriate TerrainTypes and
     // blending near the seams.
-    Heightfield naiveBlend(const MapRasterization::LOD & map,
-                           int borderWidth);
+    void naiveBlend(TerrainSample::LOD & ts, int borderWidth);
 
 
-   // Generate a heightfield by splatting together the Gene data in c
-    void renderChromosome(Heightfield & hf,
+    // Generate a heightfield by splatting together the Gene data in c
+    void renderChromosome(TerrainSample::LOD & ts,
                           const TerrainChromosome & c);
     void renderGene(Heightfield & hf, Heightfield & sum,
                     const TerrainChromosome::Gene & g);
 
+    // Compute the aggregate fitness of an LOD of a TerrainLibrary, TerrainType,
+    // or TerrainSample, defined as the average of the fitnesses of each
+    // consitutent subpart (TerrainType, TerrainSample, or region), weighted
+    // according to the size of the sub-part.
+    scalar_t terrainLibraryFitness(const TerrainLibrary::LOD & tl,
+                                   bool print = false);
+    scalar_t terrainTypeFitness(const TerrainType::LOD & tt,
+                                bool print = false);
+    scalar_t terrainSampleFitness(const TerrainSample::LOD & tt,
+                                  bool print = false);
 
+    // Compute the fitness of a region within a TerrainSample, by comparing it
+    // to the TerrainType it's supposed to emulate, w/r to a set of measured
+    // characteristics (mean elevation, slope, ridges, etc.)
+//    RegionSimilarityMeasure encodeFeatures(const TerrainSample::LOD & ts,
+//                                           IDType regionID);
+    RegionSimilarityMeasure terrainRegionSimilarity(const TerrainSample::LOD & ts,
+                                                    IDType regionID,
+                                                    bool print = false);
+     
     // Heightfield measurement operations for a particular slot in a Chromosome.
     // These operations return average values across the region of the pattern
     // heightfield covered by the gene at (i, j).

@@ -63,10 +63,16 @@ namespace terrainosaurus {
     typedef inca::raster::MultiArrayRaster<Color, 2>    ColorImage;
     typedef inca::raster::MultiArrayRaster<float, 3>    ScaleSpaceImage;
     typedef inca::raster::MultiArrayRaster<Vector2D, 2> VectorMap;
+    typedef inca::raster::MultiArrayRaster<Color, 2>    ColorMap;
+    typedef inca::raster::MultiArrayRaster<IDType, 2>   IDMap;
     typedef GrayscaleImage                              Heightfield;
+    
+    // Forward declarations for data objects
+    class TerrainLibrary;
+    class TerrainType;
+    class TerrainSample;
+    class MapRasterization;
+    class Map;
 };
-
-// Choose which GUI toolkit we will be using (for windows, etc.)
-#define GUI_TOOLKIT GLUT
 
 #endif

@@ -7,26 +7,26 @@
 #
 # Note that vertices are numbered starting from 1, not 0
 
-# Map intersections (vertices)
-v -7.0 -7.0     # 1
-v -4.0 -4.0     # 2
-v -4.5 1.0      # 3
-v -1.0 5.0      # 4
-v -1.0 6.0      # 5
-v -7.0 5.5      # 6
-v 7.0 6.5       # 7
-v 6.0 -6.5      # 8
-v 0.0 -6.0      # 9
-v 2.5 -1.0      # 10
-v 2.5 4.0       # 11
-v 3.5 4.0       # 12
+# Map vertices
+v -700.0 -700.0     # 1
+v -400.0 -400.0     # 2
+v -450.0 100.0      # 3
+v -100.0 500.0      # 4
+v -100.0 600.0      # 5
+v -700.0 550.0      # 6
+v 700.0 650.0       # 7
+v 600.0 -650.0      # 8
+v 000.0 -600.0      # 9
+v 250.0 -100.0      # 10
+v 250.0 400.0       # 11
+v 350.0 400.0       # 12
 
 # Map regions (faces)
 tt California_Coast_Hills
 f 1 2 3 4 5 6
-tt California_Coast_Hills
-f 1 9 10 11 4 3 2 1
-tt California_Coast_Hills
+tt Washington_Mountains_Eroded
+f 1 9 10 11 4 3 2
+tt Texas_Flat_w_Rocks
 f 11 12 7 5 4
-tt California_Coast_Hills
-f 7 8 9 10 11 12
+tt Florida_Cracks_n_Crevices
+f 7 12 11 10 9 8

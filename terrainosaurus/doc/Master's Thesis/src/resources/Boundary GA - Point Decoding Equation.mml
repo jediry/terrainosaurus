@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <msub mathvariant="bold">
+    <mi>P</mi>
+    <mi mathvariant="bold-italic">i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub mathvariant="bold">
+    <mi>P</mi>
+    <mrow>
+      <mi mathvariant="bold-italic">i</mi>
+      <mo>&minus;</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>&plus;</mo>
+  <mi mathvariant="bold">P</mi>
+  <mfenced>
+    <mrow>
+      <mo>cos</mo>
+      <msub>
+        <mi>&alpha;</mi>
+        <mrow>
+          <mi>i</mi>
+          <mo>&minus;</mo>
+          <mn>1</mn>
+        </mrow>
+      </msub>
+    </mrow>
+    <mrow>
+      <mo>sin</mo>
+      <msub>
+        <mi>&alpha;</mi>
+        <mrow>
+          <mi>i</mi>
+          <mo>&minus;</mo>
+          <mn>1</mn>
+        </mrow>
+      </msub>
+    </mrow>
+  </mfenced>
+</math>

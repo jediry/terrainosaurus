@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <msub>
+    <mi>&sigma;</mi>
+    <mi>G</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac linethickness="thin">
+    <mrow>
+      <munder>
+        <mo>max</mo>
+        <mi>x</mi>
+      </munder>
+      <mfenced open="|" close="|">
+        <mrow>
+          <msub>
+            <mi>&mu;</mi>
+            <mi>G</mi>
+          </msub>
+          <mo>&minus;</mo>
+          <mi>x</mi>
+        </mrow>
+      </mfenced>
+    </mrow>
+    <mroot>
+      <mrow>
+        <mo>&minus;</mo>
+        <mn>2</mn>
+        <mi>ln</mi>
+        <mn>0.9</mn>
+      </mrow>
+    </mroot>
+  </mfrac>
+</math>

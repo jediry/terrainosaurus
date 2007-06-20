@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <mi>F</mi>
+  <mo>=</mo>
+  <mo>sin</mo>
+  <mfenced>
+    <mrow>
+      <mfenced>
+        <mrow>
+          <mi>&pi;</mi>
+          <mo>&minus;</mo>
+          <mi>&alpha;</mi>
+        </mrow>
+      </mfenced>
+      <mo>&InvisibleTimes;</mo>
+      <mfenced>
+        <mrow>
+          <mn>1.1</mn>
+          <mo>&minus;</mo>
+          <mi>S</mi>
+        </mrow>
+      </mfenced>
+    </mrow>
+  </mfenced>
+</math>

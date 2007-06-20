@@ -33,6 +33,9 @@ namespace terrainosaurus {
 #include "TerrainType.hpp"
 #include "TerrainSeam.hpp"
 
+// Import statistical analysis tools
+#include <inca/math/statistics/DistributionMatcher>
+
 
 /*****************************************************************************
  * LOD specialization for TerrainLibrary
@@ -47,6 +50,8 @@ public:
     typedef inca::raster::MultiArrayRaster<IndexType, 2>    IndexMap;
     typedef inca::raster::MultiArrayRaster<scalar_t, 2>     DistanceMap;
     typedef IndexMap::SizeArray                             SizeArray;
+    typedef inca::math::DistributionMatcher<scalar_t>       DistributionMatcher;
+    typedef DistributionMatcher::ScalarArray                VarianceArray;
 
 
 /*---------------------------------------------------------------------------*
@@ -70,11 +75,58 @@ public:
  | Loading & analysis
  *---------------------------------------------------------------------------*/
 public:
+    void analyze();
+
     // Lazy loading and analysis mechanism
     void ensureLoaded()   const;
     void ensureAnalyzed() const;
     void ensureStudied()  const;
 
+
+/*---------------------------------------------------------------------------*
+ | Statistical distribution matching
+ *---------------------------------------------------------------------------*/
+public:
+    // Aggregation of the distributions for *everything* in the library
+    const DistributionMatcher & elevationDistribution()    const;
+    const DistributionMatcher & slopeDistribution()        const;
+    const DistributionMatcher & edgeLengthDistribution()   const;
+    const DistributionMatcher & edgeScaleDistribution()    const;
+    const DistributionMatcher & edgeStrengthDistribution() const;
+
+    // Default variances (used for singular TT's)
+    const VarianceArray & defaultElevationVariances()    const;
+    const VarianceArray & defaultSlopeVariances()        const;
+    const VarianceArray & defaultEdgeLengthVariances()   const;
+    const VarianceArray & defaultEdgeScaleVariances()    const;
+    const VarianceArray & defaultEdgeStrengthVariances() const;
+
+    // Variances for matching every parameter across the whole lib. HACK
+    const VarianceArray & libraryElevationVariances()    const;
+    const VarianceArray & librarySlopeVariances()        const;
+    const VarianceArray & libraryEdgeLengthVariances()   const;
+    const VarianceArray & libraryEdgeScaleVariances()    const;
+    const VarianceArray & libraryEdgeStrengthVariances() const;
+
+protected:
+    DistributionMatcher _elevationDistribution,
+                        _slopeDistribution,
+                        _edgeLengthDistribution,
+                        _edgeScaleDistribution,
+                        _edgeStrengthDistribution;
+
+    VarianceArray _defaultElevationVariances,
+                  _defaultSlopeVariances,
+                  _defaultEdgeLengthVariances,
+                  _defaultEdgeScaleVariances,
+                  _defaultEdgeStrengthVariances;
+
+    VarianceArray _libraryElevationVariances,
+                  _librarySlopeVariances,
+                  _libraryEdgeLengthVariances,
+                  _libraryEdgeScaleVariances,
+                  _libraryEdgeStrengthVariances;
+                  
 
 /*---------------------------------------------------------------------------*
  | Access to parent TerrainLibrary's properties

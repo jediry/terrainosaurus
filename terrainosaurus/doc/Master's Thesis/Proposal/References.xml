@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="latin1"?>
+<references>
+
+  <reference id="Procedure Models" type="proceedings">
+    <author>
+      <last-name> Marshall </last-name>
+      <first-name> Robert </first-name>
+    </author>
+    <author>
+      <last-name> Wilson </last-name>
+      <first-name> Rodger </first-name>
+    </author>
+    <author>
+      <last-name> Carlson </last-name>
+      <first-name> Wayne </first-name>
+    </author>
+    <title> Procedure Models for Generating Three-Dimensional Terrain </title>
+    <conference> ACM SIGGRAPH '80 </conference>
+    <publisher>
+      <name> ACM Press </name>
+      <location> New York, NY </location>
+    </publisher>
+    <date>
+      <month> July </month>
+      <year> 1980 </year>
+    </date>
+    <pages> 154-162 </pages>
+  </reference>
+
+  <reference id="Mountains and Rivers" type="proceedings">
+    <author>
+      <last-name> Prusinkiewicz </last-name>
+      <first-name> Przemyslaw </first-name>
+    </author>
+    <author>
+      <last-name> Hammel </last-name>
+      <first-name> Mark </first-name>
+    </author>
+    <title> A Fractal Model of Mountains with Rivers </title>
+    <conference> Graphics Interface '93 </conference>
+    <date>
+      <month> May </month>
+      <year> 1993 </year>
+    </date>
+    <pages> 174-180 </pages>
+  </reference>
+
+  <reference id="ROAM" type="proceedings">
+    <author>
+      <last-name> Duchaineau </last-name>
+      <first-name> Mark </first-name>
+    </author>
+    <author>
+      <last-name> Wolinsky </last-name>
+      <first-name> Murray </first-name>
+    </author>
+    <author>
+      <last-name> Sigeti </last-name>
+      <first-name> David </first-name>
+      <middle-name> E. </middle-name>
+    </author>
+    <author>
+      <last-name> Miller </last-name>
+      <first-name> Mark </first-name>
+      <middle-name> C. </middle-name>
+    </author>
+    <author>
+      <last-name> Aldrich </last-name>
+      <first-name> Charles </first-name>
+    </author>
+    <author>
+      <last-name> Mineev-Weinstein </last-name>
+      <first-name> Mark </first-name>
+      <middle-name> B. </middle-name>
+    </author>
+    <title> ROAMing Terrain: Real-time Optimally Adapting Meshes </title>
+    <conference> IEEE Visualization '97 </conference>
+    <publisher>
+      <name> IEEE Computer Society Press </name>
+      <location> Los Alamitos, CA </location>
+    </publisher>
+    <date>
+      <month> October </month>
+      <year> 1997 </year>
+    </date>
+    <pages> 81-88 </pages>
+  </reference>
+
+  <reference id="Definition and Rendering" type="proceedings">
+    <author>
+      <last-name> Miller </last-name>
+      <first-name> Gavin S. </first-name>
+      <middle-name> P. </middle-name>
+    </author>
+    <title> The Definition and Rendering of Terrain Maps </title>
+    <conference> ACM SIGGRAPH '86 </conference>
+    <publisher>
+      <name> ACM Press </name>
+      <location> New York, NY </location>
+    </publisher>
+    <date>
+      <month> August </month>
+      <year> 1986 </year>
+    </date>
+    <pages> 39-48 </pages>
+  </reference>
+
+  <reference id="Eroded Fractal Terrains" type="proceedings">
+    <author>
+      <last-name> Musgrave </last-name>
+      <first-name> F. </first-name>
+      <middle-name> Kenton </middle-name>
+    </author>
+    <author>
+      <last-name> Kolb </last-name>
+      <first-name> Craig </first-name>
+      <middle-name> E. </middle-name>
+    </author>
+    <author>
+      <last-name> Mace </last-name>
+      <first-name> Robert </first-name>
+      <middle-name> S. </middle-name>
+    </author>
+    <title> The Synthesis and Rendering of Eroded Fractal Terrains </title>
+    <conference> ACM SIGGRAPH '89 </conference>
+    <publisher>
+      <name> ACM Press </name>
+      <location> New York, NY </location>
+    </publisher>
+    <date>
+      <month> July </month>
+      <year> 1989 </year>
+    </date>
+    <pages> 41-50 </pages>
+  </reference>
+
+  <reference id="Feature-based CLOD" type="proceedings">
+    <author>
+      <last-name> Li </last-name>
+      <first-name> Sheng </first-name>
+    </author>
+    <author>
+      <last-name> Liu </last-name>
+      <first-name> Xuehui </first-name>
+    </author>
+    <author>
+      <last-name> Wu </last-name>
+      <first-name> Enhua </first-name>
+    </author>
+    <title> Feature-based Visibility-driven CLOD for Terrain </title>
+    <conference> Pacific Graphics 2003 </conference>
+    <publisher>
+      <name> IEEE Computer Society Press </name>
+      <location> Los Alamitos, CA </location>
+    </publisher>
+    <date>
+      <month> October </month>
+      <year> 2003 </year>
+    </date>
+    <pages> 313-322 </pages>
+  </reference>
+
+  <reference id="Combat Simulation" type="proceedings">
+    <author>
+      <last-name> Parry </last-name>
+      <first-name> Sam </first-name>
+      <middle-name> H. </middle-name>
+    </author>
+    <title> The Generation and Use of Parameterized Terrain in Land Combat Simulation </title>
+    <conference> Winter Simulation Conference '77 </conference>
+    <publisher>
+      <name> Winter Simulation Conference </name>
+    </publisher>
+    <date>
+      <month> December </month>
+      <year> 1977 </year>
+    </date>
+    <pages> 422-431 </pages>
+  </reference>
+
+  <reference id="Stream Erosion" type="proceedings">
+    <author>
+      <last-name> Kelley </last-name>
+      <first-name> Alex </first-name>
+      <middle-name> D. </middle-name>
+    </author>
+    <author>
+      <last-name> Malin </last-name>
+      <first-name> Michael </first-name>
+      <middle-name> C. </middle-name>
+    </author>
+    <author>
+      <last-name> Nielson </last-name>
+      <first-name> Gregory </first-name>
+      <middle-name> M. </middle-name>
+    </author>
+    <title> Terrain Simulation Using a Model of Stream Erosion </title>
+    <conference> ACM SIGGRAPH '88 </conference>
+    <publisher>
+      <name> ACM Press </name>
+      <location> New York, NY </location>
+    </publisher>
+    <date>
+      <month> June </month>
+      <year> 1988 </year>
+    </date>
+    <pages> 263-268 </pages>
+  </reference>
+
+  <reference id="Genetic Algorithms" type="proceedings">
+    <author>
+      <last-name> Obitko </last-name>
+      <first-name> Marek </first-name>
+    </author>
+    <author>
+      <last-name> Skavík </last-name>
+      <first-name> Pavel </first-name>
+    </author>
+    <title> Visualization of Genetic Algorithms in a Learning Environment </title>
+    <conference> Spring Conference on Computer Graphics '99 </conference>
+    <publisher>
+      <name> Comenius University </name>
+      <location> Bratislava, Slovakia </location>
+    </publisher>
+    <date>
+      <year> 1999 </year>
+    </date>
+    <pages> 101-106 </pages>
+  </reference>
+
+  <reference id="Geometry Clipmaps" type="proceedings">
+    <author>
+      <last-name> Losasso </last-name>
+      <first-name> Frank </first-name>
+    </author>
+    <author>
+      <last-name> Hoppe </last-name>
+      <first-name> Hugues </first-name>
+    </author>
+    <title> Geometry Clipmaps: Terrain Rendering Using Nested Regular Grids </title>
+    <conference> ACM SIGGRAPH 2004 </conference>
+    <publisher>
+      <name> ACM Press </name>
+      <location> New York, NY </location>
+    </publisher>
+    <date>
+      <month> August </month>
+      <year> 2004 </year>
+    </date>
+    <pages> 769-776 </pages>
+  </reference>
+
+  <reference id="MPD Method" type="journal">
+    <author>
+      <last-name> Fournier </last-name>
+      <first-name> Alain </first-name>
+    </author>
+    <author>
+      <last-name> Fussell </last-name>
+      <first-name> Don </first-name>
+    </author>
+    <author>
+      <last-name> Carpenter </last-name>
+      <first-name> Loren </first-name>
+    </author>
+    <title> Computer Rendering of Stochastic Models </title>
+    <journal>
+      <name> Communications of the ACM </name>
+      <volume> 25 </volume>
+      <issue> 6 </issue>
+    </journal>
+    <publisher>
+      <name> ACM Press </name>
+      <location> New York, NY </location>
+    </publisher>
+    <date>
+      <month> June </month>
+      <year> 1982 </year>
+    </date>
+    <pages> 371-384 </pages>
+  </reference>
+
+  <reference id="Wavelet Synthesis" type="tech-report">
+    <author>
+      <last-name> Pelton </last-name>
+      <first-name> Blake </first-name>
+    </author>
+    <author>
+      <last-name> Atkinson </last-name>
+      <first-name> Darren </first-name>
+      <middle-name> C. </middle-name>
+    </author>
+    <title> Flexible Generation and Lightweight View-Dependent Rendering of Terrain </title>
+    <report> School of Engineering Technical Report COEN-2003-01-22 </report>
+    <publisher>
+      <name> Santa Clara University, Department of Computer Engineering </name>
+      <location> Santa Clara, CA </location>
+    </publisher>
+    <date>
+      <month> January </month>
+      <year> 2003 </year>
+    </date>
+  </reference>
+
+  <reference id="Chunked LOD" type="course-notes">
+    <author>
+      <last-name> Ulrich </last-name>
+      <first-name> Thatcher </first-name>
+    </author>
+    <title> Rendering Massive Terrains Using Chunked Level of Detail Control </title>
+    <conference> ACM SIGGRAPH 2001 </conference>
+    <date>
+      <day> 14 </day>
+      <month> April </month>
+      <year> 2002 </year>
+    </date>
+    <url> http://cvs.sourceforge.net/viewcvs.py/*checkout*/tu-testbed/tu-testbed/docs/sig-notes.pdf?rev=HEAD </url>
+  </reference>
+
+  <reference id="Algorithms" type="book">
+    <author>
+      <last-name> Cormen </last-name>
+      <first-name> Thomas </first-name>
+      <middle-name> H. </middle-name>
+    </author>
+    <author>
+      <last-name> Leiserson </last-name>
+      <first-name> Charles </first-name>
+      <middle-name> E. </middle-name>
+    </author>
+    <author>
+      <last-name> Rivest </last-name>
+      <first-name> Ronald </first-name>
+      <middle-name> L. </middle-name>
+    </author>
+    <author>
+      <last-name> Stein </last-name>
+      <first-name> Clifford </first-name>
+    </author>
+    <title> Introduction to Algorithms, 2nd Ed. </title>
+    <isbn> 0-262-03293-7 </isbn>
+    <publisher>
+      <name> MIT Press </name>
+      <location> Cambridge, MA </location>
+    </publisher>
+    <date>
+      <year> 2001 </year>
+    </date>
+  </reference>
+
+  <reference id="Texturing and Modeling" type="book">
+    <author>
+      <last-name> Ebert </last-name>
+      <first-name> David </first-name>
+      <middle-name> S. </middle-name>
+    </author>
+    <author>
+      <last-name> Musgrave </last-name>
+      <first-name> F. </first-name>
+      <middle-name> Kenton </middle-name>
+    </author>
+    <author>
+      <last-name> Peachey </last-name>
+      <first-name> Darwyn </first-name>
+    </author>
+    <author>
+      <last-name> Perlin </last-name>
+      <first-name> Ken </first-name>
+    </author>
+    <author>
+      <last-name> Worley </last-name>
+      <first-name> Steven </first-name>
+    </author>
+    <title> Texturing &amp; Modeling </title>
+    <isbn> 0-12-228730-4 </isbn>
+    <publisher>
+      <name> Morgan Kaufmann Publishers </name>
+      <location> San Fransico, CA </location>
+    </publisher>
+    <date>
+      <year> 1998 </year>
+    </date>
+  </reference>
+
+
+  <reference id="ROAM Tutorial" type="website">
+    <author>
+      <last-name> Turner </last-name>
+      <first-name> Bryan </first-name>
+    </author>
+    <title> Real-Time Dynamic Level of Detail Terrain Rendering with ROAM </title>
+    <publisher>
+      <name> Gamasutra </name>
+    </publisher>
+    <date>
+      <month> April </month>
+      <year> 2000 </year>
+    </date>
+    <url> http://www.gamasutra.com/features/20000403/turner_01.htm </url>
+  </reference>
+
+  <reference id="Area51" type="website">
+    <author>
+      <last-name> Burke </last-name>
+      <first-name> Carl </first-name>
+    </author>
+    <title> Generating Terrain </title>
+    <date>
+      <year> 1996 </year>
+    </date>
+    <url> http://www.geocities.com/Area51/6902/terrain.html </url>
+  </reference>
+
+  <reference id="Lighthouse 3D" type="website">
+    <author>
+      <last-name> Fernandez </last-name>
+      <first-name> António Ramires </first-name>
+    </author>
+    <title> Lighthouse 3D - Terrain Tutorial </title>
+    <url> http://www.lighthouse3d.com/opengl/terrain/index.php3 </url>
+  </reference>
+
+  <reference id="Spectral Synthesis" type="website">
+    <author>
+      <last-name> Franke </last-name>
+      <first-name> Scott </first-name>
+    </author>
+    <title> Spectral Synthesis Noise for Creating Terrain </title>
+    <publisher>
+      <name> GameDev.net </name>
+    </publisher>
+    <date>
+      <month> January </month>
+      <day> 1 </day>
+      <year> 2000 </year>
+    </date>
+    <url> http://www.gamedev.net/reference/articles/article900.asp </url>
+  </reference>
+
+  <reference id="SDTS Specification" type="website">
+    <author>
+      <last-name> Rinehart </last-name>
+      <first-name> Robert (editor) </first-name>
+    </author>
+    <title> The SDTS Document </title>
+    <publisher>
+      <name> United States Geological Survey </name>
+    </publisher>
+    <date>
+      <month> September </month>
+      <day> 11 </day>
+      <year> 2003 </year>
+    </date>
+    <url> http://rockyweb.cr.usgs.gov/nmpstds/demstds.html </url>
+  </reference>
+
+  <reference id="DEM Specification" type="website">
+    <author>
+      <last-name> USGS </last-name>
+    </author>
+    <title> National Mapping Program Standards </title>
+    <publisher>
+      <name> United States Geological Survey </name>
+    </publisher>
+    <date>
+      <month> April </month>
+      <day> 10 </day>
+      <year> 2003 </year>
+    </date>
+    <url> http://rockyweb.cr.usgs.gov/nmpstds/demstds.html </url>
+  </reference>
+
+  <reference id="Fluid Simulation" type="website">
+    <author>
+      <last-name> Woodhouse </last-name>
+      <first-name> Francis </first-name>
+    </author>
+    <title> Terrain Generation Using Fluid Simulation </title>
+    <publisher>
+      <name> GameDev.net </name>
+    </publisher>
+    <date>
+      <month> September </month>
+      <day> 30 </day>
+      <year> 2003 </year>
+    </date>
+    <url> http://www.gamedev.net/reference/articles/article2001.asp </url>
+  </reference>
+
+  <reference id="Random Rivers" type="website">
+    <author>
+      <last-name> Clyde </last-name>
+      <first-name> David </first-name>
+    </author>
+    <title> Adding Realistic Rivers to Random Terrain </title>
+    <publisher>
+      <name> GameDev.net </name>
+    </publisher>
+    <date>
+      <month> March </month>
+      <day> 15 </day>
+      <year> 2004 </year>
+    </date>
+    <url> http://www.gamedev.net/reference/articles/article2065.asp </url>
+  </reference>
+
+  <reference id="USGS Maps" type="website">
+    <author>
+      <last-name> USGS </last-name>
+    </author>
+    <title> USGS Seamless Data Distribution </title>
+    <publisher>
+      <name> United States Geological Survey </name>
+    </publisher>
+    <date>
+      <month> April </month>
+      <day> 14 </day>
+      <year> 2004 </year>
+    </date>
+    <url> http://gisdata.usgs.net/Website/Seamless/viewer.php </url>
+  </reference>
+
+  <reference id="GDC 2002" type="website">
+    <author>
+      <last-name> Sanchez-Crespo </last-name>
+      <first-name> Daniel </first-name>
+    </author>
+    <title> Science Imitates Nature at GDC </title>
+    <publisher>
+      <name> Gamasutra </name>
+    </publisher>
+    <date>
+      <month> March </month>
+      <day> 23 </day>
+      <year> 2002 </year>
+    </date>
+    <url> http://www.gamasutra.com/gdc2002/features/nature/nature_01.htm </url>
+  </reference>
+
+  <reference id="Trespasser Postmortem" type="website">
+    <author>
+      <last-name> Wyckoff </last-name>
+      <first-name> Richard </first-name>
+    </author>
+    <title> Postmortem: DreamWorks Interactive’s Trespasser </title>
+    <publisher>
+      <name> Gamasutra </name>
+    </publisher>
+    <date>
+      <month> May </month>
+      <day> 14 </day>
+      <year> 1999 </year>
+    </date>
+    <url> http://www.gamasutra.com/features/19990514/trespasser_01.htm </url>
+  </reference>
+
+
+  <reference id="Halo" type="software">
+    <title> Halo </title>
+    <developer>
+      <name> Bungie Studios </name>
+    </developer>
+    <publisher>
+      <name> Microsoft Game Studios </name>
+    </publisher>
+    <date>
+      <year> 2001 </year>
+    </date>
+  </reference>
+
+  <reference id="SimCity 4" type="software">
+    <title> SimCity 4 </title>
+    <publisher>
+      <name> Electronic Arts </name>
+    </publisher>
+    <date>
+      <year> 2003 </year>
+    </date>
+  </reference>
+
+  <reference id="VTP" type="software">
+    <title> The Virtual Terrain Project </title>
+    <publisher>
+      <name> VTP </name>
+    </publisher>
+    <url> http://www.vterrain.org/ </url>
+  </reference>
+
+  <reference id="UT 2004" type="software">
+    <title> Unreal Tournament 2004 </title>
+    <developer>
+      <name> Epic Games, Inc. </name>
+    </developer>
+    <publisher>
+      <name> Atari, Inc. </name>
+    </publisher>
+    <url> http://www.unrealtournament.com/ </url>
+  </reference>
+
+  <reference id="FS 2004" type="software">
+    <title> Flight Simulator 2004 </title>
+    <developer>
+      <name> Microsoft Game Studios </name>
+    </developer>
+    <publisher>
+      <name> Microsoft, Inc. </name>
+    </publisher>
+    <url> http://www.microsoft.com/games/flightsimulator/ </url>
+  </reference>
+
+  <reference id="Terragen" type="software">
+    <title> Terragen </title>
+    <developer>
+      <name> Planetside Software </name>
+    </developer>
+    <url> http://www.planetside.co.uk/terragen/ </url>
+  </reference>
+
+  <reference id="Bryce 3D" type="software">
+    <title> Bryce 3D </title>
+    <publisher>
+      <name> DAZ Productions </name>
+    </publisher>
+    <url> http://www.daz3d.com/program/bryce/ </url>
+  </reference>
+
+  <reference id="ArcGIS" type="software">
+    <title> ArcGIS </title>
+    <publisher>
+      <name> ESRI </name>
+    </publisher>
+    <url> http://www.esri.com/software/arcgis/ </url>
+  </reference>
+
+  <reference id="MojoWorld" type="software">
+    <title> MojoWorld </title>
+    <publisher>
+      <name> Pandromeda, Inc. </name>
+    </publisher>
+    <url> http://www.pandromeda.com/ </url>
+  </reference>
+
+  <reference id="L3DT" type="software">
+    <title> L3DT </title>
+    <developer>
+      <name> Aaron Torpy </name>
+    </developer>
+    <url> http://www.geocities.com/aaron_torpy/gallery.htm </url>
+  </reference>
+
+  <reference id="World Machine" type="software">
+    <title> World Machine </title>
+    <developer>
+      <name> Stephen Schmidt </name>
+    </developer>
+    <url> http://www.world-machine.com/ </url>
+  </reference>
+
+<!--
+  <reference id="Trespasser Post Mortem" type="website">
+    <author> </author>
+    <title> </title>
+    <publisher>
+      <name> </name>
+    </publisher>
+    <date>
+      <month> </month>
+      <year> </year>
+    </date>
+    <url> </url>
+  </reference>
+
+
+  <reference id="" type="proceedings">
+    <author> </author>
+    <title> </title>
+    <conference> </conference>
+    <publication> </publication>
+    <publisher>
+      <name> </name>
+    </publisher>
+    <date>
+      <month> </month>
+      <year> </year>
+    </date>
+    <pages> </pages>
+  </reference>
+-->
+
+</references>

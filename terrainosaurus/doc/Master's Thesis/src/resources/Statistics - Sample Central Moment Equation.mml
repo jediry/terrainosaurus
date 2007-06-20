@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <msub>
+    <mi>m</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac linethickness="thin">
+    <mn>1</mn>
+    <mi>n</mi>
+  </mfrac>
+  <mo>&InvisibleTimes;</mo>
+  <munderover>
+    <mo>&sum;</mo>
+    <mrow>
+      <mi>i</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+    </mrow>
+    <mi>n</mi>
+  </munderover>
+  <msup>
+    <mfenced>
+      <mrow>
+        <msub>
+          <mi>x</mi>
+          <mi>i</mi>
+        </msub>
+        <mo>&minus;</mo>
+        <mi>&mu;</mi>
+      </mrow>
+    </mfenced>
+    <mi>r</mi>
+  </msup>
+</math>

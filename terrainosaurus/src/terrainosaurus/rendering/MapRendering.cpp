@@ -21,7 +21,8 @@ namespace terrainosaurus {
 
 
 // Import OpenGL
-#define GL_HPP_IMPORT_GLU 1
+#define GL_HPP_IMPORT_GLUT 1
+#define GL_HPP_IMPORT_INCA 1
 #include <inca/integration/opengl/GL.hpp>
 using namespace GL;
 
@@ -71,6 +72,11 @@ using namespace terrainosaurus;
 #define CALLBACK
 #endif
 
+#define USE_GLU_TESSELATOR 1
+
+
+#if USE_GLU_TESSELATOR
+
 void CALLBACK printTessError(GLenum errorCode) {
     INCA_ERROR(gluErrorString(errorCode))
 }
@@ -84,17 +90,25 @@ void CALLBACK combineTessPoly(GLdouble coords[3], GLdouble *vertexData[4],
     *dataOut = vtx;
 }
 
+GLUtesselator * createTesselator() {
+    GLUtesselator * tess = gluNewTess();
+    gluTessCallback(tess, GLU_TESS_VERTEX,(GLvoid (CALLBACK*) ( )) &glVertex2dv);
+    gluTessCallback(tess, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineTessPoly);
+    gluTessCallback(tess, GLU_TESS_BEGIN,(GLvoid (CALLBACK*) ( )) &glBegin);
+    gluTessCallback(tess, GLU_TESS_END,(GLvoid (CALLBACK*) ( )) &glEnd);
+    gluTessCallback(tess, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &printTessError);
+    gluTessNormal(tess, 0.0, 0.0, 1.0);
+    return tess;
+}
+#endif
+
+
 MapRendering::MapRendering() {
     setDefaults();
 
-//    GLUtesselator * tess = gluNewTess();
-//    gluTessCallback(tess, GLU_TESS_VERTEX,(GLvoid (CALLBACK*) ( )) &glVertex2dv);
-//    gluTessCallback(tess, GLU_TESS_COMBINE, (GLvoid (CALLBACK*) ()) &combineTessPoly);
-//    gluTessCallback(tess, GLU_TESS_BEGIN,(GLvoid (CALLBACK*) ( )) &glBegin);
-//    gluTessCallback(tess, GLU_TESS_END,(GLvoid (CALLBACK*) ( )) &glEnd);
-//    gluTessCallback(tess, GLU_TESS_ERROR, (GLvoid (CALLBACK*) ()) &printTessError);
-//    gluTessNormal(tess, 0.0, 0.0, 1.0);
-//    tesselator = tess;
+#if USE_GLU_TESSELATOR
+    _tesselator = createTesselator();
+#endif
 }
 
 MapRendering::MapRendering(MapConstPtr m,
@@ -104,14 +118,23 @@ MapRendering::MapRendering(MapConstPtr m,
     setMap(m);
     setPersistentSelection(ps);
     setTransientSelection(ts);
+
+#if USE_GLU_TESSELATOR
+    _tesselator = createTesselator();
+#endif
 }
 
 MapRendering::~MapRendering() {
-//    gluDeleteTess(static_cast<GLUtesselator *>(tesselator));
+#if USE_GLU_TESSELATOR
+    gluDeleteTess(static_cast<GLUtesselator *>(_tesselator));
+#endif
 }
 
 
+
 void MapRendering::setDefaults() {
+    _asTTID = false;
+
     _features.resize(FEATURE_COUNT);
     _features.at(VERTICES)      = true;
     _features.at(EDGES)         = true;
@@ -126,7 +149,7 @@ void MapRendering::setDefaults() {
 
     _scalars.resize(SCALAR_COUNT);
     _scalars.at(VERTEX_RADIUS)      = 4.0f;
-    _scalars.at(EDGE_WIDTH)         = 4.0f;
+    _scalars.at(EDGE_WIDTH)         = 2.0f;
     _scalars.at(REFINEMENT_WIDTH)   = 2.0f;
     _scalars.at(ENVELOPE_WIDTH)     = 1.0f;
     _scalars.at(TANGENT_WIDTH)      = 2.0f;
@@ -237,18 +260,23 @@ void MapRendering::renderLasso(Pixel p1, Pixel p2) {
 
 void MapRendering::operator()(Renderer & renderer) {
     Renderer::Rasterizer & rasterizer = renderer.rasterizer();
-    rasterizer.setLineSmoothingEnabled(true);
-    rasterizer.setPointSmoothingEnabled(true);
-    rasterizer.setAlphaBlendingEnabled(true);
-    GL::glEnable(GL_POINT_SMOOTH);
-    GL::glEnable(GL_LINE_SMOOTH);
-    GL::glEnable(GL_BLEND);
-    GL::glDisable(GL_DEPTH_TEST);
+    
+    if (_asTTID) {
+        rasterizer.setPolygonSmoothingEnabled(false);
+        rasterizer.setAlphaBlendingEnabled(false);
+        rasterizer.setLightingEnabled(false);
+    } else {
+        rasterizer.setLineSmoothingEnabled(true);
+        rasterizer.setPointSmoothingEnabled(true);
+        rasterizer.setAlphaBlendingEnabled(true);
+    }
 
     renderFaces<false>(renderer);
-    renderEdges<false>(renderer);
-    renderVertices<false>(renderer);
-    renderRefinements<false>(renderer);
+    if (! _asTTID) {
+        renderEdges<false>(renderer);
+        renderVertices<false>(renderer);
+        renderRefinements<false>(renderer);
+    }
 }
 
 template <bool forSelection>
@@ -292,20 +320,20 @@ void MapRendering::renderFaces(Renderer & renderer) {
         Map::FacePtr f = *fs;
 
         // Set either selection ID, or color, depending on mode
-        if (forSelection)   rasterizer.setSelectionID(f->id());
-        else                rasterizer.setCurrentColor(pickColor(f));
+        if (_asTTID) {
+            IDType id = f->terrainType()->terrainTypeID();
+            inca::math::Color<unsigned char, inca::math::sRGB<false> > c;
+            c[0] = (id & 0xFF0000) >> 16;
+            c[1] = (id & 0x00FF00) >> 8;
+            c[2] = (id & 0x0000FF);
+            glColor(c);
+//            INCA_DEBUG("Color for ttid " << std::hex << id << " is " << int(c[0]) << ", " << int(c[1]) << ", " << int(c[2]) << std::dec)
+        } else if (forSelection)    rasterizer.setSelectionID(f->id());
+        else                        rasterizer.setCurrentColor(pickColor(f));
 
         // Draw the region
-//         rasterizer.beginPrimitive(inca::rendering::Polygon);
-//             Map::Face::ccw_vertex_iterator vs, done;
-//             for (vs = f->verticesCCW(); vs != done; ++vs)
-//                 // This could DEFINITELY be done faster...but this'll get ripped
-//                 // out anyway once we support concave polys
-//                 rasterizer.vertexAt(vs->position());
-//         rasterizer.endPrimitive();
-//         continue;
-#if 0
-        GLUtesselator * tess = static_cast<GLUtesselator *>(tesselator);
+#if USE_GLU_TESSELATOR
+        GLUtesselator * tess = static_cast<GLUtesselator *>(_tesselator);
         gluTessBeginPolygon(tess, NULL);
             gluTessBeginContour(tess);
 
@@ -367,6 +395,14 @@ void MapRendering::renderFaces(Renderer & renderer) {
 //            cerr << "\t" << (*pt)[0] << ", " << (*pt)[1] << endl;
             delete [] *pt;
         }
+#else
+        rasterizer.beginPrimitive(inca::rendering::Polygon);
+            Map::Face::ccw_vertex_iterator vs, done;
+            for (vs = f->verticesCCW(); vs != done; ++vs)
+                // This could DEFINITELY be done faster...but this'll get ripped
+                // out anyway once we support concave polys
+                rasterizer.vertexAt(vs->position());
+        rasterizer.endPrimitive();
 #endif
     }
 }
@@ -494,6 +530,12 @@ void MapRendering::renderRefinements(Renderer & renderer) {
             }
         }
     }
+}
+
+
+// HACK!!!
+void MapRendering::renderFacesAsTerrainTypeIDs(bool ttid) {
+    _asTTID = ttid;
 }
 
 

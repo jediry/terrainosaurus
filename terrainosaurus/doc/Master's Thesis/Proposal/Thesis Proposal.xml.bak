@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="latin1"?>
+<!DOCTYPE document [ <!ENTITY em "#8212;"> ]>
+
+<document>
+  <title> Terrainosaurus </title>
+  <subtitle> Realistic Terrain Synthesis Via Genetic Algorithms on GIS Elevation Data </subtitle>
+  <version> Thesis Proposal </version>
+  <author> Ryan L. Saunders </author>
+  <author> Dr. John Keyser (advisor) </author>
+
+
+  <!-- INTRODUCTION -->
+  <section>
+    <title> Introduction </title>
+    <paragraph>
+      Computer-rendered terrain is an important facet of most applications that attempt to represent the natural world in some way, 
+      including geographic information systems (GIS) applications, CG-animated feature films, virtual reality systems, and computer 
+      games. The ability to synthesize large-scale, realistic terrain models would be of considerable interest for these applications 
+      (with the exception of the GIS-related applications, which are generally only interested in representing faithfully the earth's 
+      landscape as it actually is).
+    </paragraph>
+    <paragraph>
+      Much of the recent research in virtual terrain has centered around accelerating the visualization of large terrains to achieve 
+      interactive frame rates, resulting in a wide array of <term>level-of-detail (LOD)</term> algorithms, which are methods of 
+      increasing rendering speed through omitting fine detail that would be indiscernable to the viewer <citation ref="ROAM"/> 
+      <citation ref="Chunked LOD"/> <citation ref="Geometry Clipmaps"/> <citation ref="Feature-based CLOD"/>.  Recent, dramatic advances 
+      in the performance and capabilities of graphics accelerators have enabled the presentation of richly-detailed terrain models at 
+      interactive frame-rates, and have sparked increased interest in representing outdoor phenomena, as evidenced by the prominence 
+      of nature-related techniques at a recent Game Developer's Conference <citation ref="GDC 2002"/>.  The visually stunning outdoor 
+      scenes in the recent video game title Halo are solid evidence that believable terrain can be achieved with current technology 
+      <citation ref="Halo"/>.
+    </paragraph>
+    <paragraph>
+      Terrain generation, in contrast, has received relatively little treatment in the literature. The most prevalent techniques are 
+      fractal-based, because they are easily implemented, require relatively little processing time and human input, and yield at 
+      least mediocre results, allowing random, unique terrains to be generated on-the-fly. However, as Losasso &amp; Hoppe <citation 
+      ref="Geometry Clipmaps"/> and Pelton &amp; Atkinson <citation ref="Wavelet Synthesis"/> have noted, fractal methods for 
+      terrain generation are limited in the types of terrain they can simulate, and one generally has to resort to GIS elevation maps 
+      to get more interesting and believable terrain models.
+    </paragraph>
+    <paragraph>
+      In this proposal I describe a new methodology for terrain generation, which I expect will be able to synthesize realistic
+      terrain models composed of a variety of terrain types. In this approach, GIS elevation data is fed as raw input to a genetic 
+      algorithm which generates unique, synthetic terrain models that are similar in their relevant characteristics to the input 
+      elevation data. My approach should be able to handle any type (or combination of types) of terrain, and at multiple levels of 
+      detail, up to the resolution of the input elevation data. Finer detail could be synthesized atop the GIS-based terrain through  
+      the use of existing techniques such as detail-map textures and fractal noise). The user is able to specify the shape and 
+      placement of various regions of terrain via a CAD-style map-drawing interface, which could be extended to permit a finer degree 
+      of user control (such as choosing the placement of individual features).
+    </paragraph>
+  </section>
+
+
+  <!-- IDEALIZED TERRAIN GENERATION -->
+  <section>
+    <title> Idealized Terrain Generation </title>
+    <paragraph>
+      Before I turn to the task of describing my approach to terrain generation, it is worth spending some time on the question of 
+      what makes an algorithm for terrain generation "good". What features would characterize an "ideal" methodology?
+    </paragraph>
+    <paragraph>
+      As is the case with many difficult problems, in terrain generation we are confronted with a number of parameters 
+      that we would like to optimize, but which are in tension with one another. An ideal terrain generation algorithm 
+      would:
+    </paragraph>
+      <list>
+        <item> require a low degree of human input </item>
+        <item> allow a high degree of human control </item>
+        <item> be able to reproduce a wide variety of recognizable terrain types and features in believable relationship to one another 
+        </item>
+        <item> produce models at arbitrary levels of detail </item>
+        <item> run quickly enough to be used in real-time, dynamic applications </item>
+        <item> be extensible to support new terrain types and features </item>
+      </list>
+    <paragraph>
+      Obviously, accomplishing all of these goals simultaneously is probably impossible. Nevertheless, having such an ideal in view gives us a 
+      yardstick with which to evaluate the strengths and weaknesses of the various approaches to terrain synthesis.
+    </paragraph>
+
+    <section>
+      <title> Low Degree of Human Input </title>
+      <paragraph>
+        Digital terrain models typically involve large amounts of data. For example, a standard 10-meter USGS DEM (digital elevation 
+        model) <citation ref="DEM Specification"/> contains more than 10,000 data points per square kilometer. If an artist is required to 
+        be involved in the determination of each data point, this adds up to an enormous amount of painstaking work on the part of the 
+        artist. Any terrain construction detail that can be offloaded from the artist to the algorithm should result in a corresponding 
+        increase in human productivity. An ideal generation methodology would accept a request such as "randomly generate a 
+        1000x1000-point desert terrain", and produce a believable result.
+      </paragraph>
+      <paragraph>
+        If the inputs required by an algorithm are sufficiently minimal, it may afford, in addition to the increase in artist 
+        productivity, a second benefit: the algorithm may be useful for generating unique terrains at runtime (e.g., as a random level 
+        generator for a game).
+      </paragraph>
+    </section>
+
+    <section>
+      <title> High Degree of Human Control </title>
+      <paragraph>
+        In obvious tension with the previous ideal is the goal of permitting the artist to exert an arbitrarily fine degree of control 
+        over the features and characteristics of the generated terrain. To give an artist full creative freedom requires that he be 
+        able to specify both low-frequency features (hills, valleys, mountains, etc.) and high-frequency features (cracks, cliffs, and 
+        gorges), at both global and local levels. An ideal algorithm would permit the artist to exert whatever control he wished, where 
+        he wished, while intelligently filling in the details the artist doesn't care about.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Diverse, Believable Features and Terrain Types </title>
+      <paragraph>
+        A terrain generation algorithm that is able to believably produce only a narrow range of terrain types and features will 
+        inherently be limited in its usefulness. An ideal algorithm would be able to create a wide diversity of terrain types (e.g., 
+        desert, mountains, plains) and features (e.g. ravines, riverbeds, volcanoes), both from the real world and from the 
+        imagination of the artist. Additionally, the seams where terrain types meet (e.g., the transition from mountains to foothills) 
+        would be believable, and the placement of semantic features would make sense (e.g., waterfalls would pour into pools, rivers 
+        would not flow uphill).
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Arbitrary Level-of-Detail </title>
+      <paragraph>
+        It is precisely because terrain models involve such large quantities of data that continuous level of detail (CLOD) algorithms 
+        are necessary for their visualization. But full-detail terrain models are not always needed, the requisite level-of-detail 
+        being determined by their intended use. For example, a model meant to be a backdrop in a computer animated film would need 
+        highly realstic detail only in the areas where the action was to take place, and could use relatively simple geometry in the 
+        other areas.  Similarly, the level of detail required for the terrain of a flight simulation is dramatically different than 
+        what is needed for ground-level action. An ideal terrain generation algorithm would permit the creation of terrains at 
+        multiple levels of detail, and the segmentation of large terrains into regions of differing level-of-detail.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Fast Enough for Real-Time Applications </title>
+      <paragraph>
+        Some terrain-processing algorithms require a lengthy preprocessing phase <citation ref="Chunked LOD"/> <citation ref="L3DT"/> 
+        before the terrain can be used in a real-time application. Intuitively, we would expect all but the most simplistic terrain 
+        generation algorithms to fall into this category. Nonetheless, an algorithm that could do all or most of its processing "on the 
+        fly", would provide several important advantages, including:
+      </paragraph>
+      <list>
+        <item> instantaneous feedback to the artist of the effects of a particular modification </item>
+        <item> the ability to modify dynamically the terrain in fundamental and interesting ways (such as transforming a mountain into a 
+          crater, or rapidly eroding a riverbed into a deep gorge) </item>
+        <item> enormous savings in the amount of memory and disk storage required (if the terrain could be generated from a small set of 
+          parameters) </item>
+        <item> the ability to create seamless, infinite worlds (if these parameters are defined at every point in the virtual world) 
+        </item>
+      </list>
+    </section>
+
+  </section>
+
+
+  <!-- RELATED WORK -->
+  <section>
+    <title> Related Work </title>
+
+    <section>
+      <title> Terrain Representation, Visualization &amp; Use </title>
+      <paragraph>
+        The majority of the terrain generation and visualization literature is concerned with <term>heightfields</term>, 2D 
+        rectangular grids of elevation data. Other representations of terrain are certainly possible, but heightfields offer several 
+        nice advantages that make them popular.
+      </paragraph>
+      <paragraph>
+        Conceptually, heightfields are very similar to grayscale images. As a result, a heightfield terrain representation is 
+        convenient because it enables existing image-based methods for creation, manipulation, compression, storage and analysis to be 
+        reused for terrain.
+      </paragraph>
+      <paragraph>
+        The regular grid structure of the heightfield is central to many of the existing <term>continuous level of detail 
+        (CLOD)</term> algorithms, which render portions of the terrain near the viewer with many triangles and far-off portions with 
+        fewer triangles <citation ref="ROAM"/>, <citation ref="Geometry Clipmaps"/>.
+      </paragraph>
+      <paragraph>
+        Heightfields are restricted to depicting terrains in which elevation is a function of the grid coordinates. In other words, 
+        the terrain must pass the vertical line test: features like overhangs and caves, where a vertical line would intersect the 
+        surface multiple times, cannot be represented directly with heightfields. In practice, this limitation is not especially 
+        cumbersome, as most terrain is fairly well-behaved and exceptions (such as the aforementioned caves and overhangs) can be 
+        handled as special cases. Furthermore, the simplicity of a 2D representation for terrain allows operations like path-finding 
+        and collision detection to be simplified.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Methods of Terrain Generation </title>
+      <paragraph>
+        Terrain generation has not received nearly as much attention in the literature as terrain LOD rendering has, with 
+        relatively few innovations to date. The terrain generation methods that currently exist in the literature generally fall into 
+        one or more of the following four categories. After considering the various strengths and weaknesses of each of these 
+        approaches, I will briefly survey current software packages for terrain generation, paying attention to which of these 
+        techniques they use.
+      </paragraph>
+
+      <section>
+        <title> GIS-based Methods </title>
+        <paragraph>
+          Probably the most obvious place to look for natural-looking terrain data is in nature itself. High-quality elevation maps of the 
+          entire United States (and some other parts of the world) can be downloaded or ordered from the U.S. Geological Survey <citation 
+          ref="USGS Maps"/> and other mapping agencies, at resolutions as high as 3 inches per sample in some cases, and in several 
+          formats (older elevation maps are available in the older DEM format <citation ref="DEM Specification"/>, with more recent data 
+          available only in the more complex SDTS format <citation ref="SDTS Specification"/>). GIS data is ideal for applications whose 
+          primary concern is realism, such as cartographic software <citation ref="ArcGIS"/>, and simulations <citation ref="SimCity 4"/>, 
+          <citation ref="FS 2004"/>. This approach has the advantage of producing a high degree of realism with relatively little human 
+          effort. The major drawback to GIS technology is the constraint that it imposes: only real-world locations that are present in a 
+          mapping agency's data can be used. For many applications, this constraint may unacceptably compromise artistic freedom (e.g., a 
+          movie director may require a particular arrangement of mountains and rivers) or other, more utilitarian goals (e.g., the setting 
+          for a military simulation might require particular terrain features). A second disadvantage of GIS-based methods is the 
+            significant amount of space required to store a large dataset.
+        </paragraph>
+        <paragraph>
+          My approach improves upon the naïve GIS-based approach, retaining its strength (high degree of realism for a low expenditure 
+          of human effort) while circumventing its primary drawback (static terrain configuration).
+        </paragraph>
+      </section>
+
+      <section>
+        <title> Procedural Methods </title>
+        <paragraph>
+          Procedural methods for terrain generation date back as far as 1977 <citation ref="Combat Simulation"/> <citation 
+          ref="Procedure Models"/>, and are largely the domain of artists and game developers <citation ref="Lighthouse 3D"/> <citation 
+          ref="Fluid Simulation"/>, and are generally optimized for speed and/or ease of implementation rather than for realism.  
+          Procedural techniques almost always incorporate a random noise generator at some point and (ideally) produce unique results 
+          each time.  And since the random noise generator usually provides most or all of the information needed to build the 
+          terrain, landscapes constructed via procedural methods usually require little or no human input, and can be of arbitrary 
+          levels of detail. Additionally, if the procedure is fast enough, random terrain models can be created at application startup 
+          (or even on-the-fly), obviating the need to store any heightfield data at all. As a result, procedural techniques are ideal for 
+          generating random terrains and infinite worlds. The principal drawback of these methods is that they generally have no causal 
+          connection to the real-world terrain they try to simulate, instead bearing only an incidental resemblance (in other words, they 
+          only happen to look terrain-like rather than being somehow derived from actual terrrain). Because of this, most procedural 
+          methods are only useful for simulating a limited range of terrain types. In addition, since the procedural parameters do not 
+          typically correspond to real-world terrain characteristics, achieving a desired effect is likely to be an exercise in trial and 
+          error.
+        </paragraph>
+        <paragraph>
+          Some of the most popular procedural techniques are fractal in nature, such as the midpoint displacement method 
+          <citation ref="MPD Method"/> and Perlin's noise function <citation ref="Texturing and Modeling"/>. These techniques exhibit 
+          the fractal property of self-similarity at different scales, and generally involve perturbing the height values of the 
+          terrain by increasingly smaller amounts at increasingly finer scales. Prusinkiewicz &amp; Hammel describe an interesting 
+          method for generating mountains with an integrated river network that is entirely fractal in nature <citation ref="Mountains 
+          and Rivers"/>.
+        </paragraph>
+        <paragraph>
+          A similar class of procedural techniques in common practice could be described as "collaging" methods <citation 
+          ref="Area51"/>. In these techniques, an irregular heightfield is created through the random superposition of simple shapes, 
+          such as spheres, cones, half-planes, or 2D trigonometric functions. After several hundred iterations, the result is a random 
+          heightfield posessing similar curvature and smoothness characteristics to the primitive shape, but without any of the 
+          primitive shapes apparent in the terrain.
+        </paragraph>
+        <paragraph>
+          The spectral synthesis family of procedural techniques involves constructing a frequency-spectrum representation of a 
+          terrain and performing the inverse FFT or inverse wavelet transform to produce a spatial-domain terrain <citation 
+          ref="Wavelet Synthesis"/> <citation ref="Spectral Synthesis"/>. In the simplest case, the frequency components would be 
+          calculated according to some random noise function.  Pelton &amp; Atkinson describe a wavelet synthesis approach based on 
+          the frequency histogram of a GIS elevation map, noting that their approach is successful at creating a unique heightfield 
+          with similar roughness characteristics to the original, but that it fails to capture semantic features, specifically 
+          riverbeds <citation ref="Wavelet Synthesis"/>.
+        </paragraph>
+        <paragraph>
+          My approach is similar to existing procedural methods in that it iteratively constructs unique landscapes using controlled 
+          random processes, but unlike the methods discussed above, it also tries to analyze its performance and to weed out 
+          unsuccessful attempts.
+        </paragraph>
+      </section>
+
+      <section>
+        <title> Sculpture-based Methods </title>
+        <paragraph>
+          At the opposite end of the spectrum, in terms of human effort, is the use of artistic tools to paint or sculpt the features 
+          of the terrain. In most cases, this means using computer-based modeling and painting tools (such as Adobe Photoshop, Bryce 
+          3D, or Maya) or specialized "level editors" (as in the recent games SimCity 4 <citation ref="SimCity 4"/> and 
+          Unreal Tournament 2004 <citation ref="UT 2004"/>). Less commonly, an artist might create a model using traditional physical 
+          media and digitize it using laser scanning techniques, as was done to create the terrain for the video game title Trespasser 
+          <citation ref="Trespasser Postmortem"/>. The primary advantage of sculpture-based methods is the enormous freedom given to 
+          the artist.  Anything the artist can imagine can be created.  This is also its main drawback &#8212; this method of terrain 
+          generation requires a large investment of human time and effort to produce good results.
+        </paragraph>
+        <paragraph>
+          My approach allows a human designer to influence the shape and features of the terrain by specifying the relationships between 
+          different types of terrain, but does not rely on the designer for determining the high-frequency details of the model.
+        </paragraph>
+      </section>
+
+      <section>
+        <title> Simulation-based Methods </title>
+        <paragraph>
+          Another family of terrain generation methods involves the simulation of physical processes (such as plate tectonics or 
+          erosion) to evolve the terrain <citation ref="Area51"/> <citation ref="Stream Erosion"/> <citation ref="Eroded Fractal 
+          Terrains"/>. These methods can produce highly believable results, since they emulate the same processes that create 
+          real-world terrain, but typically require very high amounts of processing time.
+        </paragraph>
+      </section>
+
+      <section>
+        <title> Existing Terrain Generation Tools </title>
+        <paragraph>
+          While the list of terrain generation engines is too large to be reviewed exhaustively, it is worthwhile to make note of a 
+          representative sample of the more prominent of these. Most of these applications permit the use of more than one of the 
+          above techniques as a way of mitigating some of the weaknesses of each.
+        </paragraph>
+
+        <section>
+          <title> Terragen </title>
+          <paragraph>
+            Terragen is a well-known terrain generation and rendering tool, developed by Planetside Software, free for non-commercial 
+            use. It provides several fractal functions for generating terrains and also provides a simple set of sculpting tools for 
+            modifying the resultant heightfields. It offers an integrated raytracing engine including some very nice cloud, water, and 
+            atmospheric lighting effects, and has a significant artistic community <citation ref="Terragen"/>.
+          </paragraph>
+        </section>
+
+        <section>
+          <title> MojoWorld </title>
+          <paragraph>
+            MojoWorld is a set of applications for creating and exploring fractal worlds. MojoWorld Transporter is a free program for 
+            exploring the worlds created by the commercial product, MojoWorld Generator. Unlike fractal/sculpting heightfield 
+            generators, MojoWorld handles fractal objects in symbolic form, allowing entire worlds to be viewed at infinite levels of 
+            detail and stored in relatively small files <citation ref="MojoWorld"/>.
+          </paragraph>
+        </section>
+
+        <section>
+          <title> Bryce 3D </title>
+          <paragraph>
+            Bryce 3D is a general-purpose 3D modeling and animation tool, but is best known for its terrain modeling capabilities. It 
+            offers a full set of painting tools for generating and editing heightfield-based terrain objects, including the ability 
+            to use Adobe Photoshop image filters <citation ref="Bryce 3D"/>.
+          </paragraph>
+        </section>
+
+        <section>
+          <title> World Machine </title>
+          <paragraph>
+            World Machine is a procedural heightfield generation tool, free for non-commercial use. Its most interesting 
+            aspect is that it treats the terrain creation process as composed of simple "device" primitives (e.g., Perlin noise 
+            generator, gaussian blur filter, etc.) which the user can connect to form a "machine" (a directed acyclic graph) that 
+            will produce the heightfield. The main benefit of this approach over a more traditional fractal/sculpting approach is 
+            that since the series of operations is preserved as a DAG, the user is free to tweak any parameter of any 
+            operation at any time, as opposed to having to commit to a particular filter size or random seed at the outset <citation 
+            ref="World Machine"/>.
+          </paragraph>
+        </section>
+
+      </section>
+    </section>
+
+    <section>
+      <title> Genetic Algorithms </title>
+      <paragraph>
+        Unfortunately, some of the more interesting problems in computer science fall into the class of "NP hard" problems, and become 
+        intractably difficult as the size of the problem increases <citation ref="Algorithms"/>. In these problems, it is often not 
+        feasible to find a perfect solution, and approximation techniques must be used. <term>Genetic algorithms (GA)</term> is one such 
+        class of techniques.
+      </paragraph>
+      <paragraph>
+        Conceptually, a genetic algorithm tries to evolve better and better solutions to its problem through mutation and "breeding". 
+        In GA terms, a single possible solution within the solution space of the problem is called an <term>individual</term> or a 
+        <term>chromosome</term>. A <term>fitness function</term> provides an evaluation of how good a solution any particular individual 
+        is, expressed as a scalar value. As the GA iterates, new potential solutions to the problem are explored by taking the more 
+        "fit" of the existing individuals and combining parts of them (their <term>genes</term>) to create new individuals having 
+        characteristics of both "parents". By iteratively evolving a <term>population</term> (set of individuals) of some fixed size, 
+        the GA explores the solution space in a parallel fashion. Hopefully, after some reasonable number of iterations, the most "fit" 
+        of the individuals in the final population will be fairly close to an optimal solution <citation ref="Genetic Algorithms"/>.
+      </paragraph>
+      <paragraph>
+        My approach to terrain generation uses genetic algorithms at two stages. An appropriately designed fitness function will be 
+        able to discriminate between plausible, natural-looking terrains and those which do not appear natural. By incorporating this 
+        fitness evaluation as a sort of intelligent feedback loop in the generation process, I expect to be able to synthesize new, 
+        unique terrain models that still maintain the qualities of the original GIS data.
+      </paragraph>
+    </section>
+  </section>
+
+
+  <!-- PROPOSED THESIS RESEARCH -->
+  <section>
+    <title> Proposed Thesis Research </title>
+
+    <section>
+      <title> Overview </title>
+      <paragraph>
+        I propose a new methodology for terrain construction based on the use of genetic algorithms to synthesize terrain using GIS 
+        elevation data as input. Fundamental to the approach is the concept of a <term>terrain type</term>, which I define as a class of 
+        terrain features with semantic meaning to the user (e.g., "desert", "steep mountains", "rolling hills", etc.) and one or more 
+        associated sample GIS heightfield samples typical of that terrain type. The samples within a single terrain type should bear 
+        resemblance to one another in some set of measurable characteristics (i.e., one instance of "glacier" should have similar 
+        characteristics to another instance of the same type, and both should have dissimilar parameters to an instance of "desert").  
+        These terrain types will be used as building blocks by the user to create arbitrarily complex terrains.
+      </paragraph>
+      <paragraph>
+        At a high level, the approach consists of an optional user input step, followed by two genetic algorithm steps. Starting with one 
+        or more predefined terrain types, the user is allowed to specify the general desired configuration by drawing a rough, 2D map of 
+        connected polygonal regions and specifying the terrain type of each region. The algorithm then generates more complex, 
+        natural-looking boundaries approximating the straight lines of the polygonal map, in order to avoid the presence of unrealistic 
+        straight lines in the output heightfield. Finally, it constructs a heightfield of the requested size and shape by splatting 
+        together compatible chunks of terrain data from the GIS samples. A population of such landscapes will be generated, and the most 
+        fit of the population will be returned as the generated terrain heightmap.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> User Input </title>
+      <paragraph>
+        In the optional user input phase, the user is given the opportunity to specify the terrain layout as a map (if this phase is 
+        omitted, the generated terrain will have only one region of a single terrain type). The user draws the 2D map as connected 
+        polygonal regions using a CAD-style editor GUI and specifies the terrain type of each polygonal region. This map can have an 
+        arbitrary number of regions, each with an arbitrarily complicated boundary, allowing the user to exert an arbitrary degree of 
+        control over the shape of a terrain by creating custom-shaped regions of different terrain types. The user may save a map that he 
+        has created to a file and may load it again at a later time.
+      </paragraph>
+      <paragraph>
+        The inputs expected from the user are intentionally primitive, as a convenience for the user &#8212; in the next step, the       
+        straight edges created by the user will be approximated by more complex, more believable boundaries. In the vast majority of 
+        cases, the user is not going to care about the exact shape of the boundary, only that it is plausible and that it goes 
+        approximately where he asked it to go. In the case where the user actually wants fine-grained control over the exact shape of 
+        the boundary, he can simply draw the boundary with more line segments &#8212; the shorter each segment is, the more closely the 
+        approximation will adhere to it.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Genetic Boundary Refinement </title>
+      <paragraph>
+        The first genetic algorithm step consists of a 2D refinement of the edges in the user created polygonal map (if any exist). 
+        I call the simple edges created by the user <term>guide boundaries</term>. The purpose of this step is to convert these simple, 
+        low-detail edges given by the user into <term>refined boundaries</term>, irregular, high-detail boundaries. Whereas the guide 
+        boundary was a single, longer line segment, the refined version is a piecewise-linear curve composed of numerous short line 
+        segments connecting the original two endpoints of the guide boundary, but in a meandering, undulating fashion.  The length and 
+        number of the line segments used to construct the refined boundary is effectively limited by the spatial resolution of the input 
+        heightfields, as detail finer than the resolution of the output heightfields will not appear in the output terrain.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Genetic Heightfield Construction </title>
+      <paragraph>
+        The second genetic algorithm step takes the refined map and generates a heightfield conforming to it. There are several 
+        challenges to be overcome in order to do this. First, the heightfield construction problem must be phrased as a genetic 
+        algorithm. This requires some way of transforming a heightfield into a chromosome and vice versa. It also requires a fitness 
+        function for evaluating how viable a particular chromosome/heightfield is. This fitness function will need to consider a variety 
+        of factors when assessing a heightfield, including how well each region conforms to its terrain type, how well terrain types 
+        meet at their boundaries, and how well features such as ridge-lines and valleys cohere throughout the whole heightfield.  
+        Evaluating terrain type conformity will likely involve image processing techniques such as ridge detection, gradient analysis 
+        and frequency-spectrum analysis. After observing the failure of their wavelet synthesis approach to reproduce features such as 
+        riverbeds, Pelton &amp; Atkinson state, "We believe that another transformation could more accurately describe the terrain 
+        features caused by erosion. A system that generates/analyzes terrain in the Fourier space could possibly capture these missing 
+        features" <citation ref="Wavelet Synthesis"/>.
+      </paragraph>
+    </section>
+    
+    <section>
+      <title> Analysis </title>
+      <paragraph>
+        The approach outlined above does not fit cleanly into any of the categories defined earlier, but incorporates aspects of several 
+        of them. While it is clearly procedural in nature, it is unlike the procedural methods discussed so far in that it possesses a 
+        degree of decision-making intelligence as a result of the genetic algorithm. It is a GIS-based method, but uses the GIS data as 
+        raw input rather than as the output terrain itself. It is similar to a sculpting method in that it permits an arbitrary degree 
+        of user interaction, but allows the user to decide how much oversight he wants to exercise. As a result, my approach combines 
+        many of the strengths of the existing methods, and is likely to produce realistic results for less human effort. The major 
+        drawback of this approach is its efficiency: due to the nature of genetic algorithms, it is almost certain to require lots of 
+        processing time, and may have high memory requirements as well.
+      </paragraph>
+    </section>
+
+    <section>
+      <title> Implementation </title>
+      <paragraph>
+        In fulfillment of the requirements for the Master's of Science in Computer Science, I will implement the algorithm described 
+        in the previous section, in conjunction with Teong "Mike" Ong. My contributions to the project will be:
+      </paragraph>
+      <list>
+        <item> the application architecture, including data structures and 3D visualization code </item>
+        <item> the map editor GUI </item>
+        <item> image processing operations for converting between heightfield data and the corresponding 3D genetic algorithm data 
+        structures </item>
+        <item> the fitness function for evaluating heightfields produced by the 3D genetic algorithm </item>
+      </list>
+      <paragraph>
+        Mike's contribution to the project will be:
+      </paragraph>
+      <list>
+        <item> the 2D genetic algorithm and fitness function for refining the terrain region boundaries </item>
+        <item> the 3D genetic algorithm for refining the terrain structure at each level of detail </item>
+      </list>
+    </section>
+  </section>
+
+</document>

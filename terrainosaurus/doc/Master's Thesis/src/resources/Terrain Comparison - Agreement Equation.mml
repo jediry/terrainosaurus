@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE math PUBLIC "-//W3C//DTD MathML 2.0//EN"
+  "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd">
+
+<math>
+  <mrow>
+    <mi>i</mi>
+    <mo>&isin;</mo>
+    <mfenced open="{" close="}">
+      <mi>&mu;</mi>
+      <mi>&sigma;</mi>
+      <msub>
+        <mi>&gamma;</mi>
+        <mn>1</mn>
+      </msub>
+      <msub>
+        <mi>&gamma;</mi>
+        <mn>2</mn>
+      </msub>
+    </mfenced>
+  </mrow>
+  <mo>:</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo>max</mo>
+  <mfenced>
+    <mn>0</mn>
+    <mrow>
+      <mn>1</mn>
+      <mo>&minus;</mo>
+      <msup>
+        <mfenced>
+          <mfrac linethickness="thin">
+            <mrow>
+              <msub>
+                <mi>&sigma;</mi>
+                <mi>G</mi>
+              </msub>
+              <mfenced>
+                <mi mathvariant="italic">i</mi>
+                <mi mathvariant="italic">tt</mi>
+              </mfenced>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>&sigma;</mi>
+                <mi>G</mi>
+              </msub>
+              <mfenced>
+                <mi mathvariant="italic">i</mi>
+                <mi mathvariant="italic">lib</mi>
+              </mfenced>
+            </mrow>
+          </mfrac>
+        </mfenced>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfenced>
+</math>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="144"
+   height="90"
+   id="svg4314"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   version="1.0"
+   sodipodi:docbase="C:\Development\projects\terrainosaurus\doc\Master's Thesis\src\resources"
+   sodipodi:docname="Implementation - Multi-LOD Object.svg">
+  <defs
+     id="defs4316" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="30.384491"
+     inkscape:cy="60.467108"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     height="1in"
+     width="1.6in"
+     inkscape:window-width="909"
+     inkscape:window-height="588"
+     inkscape:window-x="330"
+     inkscape:window-y="281" />
+  <metadata
+     id="metadata4319">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       style="display:inline"
+       id="g5843"
+       transform="matrix(0.71429,0,0,0.71429,-82.93132,-79.67395)">
+      <rect
+         style="fill:#dfa8ff;fill-opacity:1;stroke:black;stroke-width:1.00000036;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect6969"
+         width="160.39828"
+         height="74.15049"
+         x="140.7034"
+         y="141.46724" />
+      <g
+         id="g5847"
+         transform="matrix(1,0,0,0.970294,12.5,13.40579)">
+        <rect
+           y="131.9821"
+           x="236.91675"
+           height="14.142121"
+           width="51.684944"
+           id="rect5849"
+           style="opacity:1;fill:#e4e4e4;fill-opacity:1;stroke:black;stroke-width:1.01519144;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <rect
+         y="137.46722"
+         x="136.7034"
+         height="74.15049"
+         width="160.39828"
+         id="rect6967"
+         style="fill:#d58dff;fill-opacity:1;stroke:black;stroke-width:1.00000036;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <g
+         id="g5853"
+         transform="matrix(1,0,0,0.970294,8.5,9.405789)">
+        <rect
+           style="opacity:1;fill:#d2d2d2;fill-opacity:1;stroke:black;stroke-width:1.01519144;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="rect5855"
+           width="51.684944"
+           height="14.142121"
+           x="236.91675"
+           y="131.9821" />
+      </g>
+      <rect
+         style="fill:#ba55f5;fill-opacity:1;stroke:black;stroke-width:1.00000036;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect5857"
+         width="160.39828"
+         height="74.15049"
+         x="132.7034"
+         y="133.46722" />
+      <g
+         id="g5859"
+         transform="matrix(1,0,0,0.970294,4.5,5.405789)">
+        <rect
+           y="131.9821"
+           x="236.91675"
+           height="14.142121"
+           width="51.684944"
+           id="rect5861"
+           style="opacity:1;fill:#bcbcbc;fill-opacity:1;stroke:black;stroke-width:1.01519144;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+        <text
+           sodipodi:linespacing="125%"
+           id="text5863"
+           y="141.9184"
+           x="244.49359"
+           style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+           xml:space="preserve"><tspan
+             y="141.9184"
+             x="244.49359"
+             id="tspan5865"
+             sodipodi:role="line">LOD: 10m</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

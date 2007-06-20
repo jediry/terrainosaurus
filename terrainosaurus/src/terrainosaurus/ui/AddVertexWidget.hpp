@@ -38,7 +38,7 @@ private:
 
 public:
     // Default constructor with optional component name
-    AddVertexWidget(const string &nm = "");
+    explicit AddVertexWidget(const string & nm = std::string());
 
     // UI properties
     rw_property(Color, potentialVertexColor,    Color(1.0f, 0.2f, 0.2f, 0.4f));

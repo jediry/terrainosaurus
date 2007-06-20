@@ -1,4 +1,5 @@
-/**
+/** -*- C++ -*-
+ *
  * \file    HeightfieldGA.hpp
  *
  * \author  Ryan L. Saunders & Mike Ong
@@ -21,22 +22,6 @@
 namespace terrainosaurus {
     // Forward declarations
     class HeightfieldGA;
-
-    // GA global parameters, which may be set from the TTL file
-    extern int      POPULATION_SIZE;
-    extern int      EVOLUTION_CYCLES;
-    extern scalar_t SELECTION_RATIO;
-    extern scalar_t ELITE_RATIO;
-    extern scalar_t MUTATION_PROBABILITY;
-    extern scalar_t MUTATION_RATIO;
-    extern scalar_t CROSSOVER_PROBABILITY;
-    extern scalar_t CROSSOVER_RATIO;
-
-    // Crossover/mutation operator limits
-    extern int      MAX_CROSSOVER_WIDTH;
-    extern int      MAX_JITTER_PIXELS;
-    extern scalar_t MAX_SCALE_FACTOR;
-    extern scalar_t MAX_OFFSET_AMOUNT;
 }
 
 // Import container and utility definitions
@@ -59,22 +44,21 @@ public:
 
 
     // Constructor
-    explicit HeightfieldGA(MapRasterizationPtr mr = MapRasterizationPtr(),
-                           TerrainSamplePtr ts = TerrainSamplePtr());
+    explicit HeightfieldGA(TerrainSamplePtr t = TerrainSamplePtr(),
+                           TerrainSamplePtr p = TerrainSamplePtr());
 
     // Destructor
     ~HeightfieldGA();
 
-
-    // The MapRasterization that we're trying to follow
-    MapRasterizationPtr      mapRasterization();
-    MapRasterizationConstPtr mapRasterization() const;
-    void setMapRasterization(MapRasterizationPtr mr);
-
-    // The TerrainSample that we're building
+    // The TerrainSample holding the terrain that we're building
     TerrainSamplePtr      terrainSample();
     TerrainSampleConstPtr terrainSample() const;
     void setTerrainSample(TerrainSamplePtr ts);
+
+    // The TerrainSample holding that we're building
+    TerrainSamplePtr      patternSample();
+    TerrainSampleConstPtr patternSample() const;
+    void setPatternSample(TerrainSamplePtr ts);
 
     // Current LOD accessor. Since the algorithm runs from coarse to fine,
     // only LODs coarser than this are valid in the TerrainSample
@@ -84,15 +68,24 @@ public:
     bool running() const;
 
     // Run the GA, and return the generated TS
-    TerrainSamplePtr run(MapRasterizationPtr mr,
-                         TerrainLOD startLOD, TerrainLOD targetLOD);
-    TerrainSamplePtr run(TerrainLOD startLOD, TerrainLOD targetLOD);
+    void run(TerrainLOD targetLOD);
+    void run(TerrainLOD startLOD, TerrainLOD targetLOD);
 
-    // Change the PMF based on gene compatibility
+    // Change the initialization PMF based on the LOD
+    const PMF & initializationOperatorPMF(const Chromosome & c) const;
+
+    // Change the mutation PMF based on gene compatibility
     const PMF & mutationOperatorPMF(const Gene & g) const;
+    
+    // Modified fitness calculation function to cache fitness results in Chromosome
+    Scalar calculateFitness(Chromosome & c);
+
+    // XXX -- misc test function
+    void test(TerrainLOD lod);
+    TerrainSamplePtr redo(TerrainSamplePtr ts, TerrainLOD lod);
 
 protected:
-    MapRasterizationPtr _mapRasterization;
+    TerrainSamplePtr    _patternSample;
     TerrainSamplePtr    _terrainSample;
     bool        _running;           // Whether we're currently doing anything
     TerrainLOD  _currentLOD;        // The LOD we're currently working on

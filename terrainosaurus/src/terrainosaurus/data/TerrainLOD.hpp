@@ -40,6 +40,7 @@
  *      capabilities this affords over the standard C 'enum'.
  */
 
+#pragma once
 #ifndef TERRAINOSAURUS_TERRAIN_LOD
 #define TERRAINOSAURUS_TERRAIN_LOD
 

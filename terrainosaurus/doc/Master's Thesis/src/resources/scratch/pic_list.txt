@@ -1,0 +1,5 @@
+Perlin noise superposition diagram
+Subdivision algorithm diagram
+
+Cracked, dried mud as an example of non-self-similar terrain.
+Vortex, other image proc. ops.

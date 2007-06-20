@@ -28,7 +28,7 @@ namespace terrainosaurus {
 typedef inca::rendering::OpenGLRenderer Renderer;
 
 // Import data object definitions
-#include <terrainosaurus/PlanarGrid.hpp>
+//#include <terrainosaurus/PlanarGrid.hpp>
 
 // Import container definitions
 class terrainosaurus::GridRendering {

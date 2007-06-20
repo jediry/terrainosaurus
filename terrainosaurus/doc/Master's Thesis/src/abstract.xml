@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- vim: set filetype=docbkxml encoding=utf8: -->
+
+<!DOCTYPE abstract PUBLIC "-//JediRy//DTD DocBook XML-MathML-SVG V4.3//EN"
+  "http://jediry.com/xml/docbook/docbook4.3-mathml-svg.dtd">
+
+
+<abstract id="Abstract">
+  <title>Abstract</title>
+  <para>
+    Synthetically generated terrain models are useful across a broad range of 
+    applications, including computer generated art &amp; animation, virtual 
+    reality and gaming, and architecture. Existing algorithms for terrain 
+    generation suffer from a number of problems, especially that of being 
+    limited in the types of terrain that they can produce and of being 
+    difficult for the user to control. Typical applications of synthetic 
+    terrain have several factors in common: first, they require the generation 
+    of large regions of believable (though not necessarily physically correct) 
+    terrain features; and second, while real-time performance is often needed 
+    when <emphasis>visualizing</emphasis> the terrain, this is generally not 
+    the case when <emphasis>generating</emphasis> the terrain.
+  </para>
+  <para>
+    In this thesis, I present a new, design-by-example method for synthesizing 
+    terrain height fields. In this approach, the user designs the layout of the 
+    terrain by sketching out simple regions using a CAD-style interface, and 
+    specifies the desired terrain characteristics of each region by providing 
+    example height fields displaying these characteristics (these height fields 
+    will typically come from real-world GIS data sources). A height field 
+    matching the user's design is generated at several levels of detail, using a 
+    genetic algorithm to blend together chunks of elevation data from the 
+    example height fields in a visually plausible manner.
+  </para>
+  <para>
+    This method has the advantage of producing an unlimited diversity of 
+    reasonably realistic results, while requiring relatively little user effort 
+    and expertise. The guided randomization inherent in the genetic algorithm 
+    allows the algorithm to come up with novel arrangements of features, while 
+    still approximating user-specified constraints.
+  </para>
+</abstract>
