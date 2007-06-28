@@ -32,24 +32,24 @@ using namespace inca::raster;
  * LOD specialization for MapRasterization
  *****************************************************************************/
  // Default constructor
-MapRasterization::LOD::LOD() : LODBase<MapRasterization>() { }
+LOD<MapRasterization>::LOD() : LODBase<MapRasterization>() { }
 
 // Constructor linking back to MapRasterization
-MapRasterization::LOD::LOD(MapRasterizationPtr mr, TerrainLOD lod)
+LOD<MapRasterization>::LOD(MapRasterizationPtr mr, TerrainLOD lod)
     : LODBase<MapRasterization>(mr, lod) { }
 
 
 // Access to related LOD objects
-TerrainLibrary::LOD & MapRasterization::LOD::terrainLibrary() {
+TerrainLibrary::LOD & LOD<MapRasterization>::terrainLibrary() {
     return (*object().terrainLibrary())[levelOfDetail()];
 }
-const TerrainLibrary::LOD & MapRasterization::LOD::terrainLibrary() const {
+const TerrainLibrary::LOD & LOD<MapRasterization>::terrainLibrary() const {
     return (*object().terrainLibrary())[levelOfDetail()];
 }
-TerrainType::LOD & MapRasterization::LOD::terrainType(IndexType i, IndexType j) {
+TerrainType::LOD & LOD<MapRasterization>::terrainType(IndexType i, IndexType j) {
     return terrainLibrary().terrainType(terrainTypeID(i, j));
 }
-const TerrainType::LOD & MapRasterization::LOD::terrainType(IndexType i, IndexType j) const {
+const TerrainType::LOD & LOD<MapRasterization>::terrainType(IndexType i, IndexType j) const {
     return terrainLibrary().terrainType(terrainTypeID(i, j));
 }
 
@@ -58,14 +58,14 @@ const TerrainType::LOD & MapRasterization::LOD::terrainType(IndexType i, IndexTy
  | Loading & analysis
  *---------------------------------------------------------------------------*/
 // Copy LOD data from an existing heightfield
-void MapRasterization::LOD::createFromRaster(const IDMap & ids) {
+void LOD<MapRasterization>::createFromRaster(const IDMap & ids) {
     _terrainTypeIDs = ids;
     _loaded   = true;
     _analyzed = false;
 }
 
 // Load an LOD from a DEM file
-void MapRasterization::LOD::loadFromFile(const std::string & filename) {
+void LOD<MapRasterization>::loadFromFile(const std::string & filename) {
     INCA_ERROR("MR::loadFromFile not implemented")
 
     // Record what we did
@@ -74,7 +74,7 @@ void MapRasterization::LOD::loadFromFile(const std::string & filename) {
 }
 
 // Generate elevation data by resampling from another LOD
-void MapRasterization::LOD::resampleFromLOD(TerrainLOD lod) {
+void LOD<MapRasterization>::resampleFromLOD(TerrainLOD lod) {
     _terrainTypeIDs = resample(object()[lod].terrainTypeIDs(),
                                scaleFactor(lod, levelOfDetail()));
     _loaded   = true;
@@ -162,7 +162,7 @@ void sweep(R0 & dist, const R1 & map, IndexType dim) {
         }
     }
 }
-void MapRasterization::LOD::_findBoundaryDistances() {
+void LOD<MapRasterization>::_findBoundaryDistances() {
     if (! _multipleTypes) {
         fill(_boundaryDistances,
              std::numeric_limits<DistanceMap::ElementType>::max());
@@ -173,7 +173,7 @@ void MapRasterization::LOD::_findBoundaryDistances() {
         _boundaryDistances = min(_boundaryDistances, tmp);
     }
 }
-void MapRasterization::LOD::_findTerrainTypes() {
+void LOD<MapRasterization>::_findTerrainTypes() {
     const TerrainLibrary::LOD & library = terrainLibrary();
     SizeType librarySize = library.size();
     IDType refCellID = *_terrainTypeIDs.begin();
@@ -194,7 +194,7 @@ void MapRasterization::LOD::_findTerrainTypes() {
         }
     }
 }
-void MapRasterization::LOD::_findRegions() {
+void LOD<MapRasterization>::_findRegions() {
     IDType nextRegionID = 1;
     _regionBounds.clear();
     _regionSeeds.clear();
@@ -254,7 +254,7 @@ void MapRasterization::LOD::_findRegions() {
 
 
 // Analyze the contents of an LOD and store the results
-void MapRasterization::LOD::analyze() {
+void LOD<MapRasterization>::analyze() {
     // Make sure we have a valid map to start with
     ensureLoaded();
     
@@ -302,7 +302,7 @@ void MapRasterization::LOD::analyze() {
 }
 
 
-void MapRasterization::LOD::ensureLoaded() const {
+void LOD<MapRasterization>::ensureLoaded() const {
     if (! loaded()) {
         // First, see if our parent object has a file that it hasn't
         // loaded yet. We might be in that file.
@@ -338,11 +338,11 @@ void MapRasterization::LOD::ensureLoaded() const {
         }
     }
 }
-void MapRasterization::LOD::ensureAnalyzed() const {
+void LOD<MapRasterization>::ensureAnalyzed() const {
     if (! analyzed())
         const_cast<MapRasterization::LOD *>(this)->analyze();
 }
-void MapRasterization::LOD::ensureStudied() const {
+void LOD<MapRasterization>::ensureStudied() const {
     _studied = true;
 }
 
@@ -351,40 +351,40 @@ void MapRasterization::LOD::ensureStudied() const {
  | Loaded & analyzed data
  *---------------------------------------------------------------------------*/
 // Raster geometry accessors
-SizeType MapRasterization::LOD::size() const {
+SizeType LOD<MapRasterization>::size() const {
     ensureLoaded();
     return _terrainTypeIDs.size();
 }
-SizeType MapRasterization::LOD::size(IndexType d) const {
+SizeType LOD<MapRasterization>::size(IndexType d) const {
     ensureLoaded();
     return _terrainTypeIDs.size(d);
 }
-IndexType MapRasterization::LOD::base(IndexType d) const {
+IndexType LOD<MapRasterization>::base(IndexType d) const {
     ensureLoaded();
     return _terrainTypeIDs.base(d);
 }
-IndexType MapRasterization::LOD::extent(IndexType d) const {
+IndexType LOD<MapRasterization>::extent(IndexType d) const {
     ensureLoaded();
     return _terrainTypeIDs.extent(d);
 }
-const MapRasterization::LOD::SizeArray & MapRasterization::LOD::sizes() const {
+const LOD<MapRasterization>::SizeArray & LOD<MapRasterization>::sizes() const {
     ensureLoaded();
     return _terrainTypeIDs.sizes();
 }
-const MapRasterization::LOD::IndexArray & MapRasterization::LOD::bases() const {
+const LOD<MapRasterization>::IndexArray & LOD<MapRasterization>::bases() const {
     ensureLoaded();
     return _terrainTypeIDs.bases();
 }
-const MapRasterization::LOD::IndexArray & MapRasterization::LOD::extents() const {
+const LOD<MapRasterization>::IndexArray & LOD<MapRasterization>::extents() const {
     ensureLoaded();
     return _terrainTypeIDs.extents();
 }
-const MapRasterization::LOD::Region & MapRasterization::LOD::bounds() const {
+const LOD<MapRasterization>::Region & LOD<MapRasterization>::bounds() const {
     ensureLoaded();
     return _terrainTypeIDs.bounds();
 }
 
-void MapRasterization::LOD::setSizes(const SizeArray & sz) {
+void LOD<MapRasterization>::setSizes(const SizeArray & sz) {
     _terrainTypeIDs.setSizes(sz);
     _colors.setSizes(sz);
     _regionIDs.setSizes(sz);
@@ -392,55 +392,55 @@ void MapRasterization::LOD::setSizes(const SizeArray & sz) {
 }
 
 // Per-cell data accessors
-const IDMap & MapRasterization::LOD::terrainTypeIDs() const {
+const IDMap & LOD<MapRasterization>::terrainTypeIDs() const {
     ensureLoaded();
     return _terrainTypeIDs;
 }
-const ColorMap & MapRasterization::LOD::colors() const {
+const ColorMap & LOD<MapRasterization>::colors() const {
     ensureAnalyzed();
     return _colors;
 }
-const IDMap & MapRasterization::LOD::regionIDs() const {
+const IDMap & LOD<MapRasterization>::regionIDs() const {
     ensureAnalyzed();
     return _regionIDs;
 }
-const DistanceMap & MapRasterization::LOD::boundaryDistances() const {
+const DistanceMap & LOD<MapRasterization>::boundaryDistances() const {
     ensureAnalyzed();
     return _boundaryDistances;
 }
 
 // Region accessors
-SizeType MapRasterization::LOD::regionCount() const {
+SizeType LOD<MapRasterization>::regionCount() const {
     ensureAnalyzed();
     return _regionBounds.size();
 }
 const TerrainType::LOD &
-MapRasterization::LOD::regionTerrainType(IDType regionID) const {
+LOD<MapRasterization>::regionTerrainType(IDType regionID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionSeeds.size() - 1, regionID, -1,
                       "regionTerrainType(" << regionID << ")")
     return terrainType(_regionSeeds[regionID]);
 }
-const MapRasterization::LOD::Region &
-MapRasterization::LOD::regionBounds(IDType regionID) const {
+const LOD<MapRasterization>::Region &
+LOD<MapRasterization>::regionBounds(IDType regionID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionBounds.size() - 1, regionID, -1,
                       "regionBounds(" << regionID << ")")
     return _regionBounds[regionID];
 }
-const Pixel & MapRasterization::LOD::regionSeed(IDType regionID) const {
+const Pixel & LOD<MapRasterization>::regionSeed(IDType regionID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionSeeds.size() - 1, regionID, -1,
                       "regionSeed(" << regionID << ")")
     return _regionSeeds[regionID];
 }
-SizeType MapRasterization::LOD::regionArea(IDType regionID) const {
+SizeType LOD<MapRasterization>::regionArea(IDType regionID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionAreas.size() - 1, regionID, -1,
                       "regionArea(" << regionID << ")")
     return _regionAreas[regionID];
 }
-GrayscaleImage MapRasterization::LOD::regionMask(IDType regionID, int borderWidth) const {
+GrayscaleImage LOD<MapRasterization>::regionMask(IDType regionID, int borderWidth) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionBounds.size() - 1, regionID, -1,
                       "regionMask(" << regionID << ")")
@@ -464,10 +464,10 @@ GrayscaleImage MapRasterization::LOD::regionMask(IDType regionID, int borderWidt
 /*---------------------------------------------------------------------------*
  | Access to parent MapRasterization properties
  *---------------------------------------------------------------------------*/
-MapPtr MapRasterization::LOD::map() {
+MapPtr LOD<MapRasterization>::map() {
     return object().map();
 }
-MapConstPtr MapRasterization::LOD::map() const {
+MapConstPtr LOD<MapRasterization>::map() const {
     return object().map();
 }
 

@@ -222,12 +222,12 @@ public:
     }
     
     // Iterators HACK -- should this just inherit MA?
-    GeneGrid::Iterator begin() {
-        return _genes.begin();
-    }
-    GeneGrid::Iterator end() {
-        return _genes.end();
-    }
+    GeneGrid::Iterator begin();// {
+//        return _genes.begin();
+//    }
+    GeneGrid::Iterator end(); //{
+//        return _genes.end();
+//    }
 
     // Size accessors
     SizeType size() const { return _genes.size(); }
@@ -400,6 +400,14 @@ protected:
     Offset              _jitter;        // How much to adjust the
                                         // target center
 };
+
+
+inline terrainosaurus::TerrainChromosome::GeneGrid::Iterator terrainosaurus::TerrainChromosome::begin() {
+    return _genes.begin();
+}
+inline terrainosaurus::TerrainChromosome::GeneGrid::Iterator terrainosaurus::TerrainChromosome::end() {
+    return _genes.end();
+}
 
 
 /*****************************************************************************

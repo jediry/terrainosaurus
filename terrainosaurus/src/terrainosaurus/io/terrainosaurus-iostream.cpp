@@ -55,7 +55,8 @@ void write(std::ostream & os, const inca::raster::MultiArrayRaster<T, dim> & r) 
     os.write((char const *)&ex, sizeof(typename Raster::IndexArray));
 
     // Write the raster contents
-    os.write((char const*)r.elements(), sz * sizeof(T));
+    if (sz > 0)
+        os.write((char const*)r.elements(), sz * sizeof(T));
 }
 template <typename T, inca::SizeType dim>
 void read(std::istream & is, inca::raster::MultiArrayRaster<T, dim> & r) {
@@ -69,7 +70,8 @@ void read(std::istream & is, inca::raster::MultiArrayRaster<T, dim> & r) {
     typename Raster::SizeType sz = r.size();
 
     // Read the raster contents
-    is.read((char*)r.elements(), sz * sizeof(T));
+    if (sz > 0)
+        is.read((char*)r.elements(), sz * sizeof(T));
 }
 
 template <typename T, inca::SizeType dim>
@@ -85,14 +87,16 @@ template <typename T>
 void write(std::ostream & os, const std::vector<T> & v) {
     int n = v.size();
     os.write((char const *)&n, sizeof(int));
-    os.write((char const *)&v[0], n * sizeof(T));
+    if (n > 0)
+        os.write((char const *)&v[0], n * sizeof(T));
 }    
 template <typename T>
 void read(std::istream & is, std::vector<T> & v) {
     int n = v.size();
     is.read((char *)&n, sizeof(int));
     v.resize(n);
-    is.read((char *)&v[0], n * sizeof(T));
+    if (n > 0)
+        is.read((char *)&v[0], n * sizeof(T));
 }    
 
 template <typename T, bool cache>

@@ -199,45 +199,45 @@ void FeatureTracker::print(std::ostream & os) {
 /*****************************************************************************
  * LOD specialization for TerrainSample
  *****************************************************************************/
- // Default constructor
-TerrainSample::LOD::LOD()
+// Default constructor
+LOD<TerrainSample>::LOD()
     : LODBase<TerrainSample>() { }
 
 // Constructor linking back to TerrainSample
-TerrainSample::LOD::LOD(TerrainSamplePtr ts, TerrainLOD lod)
+LOD<TerrainSample>::LOD(TerrainSamplePtr ts, TerrainLOD lod)
     : LODBase<TerrainSample>(ts, lod) { }
 
 
 // Access to related LOD objects
-TerrainType::LOD & TerrainSample::LOD::terrainType() {
+TerrainType::LOD & LOD<TerrainSample>::terrainType() {
     return (*object().terrainType())[levelOfDetail()];
 }
-const TerrainType::LOD & TerrainSample::LOD::terrainType() const {
+const TerrainType::LOD & LOD<TerrainSample>::terrainType() const {
     return (*object().terrainType())[levelOfDetail()];
 }
 
-MapRasterization::LOD & TerrainSample::LOD::mapRasterization() {
+MapRasterization::LOD & LOD<TerrainSample>::mapRasterization() {
     return (*object().mapRasterization())[levelOfDetail()];
 }
-const MapRasterization::LOD & TerrainSample::LOD::mapRasterization() const {
+const MapRasterization::LOD & LOD<TerrainSample>::mapRasterization() const {
     return (*object().mapRasterization())[levelOfDetail()];
 }
 
 // Initialization & analysis of elevation data
-void TerrainSample::LOD::createFromRaster(const Heightfield & hf) {
+void LOD<TerrainSample>::createFromRaster(const Heightfield & hf) {
     _elevations = hf;
     _loaded   = true;
     _analyzed = false;
     _studied  = false;
 }
-void TerrainSample::LOD::resampleFromLOD(TerrainLOD lod) {
+void LOD<TerrainSample>::resampleFromLOD(TerrainLOD lod) {
     // Resample the fundamental raster properties
     _elevations = resample(object()[lod].elevations(),
                            scaleFactor(lod, levelOfDetail()));
     _loaded = true;
     _analyzed = false;
 }
-void TerrainSample::LOD::_calculateFrequencySpectrum() {
+void LOD<TerrainSample>::_calculateFrequencySpectrum() {
     scalar_t period = metersPerSampleForLOD(levelOfDetail());
     scalar_t nyquist = 1.0f / period;
     scalar_t maxFreq = nyquist / 2.0f;    // Samples per meter
@@ -264,7 +264,7 @@ void TerrainSample::LOD::_calculateFrequencySpectrum() {
         _frequencySpectrum[i] /= counts[i];
 }
 
-void TerrainSample::LOD::_calculateStatistics() {
+void LOD<TerrainSample>::_calculateStatistics() {
     // Determine whether we need to calculate per-region stats too
     bool hasRegions = (regionCount() > 1);
 
@@ -373,7 +373,7 @@ void TerrainSample::LOD::_calculateStatistics() {
     INCA_DEBUG("  Kurtosis: " << s.kurtosis())
     
 }
-void TerrainSample::LOD::_findFeatures() {
+void LOD<TerrainSample>::_findFeatures() {
     inca::Timer<float, false> phase;
     
     // Create the scale-space representation of the heightfield
@@ -431,7 +431,7 @@ void TerrainSample::LOD::_findFeatures() {
                << phase() << " seconds")
 #endif
 }
-void TerrainSample::LOD::analyze() {
+void LOD<TerrainSample>::analyze() {
     // Make sure we have a valid map to start with
     ensureLoaded();
 
@@ -486,7 +486,7 @@ void TerrainSample::LOD::analyze() {
 }
 
 // Lazy loading and analysis mechanism
-void TerrainSample::LOD::ensureLoaded() const {
+void LOD<TerrainSample>::ensureLoaded() const {
     if (! loaded()) {
         TerrainosaurusApplication & app = TerrainosaurusApplication::instance();
 
@@ -546,18 +546,18 @@ void TerrainSample::LOD::ensureLoaded() const {
         }
     }
 }
-void TerrainSample::LOD::ensureAnalyzed() const {
+void LOD<TerrainSample>::ensureAnalyzed() const {
     ensureLoaded();
     if (! analyzed())
         const_cast<TerrainSample::LOD *>(this)->analyze();
 }
-void TerrainSample::LOD::ensureStudied() const {
+void LOD<TerrainSample>::ensureStudied() const {
     ensureAnalyzed();
     if (! studied())
         const_cast<TerrainSample::LOD *>(this)->study();
 }
 
-void TerrainSample::LOD::study() {
+void LOD<TerrainSample>::study() {
     INCA_INFO("Studying TerrainSample<" << name() << "> (" << sizes() << ')')
     inca::Timer<float, false> total, phase;
     total.start();
@@ -641,40 +641,40 @@ void TerrainSample::LOD::study() {
 /*---------------------------------------------------------------------------*
  | Raster geometry accessors
  *---------------------------------------------------------------------------*/
-SizeType TerrainSample::LOD::size() const {
+SizeType LOD<TerrainSample>::size() const {
     ensureLoaded();
     return _elevations.size();
 }
-SizeType TerrainSample::LOD::size(IndexType d) const {
+SizeType LOD<TerrainSample>::size(IndexType d) const {
     ensureLoaded();
     return _elevations.size(d);
 }
-IndexType TerrainSample::LOD::base(IndexType d) const {
+IndexType LOD<TerrainSample>::base(IndexType d) const {
     ensureLoaded();
     return _elevations.base(d);
 }
-IndexType TerrainSample::LOD::extent(IndexType d) const {
+IndexType LOD<TerrainSample>::extent(IndexType d) const {
     ensureLoaded();
     return _elevations.extent(d);
 }
-const TerrainSample::LOD::SizeArray & TerrainSample::LOD::sizes() const {
+const LOD<TerrainSample>::SizeArray & LOD<TerrainSample>::sizes() const {
     ensureLoaded();
     return _elevations.sizes();
 }
-const TerrainSample::LOD::IndexArray & TerrainSample::LOD::bases() const {
+const LOD<TerrainSample>::IndexArray & LOD<TerrainSample>::bases() const {
     ensureLoaded();
     return _elevations.bases();
 }
-const TerrainSample::LOD::IndexArray & TerrainSample::LOD::extents() const {
+const LOD<TerrainSample>::IndexArray & LOD<TerrainSample>::extents() const {
     ensureLoaded();
     return _elevations.extents();
 }
-const TerrainSample::LOD::Region & TerrainSample::LOD::bounds() const {
+const LOD<TerrainSample>::Region & LOD<TerrainSample>::bounds() const {
     ensureLoaded();
     return _elevations.bounds();
 }
 
-void TerrainSample::LOD::setSizes(const SizeArray & sz) {
+void LOD<TerrainSample>::setSizes(const SizeArray & sz) {
     _elevations.setSizes(sz);
     _gradients.setSizes(sz);
     _featureMap.setSizes(sz);
@@ -689,35 +689,35 @@ void TerrainSample::LOD::setSizes(const SizeArray & sz) {
  | Per-cell properties
  *---------------------------------------------------------------------------*/
 // Fundamental properties (initialized at load-time)
-const Heightfield & TerrainSample::LOD::elevations() const {
+const Heightfield & LOD<TerrainSample>::elevations() const {
     ensureLoaded();
     return _elevations;
 }
 
 // Derived properties (initialized at analysis-time)
-const VectorMap & TerrainSample::LOD::gradients() const {
+const VectorMap & LOD<TerrainSample>::gradients() const {
     ensureAnalyzed();
     return _gradients;
 }
-const ColorImage & TerrainSample::LOD::featureMaps() const {
+const ColorImage & LOD<TerrainSample>::featureMaps() const {
     ensureAnalyzed();
     return _featureMap;
 }
 
 // Windowed properties (initialized at study-time)
-const Heightfield & TerrainSample::LOD::localElevationMeans() const {
+const Heightfield & LOD<TerrainSample>::localElevationMeans() const {
     ensureStudied();
     return _localElevationMeans;
 }
-const VectorMap & TerrainSample::LOD::localGradientMeans() const {
+const VectorMap & LOD<TerrainSample>::localGradientMeans() const {
     ensureStudied();
     return _localGradientMeans;
 }
-const VectorMap & TerrainSample::LOD::localElevationLimitss() const {
+const VectorMap & LOD<TerrainSample>::localElevationLimitss() const {
     ensureStudied();
     return _localElevationLimits;
 }
-const VectorMap & TerrainSample::LOD::localSlopeLimitss() const {
+const VectorMap & LOD<TerrainSample>::localSlopeLimitss() const {
     ensureStudied();
     return _localSlopeLimits;
 }
@@ -727,30 +727,30 @@ const VectorMap & TerrainSample::LOD::localSlopeLimitss() const {
  | Global and per-region properties
  *---------------------------------------------------------------------------*/
 // Detected features
-const FeatureList & TerrainSample::LOD::peaks() const {
+const FeatureList & LOD<TerrainSample>::peaks() const {
     ensureAnalyzed();
     return _peaks;
 }
-const FeatureList & TerrainSample::LOD::edges() const {
+const FeatureList & LOD<TerrainSample>::edges() const {
     ensureAnalyzed();
     return _edges;
 }
-const FeatureList & TerrainSample::LOD::ridges() const {
+const FeatureList & LOD<TerrainSample>::ridges() const {
     ensureAnalyzed();
     return _ridges;
 }
 
 // Region accessors
-SizeType TerrainSample::LOD::regionCount() const {
+SizeType LOD<TerrainSample>::regionCount() const {
     if (! object().mapRasterization())  return 1;
     else                                return mapRasterization().regionCount();
 }
-SizeType TerrainSample::LOD::regionArea(IDType regionID) const {
+SizeType LOD<TerrainSample>::regionArea(IDType regionID) const {
     if (! object().mapRasterization())  return size();
     else                                return mapRasterization().regionArea(regionID);
 }
 const TerrainType::LOD &
-TerrainSample::LOD::regionTerrainType(IDType regionID) const {
+LOD<TerrainSample>::regionTerrainType(IDType regionID) const {
     if (! object().mapRasterization())
         return terrainType();
     else
@@ -758,62 +758,62 @@ TerrainSample::LOD::regionTerrainType(IDType regionID) const {
 }
 
 // Global statistics
-const Stat & TerrainSample::LOD::globalElevationStatistics() const {
+const Stat & LOD<TerrainSample>::globalElevationStatistics() const {
     ensureAnalyzed();
     return _globalElevationStatistics;
 }
-const Stat & TerrainSample::LOD::globalSlopeStatistics() const {
+const Stat & LOD<TerrainSample>::globalSlopeStatistics() const {
     ensureAnalyzed();
     return _globalSlopeStatistics;
 }
-const Stat & TerrainSample::LOD::globalEdgeStrengthStatistics() const {
+const Stat & LOD<TerrainSample>::globalEdgeStrengthStatistics() const {
     ensureAnalyzed();
     return _globalEdgeStrengthStatistics;
 }
-const Stat & TerrainSample::LOD::globalEdgeLengthStatistics() const {
+const Stat & LOD<TerrainSample>::globalEdgeLengthStatistics() const {
     ensureAnalyzed();
     return _globalEdgeLengthStatistics;
 }
-const Stat & TerrainSample::LOD::globalEdgeScaleStatistics() const {
+const Stat & LOD<TerrainSample>::globalEdgeScaleStatistics() const {
     ensureAnalyzed();
     return _globalEdgeScaleStatistics;
 }
-const Stat & TerrainSample::LOD::regionElevationStatistics(IDType rID) const {
+const Stat & LOD<TerrainSample>::regionElevationStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
                       __FUNCTION__ "(" << regionID << ")")
     if (regionCount() == 1)     return _globalElevationStatistics;
     else                        return _regionElevationStatistics[rID];
 }
-const Stat & TerrainSample::LOD::regionSlopeStatistics(IDType rID) const {
+const Stat & LOD<TerrainSample>::regionSlopeStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
                       __FUNCTION__ "(" << regionID << ")")
     if (regionCount() == 1)     return _globalSlopeStatistics;
     else                        return _regionSlopeStatistics[rID];
 }
-const Stat & TerrainSample::LOD::regionEdgeStrengthStatistics(IDType rID) const {
+const Stat & LOD<TerrainSample>::regionEdgeStrengthStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
                       __FUNCTION__ "(" << regionID << ")")
     if (regionCount() == 1)     return _globalEdgeStrengthStatistics;
     else                        return _regionEdgeStrengthStatistics[rID];
 }
-const Stat & TerrainSample::LOD::regionEdgeLengthStatistics(IDType rID) const {
+const Stat & LOD<TerrainSample>::regionEdgeLengthStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
                       __FUNCTION__ "(" << regionID << ")")
     if (regionCount() == 1)     return _globalEdgeLengthStatistics;
     else                        return _regionEdgeLengthStatistics[rID];
 }
-const Stat & TerrainSample::LOD::regionEdgeScaleStatistics(IDType rID) const {
+const Stat & LOD<TerrainSample>::regionEdgeScaleStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
                       __FUNCTION__ "(" << regionID << ")")
     if (regionCount() == 1)     return _globalEdgeScaleStatistics;
     else                        return _regionEdgeScaleStatistics[rID];
 }
-const FrequencySpectrum & TerrainSample::LOD::frequencyContent() const {
+const FrequencySpectrum & LOD<TerrainSample>::frequencyContent() const {
     ensureAnalyzed();
     return _frequencySpectrum;
 }
@@ -822,12 +822,12 @@ const FrequencySpectrum & TerrainSample::LOD::frequencyContent() const {
 /*---------------------------------------------------------------------------*
  | Access to parent TerrainSample properties
  *---------------------------------------------------------------------------*/
-std::string TerrainSample::LOD::name() const {
+std::string LOD<TerrainSample>::name() const {
     std::stringstream ss;
     ss << object().name() << '[' << levelOfDetail() << ']';
     return ss.str();
 }
-IndexType TerrainSample::LOD::index() const {
+IndexType LOD<TerrainSample>::index() const {
     return object().index();
 }
 

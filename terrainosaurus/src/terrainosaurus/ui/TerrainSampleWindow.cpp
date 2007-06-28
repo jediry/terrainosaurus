@@ -53,7 +53,7 @@
 #define CAMERA_FAR_CLIP     100000.0f
 //#define CAMERA_FOV          15.0f
 
-#define BORDER_WIDTH        0
+#define BORDER_WIDTH        2
 
 // Declare the specialized Widget subclass that will serve as the top-level
 // widget for this kind of Window
