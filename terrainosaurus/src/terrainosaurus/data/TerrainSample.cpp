@@ -781,35 +781,35 @@ const Stat & LOD<TerrainSample>::globalEdgeScaleStatistics() const {
 const Stat & LOD<TerrainSample>::regionElevationStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
-                      __FUNCTION__ "(" << regionID << ")")
+                      __FUNCTION__ << "(" << regionID << ")")
     if (regionCount() == 1)     return _globalElevationStatistics;
     else                        return _regionElevationStatistics[rID];
 }
 const Stat & LOD<TerrainSample>::regionSlopeStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
-                      __FUNCTION__ "(" << regionID << ")")
+                      __FUNCTION__ << "(" << regionID << ")")
     if (regionCount() == 1)     return _globalSlopeStatistics;
     else                        return _regionSlopeStatistics[rID];
 }
 const Stat & LOD<TerrainSample>::regionEdgeStrengthStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
-                      __FUNCTION__ "(" << regionID << ")")
+                      __FUNCTION__ << "(" << regionID << ")")
     if (regionCount() == 1)     return _globalEdgeStrengthStatistics;
     else                        return _regionEdgeStrengthStatistics[rID];
 }
 const Stat & LOD<TerrainSample>::regionEdgeLengthStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
-                      __FUNCTION__ "(" << regionID << ")")
+                      __FUNCTION__ << "(" << regionID << ")")
     if (regionCount() == 1)     return _globalEdgeLengthStatistics;
     else                        return _regionEdgeLengthStatistics[rID];
 }
 const Stat & LOD<TerrainSample>::regionEdgeScaleStatistics(IDType rID) const {
     ensureAnalyzed();
     INCA_BOUNDS_CHECK(0, _regionCount.size() - 1, regionID, -1,
-                      __FUNCTION__ "(" << regionID << ")")
+                      __FUNCTION__ << "(" << regionID << ")")
     if (regionCount() == 1)     return _globalEdgeScaleStatistics;
     else                        return _regionEdgeScaleStatistics[rID];
 }
@@ -884,7 +884,7 @@ bool TerrainSample::fileLoaded() const { return _fileLoaded; }
 void TerrainSample::ensureFileLoaded() const {
     if (! fileLoaded() && filename() != "") {
         try {
-            INCA_INFO(__FUNCTION__ "(): Loading DEM file " << filename())
+            INCA_INFO(__FUNCTION__ << "(): Loading DEM file " << filename())
             TerrainosaurusApplication & app = TerrainosaurusApplication::instance();
             app.loadSourceFiles(const_cast<TerrainSample &>(*this));
             const_cast<TerrainSample*>(this)->_fileLoaded = true;

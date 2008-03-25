@@ -29,7 +29,7 @@ header "pre_include_hpp" {
     };
 
     // Import parser superclass and supergrammer definitions
-    #include "INIParser.hpp"
+    #include <terrainosaurus/io/INIParser.hpp>
     #include "CommonParser.hpp"
 
 

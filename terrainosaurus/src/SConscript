@@ -1,0 +1,17 @@
+import SCons.Node.FS
+import SourceCatalog
+
+# Get the construction environment from the top-level script
+Import('env')
+
+# Scan the directory tree (minus any files we specifically want to ignore)
+ignore = ['Widget', 'GridRendering', 'terrain-ga', 'DEM\.g$']
+SourceCatalog.EnableSourceCatalog(env)
+files = env.CatalogFiles('terrainosaurus', ignorePatterns = ignore)
+
+env.Append(CPPPATH = ['.'])
+sources = files['sources']
+for file in files['grammars']:
+    sources.append(env.AntlrGrammar(file))
+env.Program('tsaurus', sources)
+

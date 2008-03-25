@@ -31,7 +31,7 @@ header "pre_include_hpp" {
     };
 
     // Import Map and related object definitions 
-    #include "../data/Map.hpp"
+    #include <terrainosaurus/data/Map.hpp>
 
     // Import parser superclass and supergrammer definitions
     #include "CommonParser.hpp"
@@ -167,7 +167,7 @@ integer returns [int value]: n:NUMBER { value = atoi(n->getText().c_str()); } ;
 
 /**
  * The MapLexer class creates tokens from the characters in
- * the .ttl file.
+ * the .map file.
  */
 class MapLexer extends Lexer;
 options {

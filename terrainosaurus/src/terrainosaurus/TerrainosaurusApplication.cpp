@@ -53,15 +53,13 @@ using namespace terrainosaurus;
 #define INTEGER_PROPERTY_COUNT 6
 #define SCALAR_PROPERTY_COUNT  16
 
-#define CONFIG_FILE "data/terrainosaurus.conf"
-
-// DEM home directory
-#define SOURCE_DIR   "C:/Development/projects/terrainosaurus/data/dem/"
-
 // Default data file names
-#define DATA_DIR "C:/Development/projects/terrainosaurus/data/"
-#define DEFAULT_MAP     DATA_DIR ## "test.map"
-#define DEFAULT_TTL     DATA_DIR ## "test.ttl"
+#define CACHE_DIR "/home/jediry/tmp/terrainosaurus-cache"
+#define DATA_DIR "/home/jediry/Documents/Development/Media/terrainosaurus/data/"
+#define CONFIG_FILE     DATA_DIR "terrainosaurus.conf"
+#define SOURCE_DIR      DATA_DIR "dem/"
+#define DEFAULT_MAP     DATA_DIR "test.map"
+#define DEFAULT_TTL     DATA_DIR "test.ttl"
 #define MATLAB_FILE     cacheDirectory() + "stats.m"
 
 // Function switches (0 or 1)
@@ -167,9 +165,16 @@ void TApp::construct() {
             INCA_INFO("No window specified...creating one")
             IDMap ids(inca::Array<int, 2>(300, 300));
             fill(ids, 4);
-            fill(selectBS(ids, IndexArray(10, 10), SizeArray(50, 50)), 3);
-            fill(selectBS(ids, IndexArray(60, 60), SizeArray(50, 50)), 2);
-            fill(selectBS(ids, IndexArray(120, 120), SizeArray(50, 50)), 1);
+            // TODO: compiler *used* to accept this, but was binding non-const ref to
+            // the temporary returned by selectBS. Need to rework this so that fill
+            // takes its argument by value, and the rasters are OK with that.
+//            fill(selectBS(ids, IndexArray(10, 10), SizeArray(50, 50)), IDType(3));
+//            fill(selectBS(ids, IndexArray(60, 60), SizeArray(50, 50)), IDType(2));
+//            fill(selectBS(ids, IndexArray(120, 120), SizeArray(50, 50)), IDType(1));
+            typedef SelectRegionOperatorRaster< IDMap > MapSelection;
+            MapSelection sel1 = selectBS(ids, IndexArray(10, 10), SizeArray(50, 50));   fill(sel1, 3);
+            MapSelection sel2 = selectBS(ids, IndexArray(60, 60), SizeArray(50, 50));   fill(sel2, 2);
+            MapSelection sel3 = selectBS(ids, IndexArray(120, 120), SizeArray(50, 50)); fill(sel3, 1);
             MapRasterizationPtr mr(new MapRasterization(ids, LOD_30m, _lastTerrainLibrary));
             createTerrainSampleWindow(mr);
             ++windowCount;
@@ -562,7 +567,7 @@ void TApp::loadSourceFiles(TerrainSample & ts) {
     std::string basename = ts.filename();
     if (basename == "") {
         FileAccessException e("");
-        e << __FUNCTION__ "(): TerrainSample does not have a base filename";
+        e << __FUNCTION__ << "(): TerrainSample does not have a base filename";
         throw e;
     }
 
@@ -617,7 +622,7 @@ void TApp::loadAnalysisCache(TerrainSample::LOD & tsl) {
     std::string basename = tsl.object().filename();
     if (basename == "") {
         FileAccessException e("");
-        e << __FUNCTION__ "(): TerrainSample does not have a base filename";
+        e << __FUNCTION__ << "(): TerrainSample does not have a base filename";
         throw e;
     }
 
@@ -698,7 +703,7 @@ void TApp::storeAnalysisCache(const TerrainSample::LOD & tsl) {
     std::string basename = tsl.object().filename();
     if (basename == "") {
         FileAccessException e("");
-        e << __FUNCTION__ "(): TerrainSample does not have a base filename";
+        e << __FUNCTION__ << "(): TerrainSample does not have a base filename";
         throw e;
     }
     std::string cacheFilename = analysisCacheFilename(basename,
@@ -728,7 +733,7 @@ void TApp::loadConfigFile(const std::string & path) {
     INCA_INFO("[" << path << "]: loading configuration settings")
 
     // Antlr, I hate you.
-    setCacheDirectory("C:/Development/projects/temp/terrainosaurus-cache/");
+    setCacheDirectory(CACHE_DIR);
 
     setBoundaryGAPopulationSize(60);
     setBoundaryGAEvolutionCycles(20);
@@ -820,7 +825,7 @@ TerrainLibraryPtr TApp::lastTerrainLibrary() { return _lastTerrainLibrary; }
  | Configuration settings functions
  *---------------------------------------------------------------------------*/
 // String properties
-#define CACHE_DIR       0
+#define CACHE_DIR_PATH  0
 
 // Integer properties
 #define HF_POP_SZ       0
@@ -850,8 +855,8 @@ TerrainLibraryPtr TApp::lastTerrainLibrary() { return _lastTerrainLibrary; }
 
 
 // Application settings
-const std::string & TApp::cacheDirectory() const { return _stringProperties[CACHE_DIR]; }
-void TApp::setCacheDirectory(const std::string & d) { _stringProperties[CACHE_DIR] = d; }
+const std::string & TApp::cacheDirectory() const { return _stringProperties[CACHE_DIR_PATH]; }
+void TApp::setCacheDirectory(const std::string & d) { _stringProperties[CACHE_DIR_PATH] = d; }
 
 // Heightfield GA settings
 int TApp::heightfieldGAPopulationSize() const { return _integerProperties[HF_POP_SZ]; }

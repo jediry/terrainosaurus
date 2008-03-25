@@ -453,10 +453,10 @@ void MapEditorWindowWidget::keyPressed(const KeyEvent & e) {
 void MapEditorWindowWidget::fitMap() {
     // Sanity checks!
     if (! _map) {
-        INCA_WARNING(__FUNCTION__ "() called, but window has no map")
+        INCA_WARNING(__FUNCTION__ << "() called, but window has no map")
         return;
     } else if (_map->vertexCount() == 0) {
-        INCA_WARNING(__FUNCTION__ "() called, but map has no vertices")
+        INCA_WARNING(__FUNCTION__ << "() called, but map has no vertices")
         return;
     }
     
@@ -497,7 +497,7 @@ void MapEditorWindowWidget::fitMap() {
     
     requestRedisplay();
 
-    INCA_DEBUG(__FUNCTION__ "(): Fitting to region " << minP << " => " << maxP)
+    INCA_DEBUG(__FUNCTION__ << "(): Fitting to region " << minP << " => " << maxP)
     INCA_DEBUG("     Size is " << worldDimensions)
     INCA_DEBUG("     Center is " << center)
     INCA_DEBUG("     Window size is " << windowSize)

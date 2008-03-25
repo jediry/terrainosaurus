@@ -146,16 +146,16 @@ SimilarityChromosome::SimilarityChromosome() {
 }
 
 void SimilarityChromosome::setValues() const {
-    HACK_weights.resize(size());
-    HACK_variances.resize(size());
-    scalar_t sumW = 0;
-    for (int i = 0; i < size(); ++i)
-        sumW += (*this)[i].weight;
-    for (int i = 0; i < size(); ++i) {
-        HACK_weights[i]   = (*this)[i].weight / sumW;
-        HACK_variances[i] = (*this)[i].variance
-                            * std::pow(1.0f, (*this)[i].magnitude);
-    }
+//    HACK_weights.resize(size());
+//    HACK_variances.resize(size());
+//    scalar_t sumW = 0;
+//    for (int i = 0; i < size(); ++i)
+//        sumW += (*this)[i].weight;
+//    for (int i = 0; i < size(); ++i) {
+//        HACK_weights[i]   = (*this)[i].weight / sumW;
+//        HACK_variances[i] = (*this)[i].variance
+//                            * std::pow(1.0f, (*this)[i].magnitude);
+//    }
 }            
 
 

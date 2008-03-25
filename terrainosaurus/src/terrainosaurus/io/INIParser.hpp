@@ -85,18 +85,20 @@ public:
     template <typename ValueType>
     class PropertyMap : public stl_ext::hash_map<PropertyID, ValueType> {
     public:
+        typedef stl_ext::hash_map<PropertyID, ValueType> MapType;
+
         // Constructor
         explicit PropertyMap(ValueType def) : _defaultValue(def) { }
         
         // Const and non-const accessors returning default if not found
         ValueType operator[](PropertyID pID) const {
-            typename const_iterator it = find(pID);
-            return (it != end() ? it->second : defaultValue());
+            typename MapType::const_iterator it = this->find(pID);
+            return (it != this->end() ? it->second : defaultValue());
         }
         ValueType & operator[](PropertyID pID) {
-            typename iterator it = find(pID);
-            if (it == end())        // Stick in the default
-                return insert(typename value_type(pID, defaultValue())).first->second;
+            typename MapType::iterator it = this->find(pID);
+            if (it == this->end())        // Stick in the default
+                return insert(typename MapType::value_type(pID, defaultValue())).first->second;
             else
                 return it->second;
         }

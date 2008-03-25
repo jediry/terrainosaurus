@@ -52,7 +52,7 @@ options {
 /**
  * The ConfigParser class processes tokens from a .conf file.
  */
-class ConfigParser extends CommonParser("::terrainosaurus::INIParser");
+class ConfigParser extends CommonParser(::terrainosaurus::INIParser);
 options {
     exportVocab = Config;
     defaultErrorHandler=false;

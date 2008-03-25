@@ -42,7 +42,7 @@ public:
 
 
 class terrainosaurus::SimilarityChromosome
-    : public inca::Array<SimilarityGene, RegionFitnessMeasure::submeasureCount> {
+    : public inca::Array<SimilarityGene, RegionSimilarityMeasure::submeasureCount> {
 public:
     // Type declarations
     typedef SimilarityGene Gene;
