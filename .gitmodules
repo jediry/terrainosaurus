@@ -1,0 +1,3 @@
+[submodule "external/inca"]
+	path = external/inca
+	url = git@github.com:jediry/inca.git
