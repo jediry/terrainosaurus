@@ -27,7 +27,7 @@ header "pre_include_hpp" {
     };
 
     // Import DEM and related object definitions 
-    #include "../data/DEM.hpp"
+    #include <terrainosaurus/data/DEM.hpp>
 }
 
 // Global options section

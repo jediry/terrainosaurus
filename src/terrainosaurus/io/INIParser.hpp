@@ -68,8 +68,7 @@ namespace terrainosaurus {
 // Import superclass definition
 #include <antlr/LLkParser.hpp>
 
-// Import hash container definitions
-#include <inca/util/hash_container>
+#include <unordered_map>
 
 
 class terrainosaurus::INIParser : public antlr::LLkParser {
@@ -83,9 +82,9 @@ public:
     // A mapping of PropertyID => ValueType, returning a configurable default
     // value if the key is not found in the map
     template <typename ValueType>
-    class PropertyMap : public stl_ext::hash_map<PropertyID, ValueType> {
+    class PropertyMap : public std::unordered_map<PropertyID, ValueType> {
     public:
-        typedef stl_ext::hash_map<PropertyID, ValueType> MapType;
+        typedef std::unordered_map<PropertyID, ValueType> MapType;
 
         // Constructor
         explicit PropertyMap(ValueType def) : _defaultValue(def) { }

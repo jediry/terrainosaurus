@@ -36,6 +36,9 @@ header "pre_include_hpp" {
     // Include STL string algorithms
     #include <algorithm>
 
+    #include <unordered_map>
+    #include <inca/util/hash_container>
+
 
     // Import TerrainLibrary and related object definitions
     #include <terrainosaurus/data/TerrainLibrary.hpp>
@@ -110,7 +113,7 @@ protected:
     TerrainLibrary * _terrainLibrary;
     TerrainTypePtr _currentTT;
     TerrainSeamPtr _currentTS;
-    stl_ext::hash_map<TerrainSeamPtr, bool> _initializedTSs;
+    std::unordered_map<TerrainSeamPtr, bool> _initializedTSs;
 }
 
 
