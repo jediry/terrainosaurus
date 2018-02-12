@@ -33,7 +33,7 @@ namespace terrainosaurus {
 
 
 class terrainosaurus::TerrainSeam
-    : public boost::enable_shared_from_this<TerrainSeam> {
+    : public std::enable_shared_from_this<TerrainSeam> {
 private:
     // Set up this object to own properties
     PROPERTY_OWNING_OBJECT(TerrainSeam);

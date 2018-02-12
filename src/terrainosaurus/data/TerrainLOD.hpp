@@ -50,9 +50,6 @@
 // Import upgraded enumeration type
 #include <inca/util/Enumeration.hpp>
 
-// Import shared_ptr utilities
-#include <boost/enable_shared_from_this.hpp>
-
 
 // This is part of the Terrainosaurus terrain generation engine
 namespace terrainosaurus {
@@ -153,7 +150,7 @@ namespace terrainosaurus {
 
     // Base class for objects that have LODs
     template <typename TP>
-    class MultiResolutionObject : public boost::enable_shared_from_this<TP> {
+    class MultiResolutionObject : public std::enable_shared_from_this<TP> {
     public:
         // LOD type
         typedef LOD<TP> LOD;

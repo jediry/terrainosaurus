@@ -25,13 +25,8 @@
 #include <inca/raster.hpp>
 
 namespace terrainosaurus {
-//    using namespace boost;
-//    using namespace inca;
-    using boost::shared_ptr;
-    using boost::scoped_ptr;
-    using boost::weak_ptr;
-    using boost::scoped_array;
-    using boost::shared_array;
+    using std::shared_ptr;
+    using std::weak_ptr;
     using inca::Nothing;
 
     // Define scalar and vector types used for geometry

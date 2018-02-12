@@ -37,7 +37,6 @@ header "pre_include_hpp" {
     #include <algorithm>
 
     #include <unordered_map>
-    #include <inca/util/hash_container>
 
 
     // Import TerrainLibrary and related object definitions

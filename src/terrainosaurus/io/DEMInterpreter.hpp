@@ -135,7 +135,7 @@ protected:
 
     static const std::size_t BUFFER_SIZE;   // Size of the char buffer
     static const std::size_t CHUNK_SIZE;
-    scoped_array<char> buffer;              // ...the buffer.
+    std::unique_ptr<char[]> buffer;         // ...the buffer.
 };
 
 #endif
