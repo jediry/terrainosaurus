@@ -7,7 +7,7 @@ objs = []
 env = env.Clone()
 pch = env.PCH('precomp.cpp')
 env['PCH'] = pch[0]
-env['PCHSTOP'] = 'inca/precomp.h'
+env['PCHSTOP'] = 'terrainosaurus/precomp.h'
 objs += [pch[1]]
 
 objs = env.StaticObject('TerrainosaurusApplication.cpp')
