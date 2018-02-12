@@ -1,3 +1,6 @@
 [submodule "external/inca"]
 	path = external/inca
 	url = git@github.com:jediry/inca.git
+[submodule "external/scons-tools"]
+	path = external/scons-tools
+	url = git@github.com:jediry/scons-tools.git
