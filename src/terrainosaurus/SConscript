@@ -1,0 +1,7 @@
+# Get the construction environment from the parent script
+Import('env')
+
+objs = env.StaticObject('TerrainosaurusApplication.cpp')
+objs += env.SConscript(dirs = ['data', 'io', 'genetics', 'rendering', 'ui'], exports = {'env' : env})
+
+env.Program('terrainosaurus', objs, LIBS = ['antlr2', 'FreeImage', 'FreeImagePlus', 'libfftw3f-3', 'inca'])

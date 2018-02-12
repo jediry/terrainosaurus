@@ -1,0 +1,19 @@
+# Get the construction environment from the parent script
+Import('env')
+
+objs = env.StaticObject(Split("""
+    ImageWindow.cpp
+    MapEditorWindow.cpp
+    TerrainSampleWindow.cpp
+"""))
+notyet = Split("""
+    AddFaceWidget.cpp
+    AddVertexWidget.cpp
+    CameraFlyWidget.cpp
+    MapEditWidget.cpp
+    MapExplorerWidget.cpp
+    ModifyPropertyWidget.cpp
+    TranslateWidget.cpp
+""")
+
+Return('objs')

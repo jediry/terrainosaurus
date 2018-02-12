@@ -1,0 +1,15 @@
+# Get the construction environment from the parent script
+Import('env')
+
+objs = env.StaticObject(Split("""
+    BoundaryGA.cpp
+    HeightfieldGA.cpp
+    SimilarityGA.cpp
+    TerrainChromosome.cpp
+    terrain-operations.cpp
+"""))
+notyet = Split("""
+    terrain-ga.cpp
+""")
+
+Return('objs')

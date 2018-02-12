@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import os
-from AutoConfigurator import AutoConfigurator
+#from AutoConfigurator import AutoConfigurator
 
 """
 help       -> scons -h
@@ -19,41 +19,64 @@ The variables are saved automatically after the first run (look at cache/kde.cac
 # LOAD THE ENVIRONMENT AND SET UP THE TOOLS
 ###################################################################
 
-buildDir = 'build'
-config_h = buildDir + '/config-ac.h'
+variantDir = 'build'
+config_h = variantDir + '/config-ac.h'
 
-env = Environment(tools = ['default', 'antlr'], toolpath = ['./tools'])
-env.BuildDir(buildDir, 'src', duplicate = 1)
-if not os.path.isdir(buildDir):
-    os.makedirs(buildDir)
+env = Environment(tools = ['default', 'antlr'], toolpath = ['#/external/scons-tools'])
+env.VariantDir(variantDir, 'src', duplicate = 1)
+if not os.path.isdir(variantDir):
+    os.makedirs(variantDir)
 
-# Hacky, icky way to find libinca headers
-env.Append(CPPPATH = ['#/../libinca/src/', '#/../libinca/build/'])
-env.Append(LIBPATH = ['#/../libinca/build/'])
+env.AppendUnique(NUGETROOT = 'D:/NuGetRoot')
 
-if not env.GetOption('clean'):
+env.Append(CLASSPATH = ['#/external/antlr-3.5.2-complete-no-st3.jar'])
+env.Append(CPPPATH = ['#/src/', '#/build/'])
+env.Append(CPPPATH = ['$NUGETROOT/boost.1.66.0.0/lib/native/include'])
+#env.Append(LIBPATH = ['$NUGETROOT/boost.1.66.0.0/lib/native/include'])
+env.Append(CPPPATH = ['$NUGETROOT/nupengl.core.0.1.0.1/build/native/include'])
+env.Append(LIBPATH = ['$NUGETROOT/nupengl.core.0.1.0.1/build/native/lib/x64'])
+#env.Append(CPPPATH = ['$NUGETROOT/native.freeimage.3.17.0/build/native/include'])
+#env.Append(LIBPATH = ['$NUGETROOT/native.freeimage.3.17.0/build/native/lib/Win32'])
+env.Append(CPPPATH = ['$NUGETROOT/libfftw.3.3.4/build/native/include'])
+env.Append(LIBPATH = ['$NUGETROOT/libfftw.3.3.4/build/native/lib/x64'])
+env.Append(CPPPATH = ['#/external/FreeImage/dist/x64'])
+env.Append(LIBPATH = ['#/external/FreeImage/dist/x64'])
+env.Append(CPPPATH = ['#/external/FreeImage/Wrapper/FreeImagePlus/dist/x64'])
+env.Append(LIBPATH = ['#/external/FreeImage/Wrapper/FreeImagePlus/dist/x64'])
+env.Append(CPPPATH = ['#/external/antlr-2.7.7/lib/cpp'])
+env.Append(LIBPATH = ['#/external/antlr-2.7.7/lib/cpp/antlr2/x64/Debug'])
+env.Append(CPPPATH = ['#/external/inca/src/', '#/external/inca/build/'])
+env.Append(LIBPATH = ['#/build/inca/src/inca'])
+
+# MSVC: Enable exception unwind semantics
+env.Append(CCFLAGS = ['/EHsc'])
+
+# MSVC: Compile for multi-threaded debug CRT
+env.Append(CCFLAGS = ['/MDd'])
+
+# if not env.GetOption('clean'):
 
     ## Examine the system configuration
-    conf = Configure(env)
-
-    autoConf = AutoConfigurator(conf)
-
-    autoConf.RequireHeader('inca/inca-common.h', language = 'C++')
-    autoConf.RequireLib('inca')
-
-    autoConf.RequireLib('GL')
-    autoConf.RequireLib('GLU')
-    autoConf.RequireLib('glut')
-    autoConf.RequireLib('fftw3f')
-    autoConf.RequireLib('antlr')
-    autoConf.RequireLib('freeimageplus')
-
-    env = conf.Finish()
+#     conf = Configure(env)
+# 
+#     autoConf = AutoConfigurator(conf)
+# 
+#     autoConf.RequireHeader('inca/inca-common.h', language = 'C++')
+#     autoConf.RequireLib('inca')
+# 
+#     autoConf.RequireLib('GL')
+#     autoConf.RequireLib('GLU')
+#     autoConf.RequireLib('glut')
+#     autoConf.RequireLib('fftw3f')
+#     autoConf.RequireLib('antlr')
+#     autoConf.RequireLib('freeimageplus')
+# 
+#     env = conf.Finish()
 
     # Write out the config.h file
-    autoConf.GenerateConfigHeader(config_h)
+#     autoConf.GenerateConfigHeader(config_h)
 
-env.BuildDir(buildDir, 'src', duplicate = 0)
+#env.VariantDir(variantDir, 'src', duplicate = 0)
 env.Clean('.', config_h)
 
 
@@ -62,7 +85,8 @@ env.Clean('.', config_h)
 ###################################################################
 
 Export('env')
-env.SConscript('src/SConscript', build_dir = buildDir)
+env.SConscript('external/inca/SConscript', variant_dir = variantDir + '/inca', duplicate = 1)
+env.SConscript('src/terrainosaurus/SConscript', variant_dir = variantDir + '/terrainosaurus', duplicate = 1)
 
 
 ###################################################################
@@ -118,7 +142,7 @@ if 'dist' in COMMAND_LINE_TARGETS:
 	os.popen("find "+FOLDER+" -name \".arch-i*\" | xargs rm -rf")
 
 	## Create the tarball (coloured output)
-	print "\033[92m"+"Writing archive "+ARCHIVE+"\033[0m"
+	print("\033[92m"+"Writing archive "+ARCHIVE+"\033[0m")
 	os.popen("tar cjf "+ARCHIVE+" "+FOLDER)
 
 	## Remove the temporary directory

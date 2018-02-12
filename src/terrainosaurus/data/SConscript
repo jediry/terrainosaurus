@@ -1,0 +1,15 @@
+# Get the construction environment from the parent script
+Import('env')
+
+objs = env.StaticObject(Split("""
+    Map.cpp
+    MapRasterization.cpp
+    MeshSelection.cpp
+    TerrainLOD.cpp
+    TerrainLibrary.cpp
+    TerrainSample.cpp
+    TerrainSeam.cpp
+    TerrainType.cpp
+"""))
+
+Return('objs')

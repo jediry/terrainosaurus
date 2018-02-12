@@ -1,0 +1,16 @@
+# Get the construction environment from the parent script
+Import('env')
+
+objs = env.StaticObject(Split("""
+    ChromosomeRendering.cpp
+    GeneShapeRendering.cpp
+    MapRendering.cpp
+    PolygonTessellator.cpp
+    SkyBox.cpp
+    TerrainSampleRendering.cpp
+"""))
+notyet = Split("""
+    GridRendering.cpp
+""")
+
+Return('objs')
