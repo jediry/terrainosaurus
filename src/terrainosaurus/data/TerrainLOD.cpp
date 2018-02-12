@@ -9,6 +9,9 @@
  * Description:
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import function prototypes
 #include "TerrainLOD.hpp"
 using namespace terrainosaurus;

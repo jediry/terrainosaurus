@@ -1,3 +1,6 @@
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definitions
 #include "TerrainChromosome.hpp"
 using namespace terrainosaurus;

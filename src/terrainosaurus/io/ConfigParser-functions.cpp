@@ -14,6 +14,9 @@
  *      (defined in TerrainLibrary.g) relatively free of behavior code.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "ConfigParser.hpp"
 using namespace antlr;

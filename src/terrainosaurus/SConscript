@@ -1,6 +1,15 @@
 # Get the construction environment from the parent script
 Import('env')
 
+objs = []
+
+# Use a precompiled header on toolchains that support it
+env = env.Clone()
+pch = env.PCH('precomp.cpp')
+env['PCH'] = pch[0]
+env['PCHSTOP'] = 'inca/precomp.h'
+objs += [pch[1]]
+
 objs = env.StaticObject('TerrainosaurusApplication.cpp')
 objs += env.SConscript(dirs = ['data', 'io', 'genetics', 'rendering', 'ui'], exports = {'env' : env})
 

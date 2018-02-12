@@ -37,6 +37,11 @@ header "pre_include_hpp" {
     #include "CommonParser.hpp"
 }
 
+header "pre_include_cpp" {
+    // Include precompiled header
+    #include <terrainosaurus/precomp.h>
+}
+
 // Global options section
 options {
     language = "Cpp";               // Create C++ output

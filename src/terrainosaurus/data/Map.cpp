@@ -10,6 +10,9 @@
  *      This file implements the functions defined in Map.hpp.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "Map.hpp"
 using namespace inca::math;

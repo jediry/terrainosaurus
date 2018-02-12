@@ -23,6 +23,9 @@
  *        linear distance
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "BoundaryGA.hpp"
 

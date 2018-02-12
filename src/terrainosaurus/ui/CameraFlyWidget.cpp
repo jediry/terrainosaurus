@@ -10,6 +10,9 @@
  *      CameraFlyWidget.hpp.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "CameraFlyWidget.hpp"
 using namespace terrainosaurus;

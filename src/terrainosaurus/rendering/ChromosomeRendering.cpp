@@ -12,6 +12,9 @@
 // HACK: This could be better integrated w/ HF rendering, for an increase in
 // performance (regen less of the grid), not to mention less code
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "ChromosomeRendering.hpp"
 

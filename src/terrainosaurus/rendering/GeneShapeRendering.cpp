@@ -8,6 +8,10 @@
  *
  * Description:
  */
+
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 #if 0
 // Import class definition
 #include "GeneShapeRendering.hpp"

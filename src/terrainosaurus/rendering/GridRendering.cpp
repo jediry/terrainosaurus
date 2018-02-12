@@ -24,6 +24,9 @@
  *      course, non-contiguous strips require a little more index wizardry.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "GridRendering.hpp"
 using namespace terrainosaurus;

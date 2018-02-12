@@ -1,3 +1,6 @@
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 #include "SimilarityGA.hpp"
 #include "terrain-operations.hpp"
 using namespace terrainosaurus;

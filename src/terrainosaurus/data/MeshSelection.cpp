@@ -1,3 +1,7 @@
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
+// Import class definition
 #include "MeshSelection.hpp"
 using namespace terrainosaurus;
 

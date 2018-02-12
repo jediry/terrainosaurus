@@ -9,6 +9,8 @@
  * Description:
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
 
 // Import function prototypes and class definitions
 #include "terrain-operations.hpp"

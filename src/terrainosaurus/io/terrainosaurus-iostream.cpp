@@ -12,6 +12,9 @@
 // TODO: Perhaps it would be worthwhile to split 'load', 'analyze' and 'study'
 // records for the TerrainSample::LOD...
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import function prototypes
 #include "terrainosaurus-iostream.hpp"
 

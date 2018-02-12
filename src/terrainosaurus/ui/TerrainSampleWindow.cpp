@@ -10,6 +10,9 @@
  * Description:
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "TerrainSampleWindow.hpp"
 

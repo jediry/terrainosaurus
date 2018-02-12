@@ -9,6 +9,9 @@
  * Description:
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "TerrainType.hpp"
 using namespace terrainosaurus;

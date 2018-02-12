@@ -12,6 +12,9 @@
  *      using the Inca GA framework.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "HeightfieldGA.hpp"
 using namespace inca;

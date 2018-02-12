@@ -12,6 +12,9 @@
  *      the INIParser class, defined in INIParser.hpp.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "INIParser.hpp"
 using namespace terrainosaurus;

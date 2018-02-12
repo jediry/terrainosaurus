@@ -21,6 +21,9 @@
  * or with generic, typed accessors.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "TerrainosaurusApplication.hpp"
 #include <terrainosaurus/genetics/terrain-operations.hpp>

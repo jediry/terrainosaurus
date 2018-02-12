@@ -1,3 +1,6 @@
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 #include "MapEditWidget.hpp"
 using namespace terrainosaurus;
 using namespace inca::ui;

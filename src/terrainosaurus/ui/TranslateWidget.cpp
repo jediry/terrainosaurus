@@ -9,6 +9,9 @@
  * Description:
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definitions
 #include "TranslateWidget.hpp"
 #include "RotateWidget.hpp"

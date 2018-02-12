@@ -25,6 +25,9 @@
  *    r     3 |              X
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "TerrainLibrary.hpp"
 using namespace terrainosaurus;

@@ -12,6 +12,9 @@
  *      displaying and editing 2D maps.
  */
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "MapEditorWindow.hpp"
 

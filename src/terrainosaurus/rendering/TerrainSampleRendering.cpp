@@ -15,6 +15,9 @@
 //      3) Intelligently choose the rebuild window
 //      4) Perhaps build (display-list-ify) in tiles?
 
+// Include precompiled header
+#include <terrainosaurus/precomp.h>
+
 // Import class definition
 #include "TerrainSampleRendering.hpp"
 #include <inca/raster/generators/constant>
