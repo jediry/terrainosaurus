@@ -20,6 +20,7 @@ The variables are saved automatically after the first run (look at cache/kde.cac
 ###################################################################
 
 variantDir = 'build'
+terrainosaurusVariantDir = variantDir + '/terrainosaurus'
 config_h = variantDir + '/config-ac.h'
 
 env = Environment(tools = ['default', 'antlr'], toolpath = ['#/external/scons-tools'])
@@ -47,6 +48,11 @@ env.Append(CPPPATH = ['#/external/antlr-2.7.7/lib/cpp'])
 env.Append(LIBPATH = ['#/external/antlr-2.7.7/lib/cpp/antlr2/x64/Debug'])
 env.Append(CPPPATH = ['#/external/inca/src/', '#/external/inca/build/'])
 env.Append(LIBPATH = ['#/build/inca/src/inca'])
+
+env.Install(terrainosaurusVariantDir, '$NUGETROOT/nupengl.core.redist.0.1.0.1/build/native/bin/x64/freeglut.dll')
+env.Install(terrainosaurusVariantDir, '$NUGETROOT/libfftw.redist.3.3.4/build/native/bin/x64/libfftw3f-3.dll')
+env.Install(terrainosaurusVariantDir, '#/external/FreeImage/Dist/x64/freeimage.dll')
+env.Install(terrainosaurusVariantDir, '#/external/FreeImage/Wrapper/FreeImagePlus/Dist/x64/freeimageplus.dll')
 
 # MSVC: Enable exception unwind semantics
 env.Append(CCFLAGS = ['/EHsc'])
@@ -85,8 +91,8 @@ env.Clean('.', config_h)
 ###################################################################
 
 Export('env')
-env.SConscript('external/inca/SConscript', variant_dir = variantDir + '/inca', duplicate = 1)
-env.SConscript('src/terrainosaurus/SConscript', variant_dir = variantDir + '/terrainosaurus', duplicate = 1)
+env.SConscript('external/inca/SConscript', variant_dir = variantDir + '/inca', duplicate = 0)
+env.SConscript('src/terrainosaurus/SConscript', variant_dir = terrainosaurusVariantDir, duplicate = 1)
 
 
 ###################################################################
