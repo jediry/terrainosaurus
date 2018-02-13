@@ -88,6 +88,10 @@ public:
     void construct();
 
 protected:
+    void findDefaultDataDirectory();
+
+    std::string _defaultDataDirectory;
+
     // Filenames to load, given on the commandline
     std::vector<std::string>    _terrainFilenames,  // .dem heightfield files
                                 _libraryFilenames,  // .ttl terrain lib files
@@ -157,6 +161,7 @@ protected:
  *---------------------------------------------------------------------------*/
 public:
     // Application settings
+    const std::string & defaultDataDirectory() const;
     const std::string & cacheDirectory() const;
     void setCacheDirectory(const std::string & d);
     

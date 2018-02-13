@@ -185,7 +185,7 @@ erosionSection :
  *---------------------------------------------------------------------------*/
 // cache directory = path
 cacheDirectory { std::string s; }:
-    t:POPULATION SIZE ASSIGN s=unixPath EOL
+    t:CACHE DIRECTORY ASSIGN s=unixPath EOL
     { assignStringProperty(t, CacheDirectory, s); } ;
 
 

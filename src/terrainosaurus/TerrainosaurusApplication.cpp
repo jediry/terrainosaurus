@@ -57,12 +57,11 @@ using namespace terrainosaurus;
 #define SCALAR_PROPERTY_COUNT  16
 
 // Default data file names
-#define CACHE_DIR "/home/jediry/tmp/terrainosaurus-cache"
-#define DATA_DIR "/home/jediry/Documents/Development/Media/terrainosaurus/data/"
-#define CONFIG_FILE     DATA_DIR "terrainosaurus.conf"
-#define SOURCE_DIR      DATA_DIR "dem/"
-#define DEFAULT_MAP     DATA_DIR "test.map"
-#define DEFAULT_TTL     DATA_DIR "test.ttl"
+#define CONFIG_FILE     defaultDataDirectory() + "terrainosaurus.conf"
+#define CACHE_DIR       defaultDataDirectory() + "cache/"
+#define SOURCE_DIR      defaultDataDirectory() + "dem/"
+#define DEFAULT_MAP     defaultDataDirectory() + "test.map"
+#define DEFAULT_TTL     defaultDataDirectory() + "test.ttl"
 #define MATLAB_FILE     cacheDirectory() + "stats.m"
 
 // Function switches (0 or 1)
@@ -100,9 +99,24 @@ TApp::TerrainosaurusApplication()
       _integerProperties(INTEGER_PROPERTY_COUNT),
       _scalarProperties(SCALAR_PROPERTY_COUNT) { }
 
+void TApp::findDefaultDataDirectory() {
+    // If the TERRAINOSAURUS_HOME environment variable is set, use that
+    if (const char * value = getenv("TERRAINOSAURUS_HOME")) {
+        _defaultDataDirectory = value;
+        return;
+    }
+
+    // TODO: fall back to path relative to executable location
+
+    exit(1, "Failed to determine default data directory...please set TERRAINOSAURUS_HOME" );
+}
+
 void TApp::setup(int & argc, char **& argv) {
     // Seed the random number generator
     srand(getSystemClocks());
+
+    // Figure out where to load data from
+    findDefaultDataDirectory();
 
     // See if the user gave us any useful filenames
     std::string arg, ext;
@@ -122,6 +136,7 @@ void TApp::setup(int & argc, char **& argv) {
         loadConfigFile(CONFIG_FILE);
     } catch (inca::StreamException & e) {
         INCA_ERROR("[" << CONFIG_FILE << "]: " << e)
+        exit(1, "Failed to load config file" );
     }
 
     // HACK If something wasn't specifed on the command-line, choose a default
@@ -735,7 +750,6 @@ void TApp::storeAnalysisCache(const TerrainSample::LOD & tsl) {
 void TApp::loadConfigFile(const std::string & path) {
     INCA_INFO("[" << path << "]: loading configuration settings")
 
-    // Antlr, I hate you.
     setCacheDirectory(CACHE_DIR);
 
     setBoundaryGAPopulationSize(60);
@@ -762,8 +776,6 @@ void TApp::loadConfigFile(const std::string & path) {
     setHeightfieldGAMaxVerticalScale(1.1f);
     setHeightfieldGAMaxVerticalOffset(50.0f);
 
-    return;     // EARLY RETURN. I hate you Antlr.
-    
 
     // Try to open the file and scream if we fail
     std::ifstream file(path.c_str());
@@ -858,6 +870,7 @@ TerrainLibraryPtr TApp::lastTerrainLibrary() { return _lastTerrainLibrary; }
 
 
 // Application settings
+const std::string & TApp::defaultDataDirectory() const { return _defaultDataDirectory; }
 const std::string & TApp::cacheDirectory() const { return _stringProperties[CACHE_DIR_PATH]; }
 void TApp::setCacheDirectory(const std::string & d) { _stringProperties[CACHE_DIR_PATH] = d; }
 
