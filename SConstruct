@@ -16,22 +16,62 @@ The variables are saved automatically after the first run (look at cache/kde.cac
 
 
 ###################################################################
+# EXTRA COMMAND LINE OPTIONS
+###################################################################
+
+AddOption('--flavor', dest = 'flavor', default = 'release',
+          nargs = 1, type = 'string', action = 'store',
+          metavar = 'FLAVOR', help = 'build flavor (one of {debug, release}')
+
+
+###################################################################
 # LOAD THE ENVIRONMENT AND SET UP THE TOOLS
 ###################################################################
 
-variantDir = 'build'
+# Get the build flavor from the command line
+flavor = GetOption('flavor')
+if not (flavor in ['debug', 'release']):
+    print("Error: expected 'debug' or 'release', found: " + flavor)
+    Exit(1)
+print('**** Compiling in ' + flavor + ' mode...')
+
+variantDir = '#/build/' + flavor
 terrainosaurusVariantDir = variantDir + '/terrainosaurus'
+incaVariantDir = variantDir + '/inca'
+antlrVariantDir = variantDir + '/antlr'
 config_h = variantDir + '/config-ac.h'
 
 env = Environment(tools = ['default', 'antlr'], toolpath = ['#/external/scons-tools'])
 env.VariantDir(variantDir, 'src', duplicate = 1)
-if not os.path.isdir(variantDir):
-    os.makedirs(variantDir)
+
+# MSVC: Enable exception unwind semantics
+env.Append(CCFLAGS = ['/EHsc'])
+
+# MSVC: Compile for multi-threaded [debug] CRT
+env.Append(CCFLAGS = ['/MDd'] if flavor == 'debug' else ['/MD'])
+
+# Define _DEBUG or NDEBUG based on build flavor
+env.Append(CCFLAGS = ['/D_DEBUG'] if flavor == 'debug' else ['/DNDEBUG'])
+
+# MSVC: Geerate a PDB
+env.Append(LINKFLAGS = ['/DEBUG'])
+
+# MSVC: Enable optimizations in release mode
+if flavor == 'release':
+    env.Append(CCFLAGS = ['/Ox', '/GL'])
+    env.Append(LINKFLAGS = ['/LTCG'])
+    env.Append(ARFLAGS = ['/LTCG'])
+
+# MSVC: Compiler warning level
+env.Append(CCFLAGS = ['/W1'])
+
+# MSVC: Enable extra debugging checks in debug mode
+#if flavor == 'debug':
+#    env.Append(CCFLAGS = ['/sdl'])
 
 env.AppendUnique(NUGETROOT = 'D:/NuGetRoot')
 
-env.Append(CLASSPATH = ['#/external/antlr-3.5.2-complete-no-st3.jar'])
-env.Append(CPPPATH = ['#/src/', '#/build/'])
+env.Append(CPPPATH = ['#/src/', variantDir])
 env.Append(CPPPATH = ['$NUGETROOT/boost.1.66.0.0/lib/native/include'])
 #env.Append(LIBPATH = ['$NUGETROOT/boost.1.66.0.0/lib/native/include'])
 env.Append(CPPPATH = ['$NUGETROOT/nupengl.core.0.1.0.1/build/native/include'])
@@ -45,20 +85,14 @@ env.Append(LIBPATH = ['#/external/FreeImage/dist/x64'])
 env.Append(CPPPATH = ['#/external/FreeImage/Wrapper/FreeImagePlus/dist/x64'])
 env.Append(LIBPATH = ['#/external/FreeImage/Wrapper/FreeImagePlus/dist/x64'])
 env.Append(CPPPATH = ['#/external/antlr-2.7.7/lib/cpp'])
-env.Append(LIBPATH = ['#/external/antlr-2.7.7/lib/cpp/antlr2/x64/Debug'])
+env.Append(LIBPATH = [antlrVariantDir])
 env.Append(CPPPATH = ['#/external/inca/src/', '#/external/inca/build/'])
-env.Append(LIBPATH = ['#/build/inca/src/inca'])
+env.Append(LIBPATH = [incaVariantDir + '/src/inca'])
 
 env.Install(terrainosaurusVariantDir, '$NUGETROOT/nupengl.core.redist.0.1.0.1/build/native/bin/x64/freeglut.dll')
 env.Install(terrainosaurusVariantDir, '$NUGETROOT/libfftw.redist.3.3.4/build/native/bin/x64/libfftw3f-3.dll')
 env.Install(terrainosaurusVariantDir, '#/external/FreeImage/Dist/x64/freeimage.dll')
 env.Install(terrainosaurusVariantDir, '#/external/FreeImage/Wrapper/FreeImagePlus/Dist/x64/freeimageplus.dll')
-
-# MSVC: Enable exception unwind semantics
-env.Append(CCFLAGS = ['/EHsc'])
-
-# MSVC: Compile for multi-threaded debug CRT
-env.Append(CCFLAGS = ['/MDd'])
 
 # if not env.GetOption('clean'):
 
@@ -91,7 +125,8 @@ env.Clean('.', config_h)
 ###################################################################
 
 Export('env')
-env.SConscript('external/inca/SConscript', variant_dir = variantDir + '/inca', duplicate = 0)
+env.SConscript('external/antlr-2.7.7/lib/cpp/src/SConscript', variant_dir = antlrVariantDir, duplicate = 0)
+env.SConscript('external/inca/SConscript', variant_dir = incaVariantDir, duplicate = 0)
 env.SConscript('src/terrainosaurus/SConscript', variant_dir = terrainosaurusVariantDir, duplicate = 1)
 
 
