@@ -4,3 +4,6 @@
 [submodule "external/scons-tools"]
 	path = external/scons-tools
 	url = git@github.com:jediry/scons-tools.git
+[submodule "external/bootstrap-scons"]
+	path = external/bootstrap-scons
+	url = git@github.com:jediry/bootstrap-scons
