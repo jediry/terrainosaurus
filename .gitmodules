@@ -7,3 +7,6 @@
 [submodule "external/bootstrap-scons"]
 	path = external/bootstrap-scons
 	url = git@github.com:jediry/bootstrap-scons
+[submodule "external/vcpkg"]
+	path = external/vcpkg
+	url = git@github.com:Microsoft/vcpkg.git
