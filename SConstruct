@@ -34,6 +34,8 @@ env['VCPKGROOT'] = '#/external/vcpkg'
 # Locate and install build-time dependencies
 ###################################################################
 
+env.VCPkg('freeimage')
+
 env.Append(CPPPATH = ['#/external/antlr-2.7.7/lib/cpp'])
 env.Append(LIBPATH = [antlrVariantDir])
 env.Append(CPPPATH = ['#/external/inca/src/', '#/src', variantDir])
