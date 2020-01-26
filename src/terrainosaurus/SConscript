@@ -13,4 +13,8 @@ objs += [pch[1]]
 objs = env.StaticObject('TerrainosaurusApplication.cpp')
 objs += env.SConscript(dirs = ['data', 'io', 'genetics', 'rendering', 'ui'], exports = {'env' : env})
 
-env.Program('terrainosaurus', objs, LIBS = ['antlr2', 'FreeImage', 'FreeImagePlus', 'fftw3f', 'inca'])
+if GetOption('flavor') == 'debug':
+    libs = ['antlr4-runtime', 'FreeImaged', 'FreeImagePlusd', 'fftw3f', 'inca']
+else:
+    libs = ['antlr4-runtime', 'FreeImage', 'FreeImagePlus', 'fftw3f', 'inca']
+env.Program('terrainosaurus', objs, LIBS = libs)

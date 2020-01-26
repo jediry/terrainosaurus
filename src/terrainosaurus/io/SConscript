@@ -3,21 +3,16 @@ Import('env')
 
 objs = []
 
-# ANTLR grammars produce a set of .cpp, .hpp and .txt files. Only the .cpp files need additional compilation.
-generated = env.AntlrGrammar(Split("""
-    CommonGrammar
-    ConfigHACK
-    Map
+# ANTLR grammars produce a set of .cpp, .h and .other files. Only the .cpp files need additional compilation.
+generated = env.Antlr4Grammar(Split("""
+    Config
     TerrainLibrary
+    Map
 """))
 objs += env.StaticObject(list(filter((lambda f: f.get_suffix() == '.cpp'), generated)))
 
 objs += env.StaticObject(Split("""
-    ConfigParser-functions.cpp
     DEMInterpreter.cpp
-    INIParser.cpp
-    MapParser-functions.cpp
-    TerrainLibraryParser-functions.cpp
     terrainosaurus-iostream.cpp
 """))
 

@@ -22,6 +22,8 @@
 #include "../data/TerrainSample.hpp"
 
 namespace terrainosaurus {
+    std::string chomp(const std::string& s);
+
     // IOstream operators for (de)serializing instances of TerrainLibrary
     std::istream & operator>>(std::istream & is, TerrainLibrary & tl);
     std::ostream & operator<<(std::ostream & os, const TerrainLibrary & tl);

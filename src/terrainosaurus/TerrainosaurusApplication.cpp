@@ -41,15 +41,15 @@ using namespace inca::raster;
 
 // Import I/O class definitions
 #include <fstream>
+#include <terrainosaurus/io/PrimitivesBaseListener.hpp>
+#include <terrainosaurus/io/ConfigLexer.h>
+#include <terrainosaurus/io/ConfigParser.h>
+#include <terrainosaurus/io/ConfigListener.h>
 #include <terrainosaurus/io/terrainosaurus-iostream.hpp>
-#include <terrainosaurus/io/ConfigLexer.hpp>
-#include <terrainosaurus/io/ConfigParser.hpp>
+#include <terrainosaurus/io/FailFastErrorListener.hpp>
 #include <inca/io/FileExceptions.hpp>
 using namespace inca::io;
 using namespace terrainosaurus;
-
-// Import Antlr exception definitions
-#include <antlr/TokenStreamException.hpp>
 
 
 #define STRING_PROPERTY_COUNT  1
@@ -745,6 +745,214 @@ void TApp::storeAnalysisCache(const TerrainSample::LOD & tsl) {
 }
 
 
+class ConfigExtractor final : public TPrimitivesBaseListener<ConfigListener, ConfigParser>
+{
+private:
+    enum class Section
+    {
+        None,
+        Application,
+        BoundaryGA,
+        HeightfieldGA,
+    };
+
+    enum class PropertyID {
+        CacheDirectory,
+
+        BoundaryGAPopulationSize,
+        BoundaryGAEvolutionCycles,
+        BoundaryGASelectionRatio,
+        BoundaryGAElitismRatio,
+        BoundaryGAMutationProbability,
+        BoundaryGAMutationRatio,
+        BoundaryGACrossoverProbability,
+        BoundaryGACrossoverRatio,
+
+        HeightfieldGAPopulationSize,
+        HeightfieldGAEvolutionCycles,
+        HeightfieldGASelectionRatio,
+        HeightfieldGAElitismRatio,
+        HeightfieldGAMutationProbability,
+        HeightfieldGAMutationRatio,
+        HeightfieldGACrossoverProbability,
+        HeightfieldGACrossoverRatio,
+        HeightfieldGAGeneSize,
+        HeightfieldGAOverlapFactor,
+        HeightfieldGAMaxCrossoverWidth,
+        HeightfieldGAMaxVerticalScale,
+        HeightfieldGAMaxVerticalOffset,
+    };
+
+public:
+    ConfigExtractor(TApp & app, ConfigParser & parser) : _app(app), _parser(parser) { }
+
+    void enterSectionList(ConfigParser::SectionListContext * /*ctx*/) override { }
+    void exitSectionList(ConfigParser::SectionListContext * /*ctx*/) override { }
+
+    void enterApplicationSection(ConfigParser::ApplicationSectionContext * /*ctx*/) override {
+        assert(_currentSection == Section::None);
+        _currentSection = Section::Application;
+    }
+    void exitApplicationSection(ConfigParser::ApplicationSectionContext * /*ctx*/) override {
+        assert(_currentSection == Section::Application);
+        _currentSection = Section::None;
+    }
+
+    void enterBoundaryGASection(ConfigParser::BoundaryGASectionContext * /*ctx*/) override {
+        assert(_currentSection == Section::None);
+        _currentSection = Section::BoundaryGA;
+    }
+    void exitBoundaryGASection(ConfigParser::BoundaryGASectionContext * /*ctx*/) override {
+        assert(_currentSection == Section::BoundaryGA);
+        _currentSection = Section::None;
+    }
+
+    void enterHeightfieldGASection(ConfigParser::HeightfieldGASectionContext * /*ctx*/) override {
+        assert(_currentSection == Section::None);
+        _currentSection = Section::HeightfieldGA;
+    }
+    void exitHeightfieldGASection(ConfigParser::HeightfieldGASectionContext * /*ctx*/) override {
+        assert(_currentSection == Section::HeightfieldGA);
+        _currentSection = Section::None;
+    }
+
+    void enterCacheDirectoryAssignment(ConfigParser::CacheDirectoryAssignmentContext * /*ctx*/) override { }
+    void exitCacheDirectoryAssignment(ConfigParser::CacheDirectoryAssignmentContext * ctx) override {
+        assert(_currentSection == Section::Application);
+        SetProperty<PropertyID::CacheDirectory>(*ctx, ctx->path()->getText(), &TApp::setCacheDirectory);
+    }
+
+    void enterPopulationSizeAssignment(ConfigParser::PopulationSizeAssignmentContext * /*ctx*/) override { }
+    void exitPopulationSizeAssignment(ConfigParser::PopulationSizeAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGAPopulationSize>(*ctx, ctx->value, &TApp::setBoundaryGAPopulationSize);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGAPopulationSize>(*ctx, ctx->value, &TApp::setHeightfieldGAPopulationSize);
+    }
+
+    void enterEvolutionCyclesAssignment(ConfigParser::EvolutionCyclesAssignmentContext * /*ctx*/) override { }
+    void exitEvolutionCyclesAssignment(ConfigParser::EvolutionCyclesAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGAEvolutionCycles>(*ctx, ctx->value, &TApp::setBoundaryGAEvolutionCycles);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGAEvolutionCycles>(*ctx, ctx->value, &TApp::setHeightfieldGAEvolutionCycles);
+    }
+
+    void enterSelectionRatioAssignment(ConfigParser::SelectionRatioAssignmentContext * /*ctx*/) override { }
+    void exitSelectionRatioAssignment(ConfigParser::SelectionRatioAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGASelectionRatio>(*ctx, ctx->value, &TApp::setBoundaryGASelectionRatio);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGASelectionRatio>(*ctx, ctx->value, &TApp::setHeightfieldGASelectionRatio);
+    }
+
+    void enterElitismRatioAssignment(ConfigParser::ElitismRatioAssignmentContext * /*ctx*/) override { }
+    void exitElitismRatioAssignment(ConfigParser::ElitismRatioAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGAElitismRatio>(*ctx, ctx->value, &TApp::setBoundaryGAElitismRatio);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGAElitismRatio>(*ctx, ctx->value, &TApp::setHeightfieldGAElitismRatio);
+    }
+
+    void enterCrossoverProbabilityAssignment(ConfigParser::CrossoverProbabilityAssignmentContext * /*ctx*/) override { }
+    void exitCrossoverProbabilityAssignment(ConfigParser::CrossoverProbabilityAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGACrossoverProbability>(*ctx, ctx->value, &TApp::setBoundaryGACrossoverProbability);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGACrossoverProbability>(*ctx, ctx->value, &TApp::setHeightfieldGACrossoverProbability);
+    }
+
+    void enterCrossoverRatioAssignment(ConfigParser::CrossoverRatioAssignmentContext * /*ctx*/) override { }
+    void exitCrossoverRatioAssignment(ConfigParser::CrossoverRatioAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGACrossoverRatio>(*ctx, ctx->value, &TApp::setBoundaryGACrossoverRatio);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGACrossoverRatio>(*ctx, ctx->value, &TApp::setHeightfieldGACrossoverRatio);
+    }
+
+    void enterMutationProbabilityAssignment(ConfigParser::MutationProbabilityAssignmentContext * /*ctx*/) override { }
+    void exitMutationProbabilityAssignment(ConfigParser::MutationProbabilityAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGAMutationProbability>(*ctx, ctx->value, &TApp::setBoundaryGAMutationProbability);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGAMutationProbability>(*ctx, ctx->value, &TApp::setHeightfieldGAMutationProbability);
+    }
+
+    void enterMutationRatioAssignment(ConfigParser::MutationRatioAssignmentContext * /*ctx*/) override { }
+    void exitMutationRatioAssignment(ConfigParser::MutationRatioAssignmentContext * ctx) override {
+        assert(_currentSection == Section::BoundaryGA || _currentSection == Section::HeightfieldGA);
+        if (_currentSection == Section::BoundaryGA)
+            SetProperty<PropertyID::BoundaryGAMutationRatio>(*ctx, ctx->value, &TApp::setBoundaryGAMutationRatio);
+        else if (_currentSection == Section::HeightfieldGA)
+            SetProperty<PropertyID::HeightfieldGAMutationRatio>(*ctx, ctx->value, &TApp::setHeightfieldGAMutationRatio);
+    }
+
+    void enterGeneSizeAssignment(ConfigParser::GeneSizeAssignmentContext * /*ctx*/) override { }
+    void exitGeneSizeAssignment(ConfigParser::GeneSizeAssignmentContext * ctx) override {
+        assert(_currentSection == Section::HeightfieldGA);
+        SetProperty<PropertyID::HeightfieldGAGeneSize>(*ctx, ctx->value, &TApp::setHeightfieldGAGeneSize);
+    }
+
+    void enterOverlapFactorAssignment(ConfigParser::OverlapFactorAssignmentContext * /*ctx*/) override { }
+    void exitOverlapFactorAssignment(ConfigParser::OverlapFactorAssignmentContext * ctx) override {
+        assert(_currentSection == Section::HeightfieldGA);
+        SetProperty<PropertyID::HeightfieldGAOverlapFactor>(*ctx, ctx->value, &TApp::setHeightfieldGAOverlapFactor);
+    }
+
+    void enterMaxCrossoverWidthAssignment(ConfigParser::MaxCrossoverWidthAssignmentContext * /*ctx*/) override { }
+    void exitMaxCrossoverWidthAssignment(ConfigParser::MaxCrossoverWidthAssignmentContext * ctx) override {
+        assert(_currentSection == Section::HeightfieldGA);
+        SetProperty<PropertyID::HeightfieldGAMaxCrossoverWidth>(*ctx, ctx->value, &TApp::setHeightfieldGAMaxCrossoverWidth);
+    }
+
+    void enterMaxVerticalScaleAssignment(ConfigParser::MaxVerticalScaleAssignmentContext * /*ctx*/) override { }
+    void exitMaxVerticalScaleAssignment(ConfigParser::MaxVerticalScaleAssignmentContext * ctx) override {
+        assert(_currentSection == Section::HeightfieldGA);
+        SetProperty<PropertyID::HeightfieldGAMaxVerticalScale>(*ctx, ctx->value, &TApp::setHeightfieldGAMaxVerticalScale);
+    }
+
+    void enterMaxVerticalOffsetAssignment(ConfigParser::MaxVerticalOffsetAssignmentContext * /*ctx*/) override { }
+    void exitMaxVerticalOffsetAssignment(ConfigParser::MaxVerticalOffsetAssignmentContext * ctx) override {
+        assert(_currentSection == Section::HeightfieldGA);
+        SetProperty<PropertyID::HeightfieldGAMaxVerticalOffset>(*ctx, ctx->value, &TApp::setHeightfieldGAMaxVerticalOffset);
+    }
+
+private:
+    template <PropertyID ID, typename ValueType, typename ParamType>
+    void SetProperty(antlr4::ParserRuleContext& ctx, ValueType value, void (TApp::*pfnSetter)(ParamType)) {
+        antlr4::ParserRuleContext*& pCtx = _mapPropertyIDToParserRuleContext[ID];
+
+        if (pCtx != nullptr) {
+            // Oooh...already saw this one
+            FileFormatException ffe(_parser.getSourceName(),
+                                    static_cast<int>(ctx.start->getLine()),
+                                    static_cast<int>(ctx.start->getCharPositionInLine()));
+            ffe << "Property " << chomp(pCtx->getText()) << " occurs more than once (previous assignment at line " << pCtx->start->getLine() << ", " << pCtx->start->getCharPositionInLine() << ")";
+            throw ffe;
+        }
+
+        pCtx = &ctx;
+
+        INCA_INFO("Setting property " << chomp(pCtx->getText()));
+
+        // Invoke the setter to actually store the value for the property
+        (_app.*(pfnSetter))(value);
+    }
+
+    TApp & _app;
+    ConfigParser & _parser;
+    Section _currentSection { Section::None };
+    std::unordered_map<PropertyID, antlr4::ParserRuleContext*> _mapPropertyIDToParserRuleContext;
+};
+
+
 // Throws inca::io::FileAccessException if the file cannot be opened for reading
 // Throws inca::io::FileFormatException if the file is syntactically or semantically invalid
 void TApp::loadConfigFile(const std::string & path) {
@@ -787,24 +995,17 @@ void TApp::loadConfigFile(const std::string & path) {
     }
 
     // Read the configuration file
-    ConfigLexer lexer(file);
-    ConfigParser parser(lexer);
-    try {
-        // Attempt to parse the stream
-        parser.sectionList(this);
+    antlr4::ANTLRInputStream stream(file);
+    ConfigLexer lexer(&stream);
+    antlr4::CommonTokenStream tokens(&lexer);
+    ConfigParser parser(&tokens);
+    FailFastErrorListener errorListener;
+    parser.addErrorListener(&errorListener);
 
-    // Other ANTLR parsing exception
-    } catch (const antlr::RecognitionException &e) {
-        FileFormatException ffe(parser.getFilename(),
-                                e.getLine(), e.getColumn(),
-                                e.getMessage());
-        throw ffe;
-
-    // ANTLR IO exception
-    } catch (const antlr::TokenStreamException &e) {
-        FileFormatException ffe(parser.getFilename(), 0, 0, e.getMessage());
-        throw ffe;
-    }
+    // Attempt to parse the stream
+    auto* tree = parser.sectionList();
+    ConfigExtractor extractor(*this, parser);
+    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&extractor, tree);
 
     file.close();
 

@@ -18,12 +18,15 @@
 // Import function prototypes
 #include "terrainosaurus-iostream.hpp"
 
-// Import parser definitions
-#include "TerrainLibraryParser.hpp"
-#include "TerrainLibraryLexer.hpp"
-#include "MapParser.hpp"
-#include "MapLexer.hpp"
-#include <antlr/TokenStreamException.hpp>
+// Import parser definitions (generated into the build tree)
+#include <terrainosaurus/io/TerrainLibraryLexer.h>
+#include <terrainosaurus/io/TerrainLibraryParser.h>
+#include <terrainosaurus/io/TerrainLibraryListener.h>
+#include <terrainosaurus/io/MapLexer.h>
+#include <terrainosaurus/io/MapParser.h>
+#include <terrainosaurus/io/MapListener.h>
+#include "PrimitivesBaseListener.hpp"
+#include "FailFastErrorListener.hpp"
 #include "DEMInterpreter.hpp"
 
 // Import file-related exception definitions
@@ -45,6 +48,17 @@ using namespace terrainosaurus;
 
 typedef TerrainSample::LOD::Feature Feature;
 
+
+namespace terrainosaurus {
+
+std::string chomp(const std::string& s) {
+    if (s.rfind('\n') + 1 == s.length())
+        return s.substr(0, s.length() - 1);
+    else
+        return s;
+}
+
+}
 
 template <typename T, inca::SizeType dim>
 void write(std::ostream & os, const inca::raster::MultiArrayRaster<T, dim> & r) {
@@ -139,27 +153,203 @@ void read(std::istream & is, Feature & f) {
 }
 
 
+class TerrainLibraryBuilder : public TPrimitivesBaseListener<TerrainLibraryListener, TerrainLibraryParser>
+{
+private:
+    enum class TerrainTypePropertyID {
+        Color,
+    };
+
+    enum class TerrainSeamPropertyID {
+        Smoothness,
+        AspectRatio,
+    };
+
+public:
+    TerrainLibraryBuilder(TerrainLibrary & tl, TerrainLibraryParser & parser) noexcept
+      : _terrainLibrary(tl), _parser(parser) { }
+
+    void enterSectionList(TerrainLibraryParser::SectionListContext *ctx) override { }
+    void exitSectionList(TerrainLibraryParser::SectionListContext *ctx) override { }
+
+    void enterTerrainTypeSection(TerrainLibraryParser::TerrainTypeSectionContext *ctx) override {
+        // Scream like hell if we've already got one
+        auto tt = ctx->string()->getText();
+        TerrainTypePtr ttp = _terrainLibrary.terrainType(tt);
+        if (ttp != NULL) {
+            FileFormatException e(_parser.getSourceName(),
+                                  static_cast<int>(ctx->start->getLine()),
+                                  static_cast<int>(ctx->start->getCharPositionInLine()));
+            e << "TerrainType \"" << tt << "\" has already been created";
+            throw e;
+        }
+
+        // Make a new one with this name
+        _currentTT = _terrainLibrary.addTerrainType(tt);
+    }
+    void exitTerrainTypeSection(TerrainLibraryParser::TerrainTypeSectionContext *ctx) override {
+        assert(_currentTT != nullptr);
+
+        // Make sure we have everything we need
+        if (_mapTTPropertyIDToParserRuleContext.find(TerrainTypePropertyID::Color) == _mapTTPropertyIDToParserRuleContext.end()) {
+            FileFormatException e(_parser.getSourceName(),
+                                  static_cast<int>(ctx->start->getLine()),
+                                  static_cast<int>(ctx->start->getCharPositionInLine()));
+            e << "TerrainType \"" << _currentTT->name() << "\" does not have a represetative color assigned to it";
+            throw e;
+        }
+
+        if (_currentTT->size() == 0) {
+            FileFormatException e(_parser.getSourceName(),
+                                  static_cast<int>(ctx->start->getLine()),
+                                  static_cast<int>(ctx->start->getCharPositionInLine()));
+            e << "TerrainType \"" << _currentTT->name() << "\" has no terrain samples assigned to it";
+            throw e;
+        }
+
+        _currentTT = nullptr;
+        _mapTTPropertyIDToParserRuleContext.clear();
+    }
+
+    void enterTerrainSeamSection(TerrainLibraryParser::TerrainSeamSectionContext *ctx) override {
+        std::string tt1 = ctx->string(0)->getText();
+        std::string tt2 = ctx->string(1)->getText();
+
+        // Make sure the associated TerrainType records exist
+        TerrainTypePtr tt1p = _terrainLibrary.terrainType(tt1);
+        TerrainTypePtr tt2p = _terrainLibrary.terrainType(tt2);
+        if (tt1p == NULL || tt2p == NULL) {
+            FileFormatException e(_parser.getSourceName(),
+                                  static_cast<int>(ctx->start->getLine()),
+                                  static_cast<int>(ctx->start->getCharPositionInLine()));
+            e << "TerrainSeam between \"" << tt1 << "\" and \"" << tt2
+              << "\" cannot be created: ";
+            if (tt1p == NULL && tt2p == NULL) { // Both are missing
+                e << "neither TerrainType record exists";
+            } else if (tt1p == NULL) {          // The first is missing
+                e << "a TerrainType record for \"" << tt1 << "\" does not exist";
+            } else {                            // The second is missing
+                e << "a TerrainType record for \"" << tt2 << "\" does not exist";
+            }
+            throw e;
+        }
+
+        // Look up the TS from its TTs
+        TerrainSeamPtr ts = _terrainLibrary.terrainSeam(tt1p->terrainTypeID(),
+                                                        tt2p->terrainTypeID());
+
+        // Make sure we've not already initialized this TerrainSeam
+        auto it = _mapTSToParserRuleContext.find(ts);
+        if (it != _mapTSToParserRuleContext.end()) {
+            FileFormatException e(_parser.getSourceName(),
+                                  static_cast<int>(ctx->start->getLine()),
+                                  static_cast<int>(ctx->start->getCharPositionInLine()));
+            e << "TerrainSeam between \"" << tt1 << "\" and \""
+              << tt2 << "\" has already been initialized (at line "<< it->second->start->getLine() << ")";
+            throw e;
+        }
+
+
+        // This is the new current TS; mark it as "initialized"
+        _currentTS = ts;
+        _mapTSToParserRuleContext[_currentTS] = ctx;
+    }
+    void exitTerrainSeamSection(TerrainLibraryParser::TerrainSeamSectionContext * ctx) override {
+        _mapTSPropertyIDToParserRuleContext.clear();
+    }
+
+    void enterTerrainColorAssignment(TerrainLibraryParser::TerrainColorAssignmentContext * /*ctx*/) override { }
+    void exitTerrainColorAssignment(TerrainLibraryParser::TerrainColorAssignmentContext * ctx) override {
+        assert(_currentTT != nullptr);
+        SetUniqueProperty<TerrainTypePropertyID::Color>(ctx, [&](const Color & c) noexcept { _currentTT->setColor(c); });
+    }
+
+    void enterTerrainSampleAssignment(TerrainLibraryParser::TerrainSampleAssignmentContext * /*ctx*/) override { }
+    void exitTerrainSampleAssignment(TerrainLibraryParser::TerrainSampleAssignmentContext * ctx) override {
+        assert(_currentTT != nullptr);
+
+        // Only add this sample if it's not a duplicate
+        auto path = ctx->string()->getText();
+        for (SizeType i = 0; i < _currentTT->size(); ++i)
+            // TODO: Use C++14 filesystem support here to handle path normalization
+            if (_currentTT->terrainSample(i)->filename() == path) {
+                INCA_WARNING("Ignoring duplicate terrain sample \"" << path << "\" (line " << ctx->start->getLine() << ")");
+                return;
+            }
+
+        _currentTT->addTerrainSample(TerrainSamplePtr(new TerrainSample(ctx->string()->getText())));
+    }
+
+    void enterSmoothnessAssignment(TerrainLibraryParser::SmoothnessAssignmentContext * /*ctx*/) override { }
+    void exitSmoothnessAssignment(TerrainLibraryParser::SmoothnessAssignmentContext * ctx) override {
+        assert(_currentTS != nullptr);
+        SetUniqueProperty<TerrainSeamPropertyID::Smoothness>(ctx, [&](double value) noexcept { _currentTS->smoothness = value; });
+    }
+
+    void enterAspectRatioAssignment(TerrainLibraryParser::AspectRatioAssignmentContext * /*ctx*/) override { }
+    void exitAspectRatioAssignment(TerrainLibraryParser::AspectRatioAssignmentContext * ctx) override {
+        assert(_currentTS != nullptr);
+        SetUniqueProperty<TerrainSeamPropertyID::AspectRatio>(ctx, [&](double value) noexcept { _currentTS->aspectRatio = value; });
+    }
+
+private:
+
+    template<TerrainTypePropertyID ID, typename ParserRuleContextType, typename AssignOp>
+    void SetUniqueProperty(ParserRuleContextType * ctx, const AssignOp & assignProperty)
+    {
+        DoSetUniqueProperty<TerrainTypePropertyID, ID>(ctx, _mapTTPropertyIDToParserRuleContext, assignProperty);
+    }
+
+    template<TerrainSeamPropertyID ID, typename ParserRuleContextType, typename AssignOp>
+    void SetUniqueProperty(ParserRuleContextType * ctx, const AssignOp & assignProperty)
+    {
+        DoSetUniqueProperty<TerrainSeamPropertyID, ID>(ctx, _mapTSPropertyIDToParserRuleContext, assignProperty);
+    }
+
+    template<typename IDType, IDType ID, typename ParserRuleContextType, typename AssignOp>
+    void DoSetUniqueProperty(ParserRuleContextType * ctx,
+                             std::unordered_map<IDType, antlr4::ParserRuleContext *> & mapPropertyIDToParserRuleContext,
+                             const AssignOp & assignProperty)
+    {
+        antlr4::ParserRuleContext*& pCtx = mapPropertyIDToParserRuleContext[ID];
+
+        if (pCtx != nullptr) {
+            // Oooh...already saw this one
+            FileFormatException ffe(_parser.getSourceName(),
+                                    static_cast<int>(ctx->start->getLine()),
+                                    static_cast<int>(ctx->start->getCharPositionInLine()));
+            ffe << "Property " << chomp(pCtx->getText()) << " occurs more than once (previous assignment at line " << pCtx->start->getLine() << ", " << pCtx->start->getCharPositionInLine() << ")";
+            throw ffe;
+        }
+
+        pCtx = ctx;
+
+        // Invoke the setter to actually store the value for the property
+        assignProperty(ctx->value);
+    }
+
+    TerrainLibrary & _terrainLibrary;
+    TerrainLibraryParser & _parser;
+    TerrainTypePtr _currentTT { nullptr };
+    TerrainSeamPtr _currentTS { nullptr };
+    std::unordered_map<TerrainSeamPtr, antlr4::ParserRuleContext*> _mapTSToParserRuleContext;
+    std::unordered_map<TerrainTypePropertyID, antlr4::ParserRuleContext*> _mapTTPropertyIDToParserRuleContext;
+    std::unordered_map<TerrainSeamPropertyID, antlr4::ParserRuleContext*> _mapTSPropertyIDToParserRuleContext;
+};
 
 // IOstream operators for (de)serializing instances of TerrainLibrary
 istream & terrainosaurus::operator>>(istream & is, TerrainLibrary & tl) {
-    try {
-        // Attempt to parse the stream
-        TerrainLibraryLexer lexer(is);
-        TerrainLibraryParser parser(lexer);
-        parser.sectionList(&tl);
+    antlr4::ANTLRInputStream stream(is);
+    TerrainLibraryLexer lexer(&stream);
+    antlr4::CommonTokenStream tokens(&lexer);
+    TerrainLibraryParser parser(&tokens);
+    FailFastErrorListener errorListener;
+    parser.addErrorListener(&errorListener);
 
-    // Other ANTLR parsing exception
-    } catch (const antlr::RecognitionException & e) {
-        FileFormatException ffe(e.getFilename(),
-                                e.getLine(), e.getColumn(),
-                                e.getMessage());
-        throw ffe;
-
-    // ANTLR IO exception
-    } catch (const antlr::TokenStreamException & e) {
-        FileFormatException ffe("", 0, 0, e.getMessage());
-        throw ffe;
-    }
+    // Attempt to parse the stream
+    auto* tree = parser.sectionList();
+    TerrainLibraryBuilder builder(tl, parser);
+    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&builder, tree);
 
     return is;
 }
@@ -196,27 +386,81 @@ ostream & terrainosaurus::operator<<(ostream & os, const TerrainLibrary & tl) {
 }
 
 
+class MapBuilder : public TPrimitivesBaseListener<MapListener, MapParser>
+{
+public:
+    MapBuilder(Map & map, MapParser & parser) noexcept : _map(map), _parser(parser) { }
+
+    void enterTerrainMap(MapParser::TerrainMapContext * /*ctx*/) override { }
+    void exitTerrainMap(MapParser::TerrainMapContext * /*ctx*/) override { }
+
+    void enterVertexRecord(MapParser::VertexRecordContext * /*ctx*/) override { }
+    void exitVertexRecord(MapParser::VertexRecordContext * ctx) override {
+        _map.createVertex(Point2D(ctx->x->value, ctx->y->value));
+    }
+
+    void enterFaceRecord(MapParser::FaceRecordContext * /*ctx*/) override {
+    }
+    void exitFaceRecord(MapParser::FaceRecordContext * ctx) override {
+        if (_currentTT == nullptr) {    // Ensure that a TT has been set
+            FileFormatException ffe(_parser.getSourceName(),
+                                    static_cast<int>(ctx->start->getLine()),
+                                    static_cast<int>(ctx->start->getCharPositionInLine()));
+            ffe << "A TerrainType must be selected before faces may be created";
+            throw ffe;
+        }
+        std::vector<Map::VertexPtr> vertices;
+        for (const auto * id : ctx->integer()) {
+            // Look up the Vertex with that ID (remember file starts at 1, vector at 0)
+            Map::VertexPtr v = _map.vertex(id->value - 1);
+            if (v == nullptr) {                 // Ensure that the Vertex does exist
+                FileFormatException ffe(_parser.getSourceName(),
+                                        static_cast<int>(ctx->start->getLine()),
+                                        static_cast<int>(ctx->start->getCharPositionInLine()));
+                ffe << "Vertex \"" << id->value << "\" does not exist";
+                throw ffe;
+            }
+            vertices.push_back(v);      // Stick it in the list
+        }
+        _map.createFace(vertices.begin(), vertices.end(), _currentTT);
+    }
+
+    void enterTerrainTypeRecord(MapParser::TerrainTypeRecordContext * /*ctx*/) override { }
+    void exitTerrainTypeRecord(MapParser::TerrainTypeRecordContext * ctx) override {
+        TerrainTypePtr ttp = _map.terrainLibrary->terrainType(ctx->ID()->getSymbol()->getText());
+        if (ttp == nullptr) {
+            FileFormatException ffe(_parser.getSourceName(),
+                                    static_cast<int>(ctx->start->getLine()),
+                                    static_cast<int>(ctx->start->getCharPositionInLine()));
+            ffe << "TerrainType \"" << ctx->ID()->getSymbol()->getText() << "\" does not exist";
+            throw ffe;
+        }
+
+        INCA_DEBUG("Selecting active terrain type \"" << ttp->name() << "\"");
+
+        // If we made it here, then the TT we want exists. Yay!
+        _currentTT = ttp;
+    }
+
+private:
+    Map & _map;
+    MapParser & _parser;
+    TerrainTypePtr _currentTT { nullptr };
+};
+
 // IOstream operators for (de)serializing instances of Map
 istream & terrainosaurus::operator>>(istream & is, Map & m) {
-    MapLexer lexer(is);
-    MapParser parser(lexer);
+    antlr4::ANTLRInputStream stream(is);
+    MapLexer lexer(&stream);
+    antlr4::CommonTokenStream tokens(&lexer);
+    MapParser parser(&tokens);
+    FailFastErrorListener errorListener;
+    parser.addErrorListener(&errorListener);
 
-    try {
-        // Attempt to parse the stream
-        parser.terrainMap(&m);
-
-    // Other ANTLR parsing exception
-    } catch (const antlr::RecognitionException &e) {
-        FileFormatException ffe(parser.getFilename(),
-                                e.getLine(), e.getColumn(),
-                                e.getMessage());
-        throw ffe;
-
-    // ANTLR IO exception
-    } catch (const antlr::TokenStreamException &e) {
-        FileFormatException ffe(parser.getFilename(), 0, 0, e.getMessage());
-        throw ffe;
-    }
+    // Attempt to parse the stream
+    auto* tree = parser.terrainMap();
+    MapBuilder builder(m, parser);
+    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&builder, tree);
 
     return is;
 }
