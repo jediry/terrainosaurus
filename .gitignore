@@ -1,4 +1,6 @@
 .sconsign.dblite
 build
+data/cache
 external/scons-*
 external/python-*
+site_scons/site_tools/__pycache__
