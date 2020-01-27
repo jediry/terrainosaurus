@@ -213,28 +213,6 @@ public:
     // Container typedefs
     typedef std::vector<Spike> SpikeList;
 
-protected:
-    // This function object takes two Vertices and searches around the first
-    // for the FaceVertex that best "encloses" the other Vertex. In geometric
-    // terms, this means the FaceVertex is considered to have an infinite
-    // "wedge" envelope, delimited by the Edges on either side of it, and
-    // a Vertex is considered "enclosed" if its location falls within that
-    // wedge.
-    class FindEnclosingFaceVertex
-        : public std::binary_function<VertexConstPtr, Point, FaceVertexPtr> {
-    public:
-        // Constructor
-        FindEnclosingFaceVertex(const Map &m) : map(m) { }
-
-        // Function call operator
-        FaceVertexPtr operator()(VertexConstPtr v, Point p) const {
-            return map.enclosingFaceVertex(v, p);
-        }
-
-    protected:
-        const Map &map;
-    };
-
 
 /*---------------------------------------------------------------------------*
  | Constructors
@@ -268,9 +246,14 @@ public:
     // Create a new face from an iterator range of VertexPtrs
     template <class iterator>
     FacePtr createFace(iterator begin, iterator end, TerrainTypePtr tt) {
-        return Mesh::createFace(begin, end,
-                                FindEnclosingFaceVertex(*this),
-                                FaceData(tt));
+        // This lambda takes two Vertices and searches around the first
+        // for the FaceVertex that best "encloses" the other Vertex. In geometric
+        // terms, this means the FaceVertex is considered to have an infinite
+        // "wedge" envelope, delimited by the Edges on either side of it, and
+        // a Vertex is considered "enclosed" if its location falls within that
+        // wedge.
+        auto findEnclosingFaceVertex = [&](VertexConstPtr v, Point p) { return enclosingFaceVertex(v, p); };
+        return Mesh::createFace(begin, end, findEnclosingFaceVertex, FaceData(tt));
     }
 };
 

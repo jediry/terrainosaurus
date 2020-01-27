@@ -18,7 +18,7 @@ The variables are saved automatically after the first run (look at cache/kde.cac
 ###################################################################
 
 DefaultEnvironment(tools = [])
-env = Environment(tools = ['default', 'build.flavor', 'antlr4'], toolpath = ['#/external/scons-tools'])
+env = Environment(tools = ['default', 'build.flavor', 'c++17', 'antlr4'], toolpath = ['#/external/scons-tools'])
 
 flavor = GetOption('flavor')
 
