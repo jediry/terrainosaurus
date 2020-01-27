@@ -62,7 +62,7 @@ typedef TerrainSample::LOD::FeatureList         FeatureList;
 
 // HACK
 #define FIND_PEAKS  0
-#define FIND_EDGES  1
+#define FIND_EDGES  0
 #define FIND_RIDGES 0
 #define FIND_FEATURES FIND_PEAKS || FIND_EDGES || FIND_RIDGES
 
