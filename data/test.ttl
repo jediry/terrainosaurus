@@ -41,7 +41,6 @@ sample = "33116b7 - Mesa Grande, CA"
 # sample = "35121e2 - Pico Creek, CA"       # Apparently degenerate
 # sample = "35121f2 - San Simeon, CA"       # 15% water
 
-
 [TerrainType: Mojave_Desert]
 color = <0.8, 0.6, 0.3, 1.0>
 sample = "36116c4 - Death Valley Junction, CA"
